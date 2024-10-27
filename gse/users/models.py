@@ -29,8 +29,20 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f'{self.first_name} {self.last_name}'
 
     @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
+    @property
     def is_staff(self):
         return self.role == choices.USER_ROLE_ADMIN
+
+    @property
+    def is_support(self):
+        return self.role == choices.USER_ROLE_SUPPORT
+
+    @property
+    def is_customer(self):
+        return self.role == choices.USER_ROLE_CUSTOMER
 
     class Meta:
         ordering = ('created_date',)
