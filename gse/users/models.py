@@ -2,12 +2,19 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
+from . import choices
 from .managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
+    role = models.CharField(
+        max_length=20,
+        choices=choices.USER_ROLE_CHOICES,
+        verbose_name='نقش'
+    )
+
     is_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
 
@@ -21,7 +28,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     @property
     def is_staff(self):
-        return self.is_admin
+        return self.role == choices.USER_ROLE_ADMIN
 
     class Meta:
         ordering = ('email',)
