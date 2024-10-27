@@ -1,22 +1,30 @@
 from django.contrib.auth.models import BaseUserManager
 
+from .choices import USER_ROLE_ADMIN
+
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, email, password):
-        if not username:
-            raise ValueError('User must have a username')
+    def create_user(self, first_name, last_name, email, role, password):
+        if not first_name:
+            raise ValueError('کاربران باید نام داشته باشند.')
+        if not last_name:
+            raise ValueError('کاربران باید نام خانوادگی داشته باشند.')
         if not email:
-            raise ValueError('User must have a Email')
+            raise ValueError('کاربران باید ایمیل داشته باشند.')
 
-        user = self.model(username=username, email=self.normalize_email(email))
+        user = self.model(first_name=first_name, last_name=last_name, role=role, email=self.normalize_email(email))
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, email, password, bio=None, avatar=None):
-        user = self.create_user(username, email, password)
-        user.is_admin = True
-        user.is_superuser = True
+    def create_superuser(self, first_name, last_name, email, password):
+        user = self.create_user(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            role=USER_ROLE_ADMIN,
+            password=password
+        )
         user.is_active = True
         user.save(using=self._db)
         return user
