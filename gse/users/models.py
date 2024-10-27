@@ -33,7 +33,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.role == choices.USER_ROLE_ADMIN
 
     class Meta:
-        ordering = ('email',)
+        ordering = ('created_date',)
+        verbose_name = 'کاربر'
+        verbose_name_plural = 'کاربران'
 
 
 class UserProfile(models.Model):
