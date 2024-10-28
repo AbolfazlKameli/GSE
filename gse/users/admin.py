@@ -2,34 +2,37 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .forms import UserChangeForm, UserCreationForm
-from .models import User, UserProfile
+from .models import User, UserProfile, Address
 
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
 
 
+class UserAddressInline(admin.StackedInline):
+    model = Address
+
+
 class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('username', 'email', 'id', 'is_active', 'is_admin', 'is_superuser')
-    list_filter = ('is_admin', 'is_superuser')
+    list_display = ('email', 'id', 'is_active', 'is_superuser', 'role')
+    list_filter = ('is_superuser',)
     readonly_fields = ('last_login',)
 
     fieldsets = (
-        ('Main', {'fields': ('username', 'email', 'password', 'last_login')}),
-        ('Permissions', {'fields': ('is_active', 'is_admin', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Main', {'fields': ('email', 'password', 'role', 'last_login')}),
+        ('Permissions', {'fields': ('is_active', 'is_superuser', 'groups', 'user_permissions')}),
     )
     add_fieldsets = (
-        (None, {'fields': ('username', 'email', 'password1', 'password2')}),
+        (None, {'fields': ('email', 'password1', 'password2')}),
     )
 
-    search_fields = ('username', 'email')
-    ordering = ('username',)
-    filter_horizontal = ('groups', 'user_permissions')
+    search_fields = ('email',)
+    ordering = ('email',)
 
-    inlines = [UserProfileInline]
+    inlines = [UserProfileInline, UserAddressInline]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
