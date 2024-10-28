@@ -13,20 +13,20 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 
-    list_display = ('first_name', 'last_name', 'email', 'id', 'is_active', 'is_superuser')
+    list_display = ('email', 'id', 'is_active', 'is_superuser')
     list_filter = ('is_superuser',)
     readonly_fields = ('last_login',)
 
     fieldsets = (
-        ('Main', {'fields': ('first_name', 'last_name', 'email', 'password', 'last_login')}),
+        ('Main', {'fields': ('email', 'password', 'last_login')}),
         ('Permissions', {'fields': ('is_active', 'is_superuser', 'groups', 'user_permissions')}),
     )
     add_fieldsets = (
-        (None, {'fields': ('first_name', 'last_name', 'email', 'password1', 'password2')}),
+        (None, {'fields': ('email', 'password1', 'password2')}),
     )
 
-    search_fields = ('first_name', 'last_name', 'email')
-    ordering = ('first_name', 'last_name')
+    search_fields = ('last_name', 'email')
+    ordering = ('last_name',)
     filter_horizontal = ('groups', 'user_permissions')
 
     inlines = [UserProfileInline]
