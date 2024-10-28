@@ -25,9 +25,8 @@ class UserAdmin(BaseUserAdmin):
         (None, {'fields': ('email', 'password1', 'password2')}),
     )
 
-    search_fields = ('last_name', 'email')
-    ordering = ('last_name',)
-    filter_horizontal = ('groups', 'user_permissions')
+    search_fields = ('email',)
+    ordering = ('email',)
 
     inlines = [UserProfileInline]
 
