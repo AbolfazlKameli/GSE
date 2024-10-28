@@ -1,9 +1,9 @@
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
-from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from . import choices
 from .managers import UserManager
+from .validators import validate_iranian_phone_number
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -45,13 +45,22 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class UserProfile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    avatar = models.ImageField(
-        upload_to='avatars',
-        blank=True,
+    first_name = models.CharField(max_length=50, default='', verbose_name='first name')
+    last_name = models.CharField(max_length=50, default='', verbose_name='last name')
+    phone_number = models.CharField(
+        max_length=12,
+        validators=[validate_iranian_phone_number],
+        unique=True,
         null=True,
-        validators=[FileExtensionValidator(['png', 'jpg', 'jpeg'])]
+        blank=True,
+        verbose_name='phone number'
     )
-    bio = models.TextField(max_length=500, blank=True, null=True)
+    created_date = models.DateTimeField(auto_now_add=True, verbose_name='created date')
+    updated_date = models.DateTimeField(auto_now=True, verbose_name='updated date')
+
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
 
     def __str__(self):
         return f'{self.owner}'

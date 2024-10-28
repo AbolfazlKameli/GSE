@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.contrib.auth.models import BaseUserManager
 
 from .choices import USER_ROLE_ADMIN
@@ -11,6 +12,11 @@ class UserManager(BaseUserManager):
         user = self.model(role=role, email=self.normalize_email(email))
         user.set_password(password)
         user.save(using=self._db)
+
+        # using get_model to avoid the circular import issue with UserProfile model
+        profile = apps.get_model('users', 'UserProfile')
+        profile.objects.create(owner=user)
+
         return user
 
     def create_superuser(self, email, password):
