@@ -64,3 +64,9 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f'{self.owner}'
+
+
+class Address(models.Model):
+    owner_profile = models.OneToOneField(User, on_delete=models.CASCADE, related_name='address', verbose_name='owner')
+    address = models.TextField()
+    postal_code = models.CharField(max_length=10, unique=True)

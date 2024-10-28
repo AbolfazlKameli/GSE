@@ -2,11 +2,15 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .forms import UserChangeForm, UserCreationForm
-from .models import User, UserProfile
+from .models import User, UserProfile, Address
 
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
+
+
+class UserAddressInline(admin.StackedInline):
+    model = Address
 
 
 class UserAdmin(BaseUserAdmin):
@@ -28,7 +32,7 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('email',)
     ordering = ('email',)
 
-    inlines = [UserProfileInline]
+    inlines = [UserProfileInline, UserAddressInline]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
