@@ -28,8 +28,8 @@ def get_user(token):
             user = get_object_or_404(User, id=decoded_data['user_id'])
             return user
         except (Http404, TypeError):
-            return Response(data={'error': 'Activation URL is invalid'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(data={'data': {'error': 'Activation URL is invalid'}}, status=status.HTTP_404_NOT_FOUND)
     except jwt.ExpiredSignatureError:
-        return Response(data={'error': 'Activation link has expired!'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'data': {'error': 'Activation link has expired!'}}, status=status.HTTP_400_BAD_REQUEST)
     except jwt.InvalidTokenError:
-        return Response(data={'error': 'Activation link is invalid!'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'data': {'error': 'Activation link is invalid!'}}, status=status.HTTP_400_BAD_REQUEST)
