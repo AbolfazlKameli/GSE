@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from gse.docs.serializers.doc_serializers import MessageSerializer
 from gse.permissions import permissions
-from gse.utils import JWT_token
+from gse.utils import JWT_token, format_errors
 from gse.utils.bucket import Bucket
 from . import serializers
 from .models import User
@@ -50,7 +50,7 @@ class UserRegisterAPI(CreateAPIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(
-            data={'errors': serializer.errors},
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
