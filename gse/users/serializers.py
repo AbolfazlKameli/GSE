@@ -21,7 +21,6 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             'access': str(refresh.access_token),
             'user': {
                 'id': self.user.id,
-                'username': self.user.username,
                 'email': self.user.email
             }
         })
@@ -38,7 +37,6 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'id',
             'last_login',
-            'is_admin',
             'groups',
             'user_permissions',
             'is_active'
@@ -51,12 +49,9 @@ class UserSerializer(serializers.ModelSerializer):
 
         # saving user profile info
         profile = instance.profile
-        profile.bio = profile_data.get('bio', profile.bio)
-        profile.avatar = profile_data.get('avatar', profile.avatar)
         profile.save()
 
         # saving user info
-        instance.username = user_data.get('username', instance.username)
         instance.email = user_data.get('email', instance.email)
         instance.save()
 
@@ -66,12 +61,6 @@ class UserSerializer(serializers.ModelSerializer):
         if not attrs:
             raise serializers.ValidationError('fields can not be blank.')
         return attrs
-
-    def validate_username(self, username):
-        users = User.objects.filter(username__exact=username)
-        if users.exists():
-            raise serializers.ValidationError('user with this username already exists.')
-        return username
 
     def validate_email(self, email):
         users = User.objects.filter(email__exact=email)
@@ -85,7 +74,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'password2')
+        fields = ('email', 'password', 'password2')
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 8},
         }
