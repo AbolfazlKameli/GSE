@@ -24,7 +24,7 @@ class UsersListAPI(ListAPIView):
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
-    filterset_fields = ['last_login', 'is_active', 'is_superuser']
+    filterset_fields = ['last_login', 'is_active', 'is_superuser', 'role']
     search_fields = ['email']
 
 

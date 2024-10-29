@@ -28,8 +28,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    bio = serializers.CharField(source='profile.bio', required=False)
-    avatar = serializers.ImageField(source='profile.avatar', required=False)
+    first_name = serializers.CharField(source='profile.first_name', required=False)
+    last_name = serializers.CharField(source='profile.last_name', required=False)
+    phone_number = serializers.CharField(source='profile.phone_number', required=False)
+    address = serializers.CharField(source='address.address', required=False)
+    postal_code = serializers.CharField(source='address.postal_code', required=False)
 
     class Meta:
         model = User
@@ -39,7 +42,8 @@ class UserSerializer(serializers.ModelSerializer):
             'last_login',
             'groups',
             'user_permissions',
-            'is_active'
+            'is_active',
+            'role'
         )
 
     def update(self, instance, validated_data):
