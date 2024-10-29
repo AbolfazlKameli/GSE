@@ -1,11 +1,11 @@
 from django.apps import apps
 from django.contrib.auth.models import BaseUserManager
 
-from .choices import USER_ROLE_ADMIN
+from .choices import USER_ROLE_ADMIN, USER_ROLE_CUSTOMER
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, role, password):
+    def create_user(self, email, password, role=USER_ROLE_CUSTOMER):
         if not email:
             raise ValueError('کاربران باید ایمیل داشته باشند.')
 
