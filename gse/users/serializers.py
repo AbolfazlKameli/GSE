@@ -112,7 +112,7 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)
     new_password = serializers.CharField(required=True, write_only=True)
-    confirm_new_password = serializers.CharField(required=True, write_only=True)
+    confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate_old_password(self, old_password):
         user: User = self.context['user']
@@ -120,16 +120,15 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError('Your old password is not correct.')
         return old_password
 
-    def validate(self, attrs):
-        new_password = attrs.get('new_password')
-        confirm_password = attrs.get('confirm_new_password')
-        if new_password and confirm_password and new_password != confirm_password:
+    def validate_confirm_password(self, data):
+        new_password = self.initial_data.get('new_password', False)
+        if new_password and data and new_password != data:
             raise serializers.ValidationError('Passwords must match.')
         try:
-            validate_password(new_password)
+            validate_password(data)
         except serializers.ValidationError as e:
-            raise serializers.ValidationError({'new_password': e.messages})
-        return attrs
+            raise serializers.ValidationError({'confirm_password': e.messages})
+        return data
 
 
 class SetPasswordSerializer(serializers.Serializer):
