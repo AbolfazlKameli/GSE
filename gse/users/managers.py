@@ -1,22 +1,31 @@
+from django.apps import apps
 from django.contrib.auth.models import BaseUserManager
+
+from .choices import USER_ROLE_ADMIN
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, email, password):
-        if not username:
-            raise ValueError('User must have a username')
+    def create_user(self, email, role, password):
         if not email:
-            raise ValueError('User must have a Email')
+            raise ValueError('کاربران باید ایمیل داشته باشند.')
 
-        user = self.model(username=username, email=self.normalize_email(email))
+        user = self.model(role=role, email=self.normalize_email(email))
         user.set_password(password)
         user.save(using=self._db)
+
+        # using get_model to avoid the circular import issue with UserProfile model
+        profile = apps.get_model('users', 'UserProfile')
+        profile.objects.create(owner=user)
+
         return user
 
-    def create_superuser(self, username, email, password, bio=None, avatar=None):
-        user = self.create_user(username, email, password)
-        user.is_admin = True
-        user.is_superuser = True
+    def create_superuser(self, email, password):
+        user = self.create_user(
+            email=email,
+            role=USER_ROLE_ADMIN,
+            password=password
+        )
         user.is_active = True
+        user.is_superuser = True
         user.save(using=self._db)
         return user

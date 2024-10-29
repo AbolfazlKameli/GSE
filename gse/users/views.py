@@ -24,8 +24,8 @@ class UsersListAPI(ListAPIView):
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
-    filterset_fields = ['last_login', 'is_active', 'is_admin', 'is_superuser']
-    search_fields = ['username', 'email']
+    filterset_fields = ['last_login', 'is_active', 'is_superuser']
+    search_fields = ['email']
 
 
 class UserRegisterAPI(CreateAPIView):
@@ -42,7 +42,7 @@ class UserRegisterAPI(CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             vd = serializer.validated_data
-            user = register(username=vd['username'], email=vd['email'], password=vd['password'])
+            user = register(email=vd['email'], password=vd['password'])
             send_verification_email.delay_on_commit(vd['email'], user.id, 'verification',
                                                     'Verification URL from AskTech')
             return Response(
