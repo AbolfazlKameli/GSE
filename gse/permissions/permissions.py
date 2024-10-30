@@ -10,7 +10,7 @@ class NotAuthenticated(BasePermission):
         return bool(request.user and not request.user.is_authenticated)
 
 
-class IsOwnerOrReadOnly(BasePermission):
+class IsAdminOrOwnerOrReadOnly(BasePermission):
     message = 'you are not the owner!'
 
     def has_object_permission(self, request, view, obj):
@@ -19,7 +19,11 @@ class IsOwnerOrReadOnly(BasePermission):
         condition = obj.id
         if hasattr(obj, 'owner'):
             condition = obj.owner.id
-        return bool(request.user and request.user.is_authenticated and condition == request.user.id)
+        return bool(
+            request.user and request.user.is_authenticated and (
+                    condition == request.user.id or request.user.role in (USER_ROLE_ADMIN, USER_ROLE_SUPPORT)
+            )
+        )
 
 
 class IsSupporterOrAdminOrReadOnly(BasePermission):
