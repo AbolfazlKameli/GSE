@@ -17,12 +17,18 @@ password = [
     path('reset/', views.ResetPasswordAPI.as_view(), name='reset-password'),
 ]
 
+profile = [
+    path('<int:id>/', views.UserProfileAPI.as_view(), name='user-profile'),
+    path('<int:id>/update/', views.UserProfileUpdateAPI.as_view(), name='update-user-profile'),
+    path('<int:id>/delete/', views.DeleteUserAccountAPI.as_view(), name='update-user-profile'),
+]
+
 urlpatterns = [
     path('', views.UsersListAPI.as_view(), name='users-list'),
     path('register/', views.UserRegisterAPI.as_view(), name='user-register'),
     path('register/verify/<str:token>/', views.UserRegisterVerifyAPI.as_view(), name='user-register-verify'),
     path('resend-email/', views.ResendVerificationEmailAPI.as_view(), name='user-register-resend-email'),
-    path('profile/<int:id>/', views.UserProfileAPI.as_view(), name='user-profile'),
+    path('profile/', include(profile)),
     path('token/', include(token)),
     path('password/', include(password))
 ]
