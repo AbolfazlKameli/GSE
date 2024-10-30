@@ -7,7 +7,7 @@ from .validators import validate_iranian_phone_number
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, max_length=50)
     role = models.CharField(
         max_length=20,
         choices=choices.USER_ROLE_CHOICES,
