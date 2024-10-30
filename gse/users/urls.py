@@ -1,12 +1,12 @@
 from django.urls import path, include
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 
 from . import views
 
 app_name = 'users'
 
 token = [
-    path('login/', TokenObtainPairView.as_view(), name='token-obtain-pair'),
+    path('login/', views.CustomTokenObtainPairView.as_view(), name='token-obtain-pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('block-token/', views.BlockTokenAPI.as_view(), name='token-block'),
 ]

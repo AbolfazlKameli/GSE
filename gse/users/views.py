@@ -1,10 +1,14 @@
+from datetime import datetime
+
 from drf_spectacular.utils import extend_schema, extend_schema_view
+from pytz import timezone
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from gse.docs.serializers.doc_serializers import MessageSerializer
 from gse.permissions import permissions
@@ -13,6 +17,20 @@ from . import serializers
 from .models import User
 from .services import register
 from .tasks import send_verification_email
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            username = request.data.get("email")
+            try:
+                user = User.objects.get(email=username)
+                user.last_login = datetime.now(tz=timezone('Asia/Tehran'))
+                user.save(update_fields=['last_login'])
+            except User.DoesNotExist:
+                pass
+        return response
 
 
 class UsersListAPI(ListAPIView):
