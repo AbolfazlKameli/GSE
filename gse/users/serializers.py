@@ -46,32 +46,6 @@ class UserSerializer(serializers.ModelSerializer):
             'role'
         )
 
-    def update(self, instance, validated_data):
-        # fetching objects data
-        profile_data = validated_data.pop('profile', {})
-        user_data = validated_data
-
-        # saving user profile info
-        profile = instance.profile
-        profile.save()
-
-        # saving user info
-        instance.email = user_data.get('email', instance.email)
-        instance.save()
-
-        return instance
-
-    def validate(self, attrs):
-        if not attrs:
-            raise serializers.ValidationError('fields can not be blank.')
-        return attrs
-
-    def validate_email(self, email):
-        users = User.objects.filter(email__exact=email)
-        if users.exists():
-            raise serializers.ValidationError('user with this Email already exists.')
-        return email
-
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(required=True, write_only=True, min_length=8)
