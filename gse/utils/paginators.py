@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 
 class NeatPagination(PageNumberPagination):
-    page_size = 10
+    page_size = 1
     max_page_size = 20
     page_size_query_param = 'limit'
 
@@ -66,6 +66,18 @@ class NeatPagination(PageNumberPagination):
                 'has_next': {
                     'type': 'boolean',
                     'example': True,
+                },
+                'first': {
+                    'type': 'string',
+                    'nullable': False,
+                    'format': 'uri',
+                    'example': 'http://127.0.0.1:8000/users/?page=1'
+                },
+                'last': {
+                    'type': 'string',
+                    'nullable': False,
+                    'format': False,
+                    'example': 'http://127.0.0.1:8000/users/?page=23'
                 },
                 'data': schema,
             },
