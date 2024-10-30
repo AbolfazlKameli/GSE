@@ -1,8 +1,11 @@
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User
+from .validators import validate_iranian_phone_number, validate_postal_code
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -45,6 +48,63 @@ class UserSerializer(serializers.ModelSerializer):
             'is_active',
             'role'
         )
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='profile.first_name', required=False)
+    last_name = serializers.CharField(source='profile.last_name', required=False)
+    phone_number = serializers.CharField(source='profile.phone_number', required=False)
+    address = serializers.CharField(source='address.address', required=False)
+    postal_code = serializers.CharField(source='address.postal_code', required=False)
+
+    class Meta:
+        model = User
+        exclude = ('password', 'is_superuser', 'id', 'last_login', 'groups', 'user_permissions', 'role')
+
+    # Address model validators
+    def validate_postal_code(self, value):
+        if value:
+            try:
+                validate_postal_code(value)
+            except ValidationError as e:
+                raise serializers.ValidationError(e.message)
+        return value
+
+    # Profile validators
+    def validate_first_name(self, value):
+        if value and len(value) > 50:
+            raise serializers.ValidationError('نام نمیتواند بیشتر از ۵۰ نویسه باشد.')
+        return value
+
+    def validate_last_name(self, value):
+        if value and len(value) > 50:
+            raise serializers.ValidationError('نام خانوادگی نمیتواند بیشتر از ۵۰ نویسه باشد.')
+        return value
+
+    def validate_phone_number(self, value):
+        if value:
+            try:
+                validate_iranian_phone_number(value)
+            except ValidationError as e:
+                raise serializers.ValidationError(e.message)
+        return value
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', None)
+        address_data = validated_data.pop('address', None)
+
+        if profile_data:
+            for attr, value in profile_data.items():
+                setattr(instance.profile, attr, value)
+            instance.profile.save()
+
+        if address_data:
+            for attr, value in address_data.items():
+                setattr(instance.address, attr, value)
+            instance.address.save()
+
+        return super().update(instance, validated_data)
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):

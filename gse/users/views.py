@@ -1,6 +1,6 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -245,3 +245,35 @@ class UserProfileAPI(RetrieveAPIView):
     lookup_field = 'id'
     queryset = User.objects.filter(is_active=True)
     http_method_names = ['get', 'options', 'head']
+
+
+class UserProfileUpdateAPI(UpdateAPIView):
+    permission_classes = [permissions.IsAdminOrOwnerOrReadOnly]
+    lookup_field = 'id'
+    lookup_url_kwarg = 'id'
+    queryset = User.objects.filter(is_active=True).select_related('profile', 'address')
+    serializer_class = serializers.UserUpdateSerializer
+
+    def patch(self, request, *args, **kwargs):
+        user: User = self.get_object()
+        serializer = self.get_serializer(instance=user, data=request.data, partial=True)
+        if serializer.is_valid():
+            email_changed = 'email' in serializer.validated_data
+            message = 'Updated profile successfully.'
+            if email_changed:
+                user.is_active = False
+                user.save()
+                send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id, 'verification',
+                                                        'Verification URL from AskTech.')
+                message += ' A verification link has been sent to your new email address.'
+
+            serializer.save()
+
+            return Response(
+                data={'data': {'message': message}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
