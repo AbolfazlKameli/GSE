@@ -1,6 +1,6 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -277,3 +277,10 @@ class UserProfileUpdateAPI(UpdateAPIView):
             data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class DeleteUserAccountAPI(DestroyAPIView):
+    permission_classes = [permissions.IsAdminOrOwner]
+    lookup_field = 'id'
+    lookup_url_kwarg = 'id'
+    queryset = User.objects.filter(is_active=True)
