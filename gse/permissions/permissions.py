@@ -26,6 +26,20 @@ class IsAdminOrOwnerOrReadOnly(BasePermission):
         )
 
 
+class IsAdminOrOwner(BasePermission):
+    message = 'you are not owner or admin'
+
+    def has_object_permission(self, request, view, obj):
+        condition = obj.id
+        if hasattr(obj, 'owner'):
+            condition = obj.owner.id
+        return bool(
+            request.user and request.user.is_authenticated and (
+                    condition == request.user.id or request.user.role in (USER_ROLE_ADMIN, USER_ROLE_SUPPORT)
+            )
+        )
+
+
 class IsSupporterOrAdminOrReadOnly(BasePermission):
     message = 'دسترسی ندارید'
 
