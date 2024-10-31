@@ -63,7 +63,7 @@ class UserRegisterAPI(CreateAPIView):
             send_verification_email.delay_on_commit(vd['email'], user.id, 'verification',
                                                     'Verification URL from AskTech')
             return Response(
-                data={'data': {'message': 'We`ve sent you an activation link via email.'}},
+                data={'data': {'message': 'لینک فعالسازی به ایمیل شما ارسال شد.'}},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
@@ -87,13 +87,13 @@ class UserRegisterVerifyAPI(APIView):
             return token_result
         if token_result.is_active:
             return Response(
-                data={'data': {'message': 'this account already is active.'}},
+                data={'data': {'message': 'این حساب کاربری قبلاً فعال شده است.'}},
                 status=status.HTTP_409_CONFLICT
             )
         token_result.is_active = True
         token_result.save()
         return Response(
-            data={'data': {'message': 'Account activated successfully.'}},
+            data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
             status=status.HTTP_200_OK
         )
 
@@ -114,7 +114,7 @@ class ResendVerificationEmailAPI(APIView):
             send_verification_email.delay_on_commit(user.email, user.id, 'verification',
                                                     'Verification URL from AskTech')
             return Response(
-                data={'data': {"message": "We`ve resent the activation link to your email."}},
+                data={'data': {"message": "لینک فعالسازی به ایمیل شما ارسال شد."}},
                 status=status.HTTP_202_ACCEPTED,
             )
         return Response(
@@ -142,7 +142,7 @@ class ChangePasswordAPI(APIView):
             user.set_password(new_password)
             user.save()
             return Response(
-                data={'data': {'message': 'Your password changed successfully.'}},
+                data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
                 status=status.HTTP_200_OK
             )
         return Response(
@@ -172,7 +172,7 @@ class SetPasswordAPI(APIView):
             token_result.set_password(new_password)
             token_result.save()
             return Response(
-                data={'data': {'message': 'Password changed successfully.'}},
+                data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
                 status=status.HTTP_200_OK
             )
         return Response(
@@ -199,14 +199,14 @@ class ResetPasswordAPI(APIView):
                 user: User = User.objects.get(email=serializer.validated_data['email'])
             except User.DoesNotExist:
                 return Response(
-                    data={'data': {'errors': 'user with this Email not found.'}},
+                    data={'data': {'errors': 'کاربر با این مشخصات یافت نشد.'}},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
             send_verification_email.delay_on_commit(user.email, user.id, 'reset_password', 'Reset Password Link:')
 
             return Response(
-                data={'data': {'message': 'A password reset link has been sent to your email.'}},
+                data={'data': {'message': 'لینک بازنشانی رمز عبور به ایمیل شما ارسال شد.'}},
                 status=status.HTTP_202_ACCEPTED
             )
         return Response(
@@ -231,12 +231,12 @@ class BlockTokenAPI(APIView):
                 token = RefreshToken(request.data['refresh'])
             except TokenError:
                 return Response(
-                    data={'data': {'errors': {'refresh': 'The provided token is invalid or has expired.'}}},
+                    data={'data': {'errors': {'refresh': 'توکن ارسالی نامعتبر یا منقضی شده است.'}}},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             token.blacklist()
             return Response(
-                data={'data': {'message': 'Token blocked successfully!'}},
+                data={'data': {'message': 'توکن با موفقیت بلاک شد.'}},
                 status=status.HTTP_204_NO_CONTENT
             )
         return Response(
@@ -251,13 +251,6 @@ class BlockTokenAPI(APIView):
     ),
 )
 class UserProfileAPI(RetrieveAPIView):
-    """
-    Retrieve, update, or delete user profile.
-    Allowed methods: GET, PATCH, DELETE.
-    GET: Retrieve the profile.
-    PATCH: Partially update the profile.
-    DELETE: Delete the account.
-    """
     serializer_class = serializers.UserSerializer
     lookup_url_kwarg = 'id'
     lookup_field = 'id'
@@ -277,13 +270,13 @@ class UserProfileUpdateAPI(UpdateAPIView):
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
             email_changed = 'email' in serializer.validated_data
-            message = 'Updated profile successfully.'
+            message = 'اطلاعات شما با موفقیت به روز رسانی شد.'
             if email_changed:
                 user.is_active = False
                 user.save()
                 send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id, 'verification',
                                                         'Verification URL from AskTech.')
-                message += ' A verification link has been sent to your new email address.'
+                message += 'و لینک فعالسازی برای آدرس ایمیل جدید شما ارسال شد.'
 
             serializer.save()
 

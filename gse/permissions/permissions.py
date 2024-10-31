@@ -4,14 +4,14 @@ from gse.users.choices import USER_ROLE_ADMIN, USER_ROLE_SUPPORT
 
 
 class NotAuthenticated(BasePermission):
-    message = 'You already authenticated!'
+    message = 'شما قبلاً احراز هویت کرده‌اید!'
 
     def has_permission(self, request, view):
         return bool(request.user and not request.user.is_authenticated)
 
 
 class IsAdminOrOwnerOrReadOnly(BasePermission):
-    message = 'you are not the owner!'
+    message = 'شما مالک نیستید!'
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
@@ -27,7 +27,7 @@ class IsAdminOrOwnerOrReadOnly(BasePermission):
 
 
 class IsAdminOrOwner(BasePermission):
-    message = 'you are not owner or admin'
+    message = 'شما مالک نیستید!'
 
     def has_object_permission(self, request, view, obj):
         condition = obj.id
@@ -41,7 +41,7 @@ class IsAdminOrOwner(BasePermission):
 
 
 class IsSupporterOrAdminOrReadOnly(BasePermission):
-    message = 'دسترسی ندارید'
+    message = 'برای دسترسی به این صفحه باید ادمین یا پشتیبان باشید.'
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
