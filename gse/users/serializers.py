@@ -59,7 +59,16 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        exclude = ('password', 'is_superuser', 'id', 'last_login', 'groups', 'user_permissions', 'role')
+        exclude = (
+            'password',
+            'is_superuser',
+            'id',
+            'last_login',
+            'groups',
+            'user_permissions',
+            'role',
+            'is_active'
+        )
 
     # Address model validators
     def validate_postal_code(self, value):
