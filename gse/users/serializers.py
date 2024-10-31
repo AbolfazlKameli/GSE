@@ -1,8 +1,11 @@
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User
+from .validators import validate_iranian_phone_number, validate_postal_code
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -28,8 +31,11 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    bio = serializers.CharField(source='profile.bio', required=False)
-    avatar = serializers.ImageField(source='profile.avatar', required=False)
+    first_name = serializers.CharField(source='profile.first_name', required=False)
+    last_name = serializers.CharField(source='profile.last_name', required=False)
+    phone_number = serializers.CharField(source='profile.phone_number', required=False)
+    address = serializers.CharField(source='address.address', required=False)
+    postal_code = serializers.CharField(source='address.postal_code', required=False)
 
     class Meta:
         model = User
@@ -39,34 +45,75 @@ class UserSerializer(serializers.ModelSerializer):
             'last_login',
             'groups',
             'user_permissions',
+            'is_active',
+            'role'
+        )
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='profile.first_name', required=False)
+    last_name = serializers.CharField(source='profile.last_name', required=False)
+    phone_number = serializers.CharField(source='profile.phone_number', required=False)
+    address = serializers.CharField(source='address.address', required=False)
+    postal_code = serializers.CharField(source='address.postal_code', required=False)
+
+    class Meta:
+        model = User
+        exclude = (
+            'password',
+            'is_superuser',
+            'id',
+            'last_login',
+            'groups',
+            'user_permissions',
+            'role',
             'is_active'
         )
 
+    # Address model validators
+    def validate_postal_code(self, value):
+        if value:
+            try:
+                validate_postal_code(value)
+            except ValidationError as e:
+                raise serializers.ValidationError(e.message)
+        return value
+
+    # Profile validators
+    def validate_first_name(self, value):
+        if value and len(value) > 50:
+            raise serializers.ValidationError('نام نمیتواند بیشتر از ۵۰ نویسه باشد.')
+        return value
+
+    def validate_last_name(self, value):
+        if value and len(value) > 50:
+            raise serializers.ValidationError('نام خانوادگی نمیتواند بیشتر از ۵۰ نویسه باشد.')
+        return value
+
+    def validate_phone_number(self, value):
+        if value:
+            try:
+                validate_iranian_phone_number(value)
+            except ValidationError as e:
+                raise serializers.ValidationError(e.message)
+        return value
+
+    @transaction.atomic
     def update(self, instance, validated_data):
-        # fetching objects data
-        profile_data = validated_data.pop('profile', {})
-        user_data = validated_data
+        profile_data = validated_data.pop('profile', None)
+        address_data = validated_data.pop('address', None)
 
-        # saving user profile info
-        profile = instance.profile
-        profile.save()
+        if profile_data:
+            for attr, value in profile_data.items():
+                setattr(instance.profile, attr, value)
+            instance.profile.save()
 
-        # saving user info
-        instance.email = user_data.get('email', instance.email)
-        instance.save()
+        if address_data:
+            for attr, value in address_data.items():
+                setattr(instance.address, attr, value)
+            instance.address.save()
 
-        return instance
-
-    def validate(self, attrs):
-        if not attrs:
-            raise serializers.ValidationError('fields can not be blank.')
-        return attrs
-
-    def validate_email(self, email):
-        users = User.objects.filter(email__exact=email)
-        if users.exists():
-            raise serializers.ValidationError('user with this Email already exists.')
-        return email
+        return super().update(instance, validated_data)
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -79,13 +126,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             'password': {'write_only': True, 'min_length': 8},
         }
 
-    def validate(self, data):
-        password1 = data.get('password')
-        password2 = data.get('password2')
-        if password1 and password2 and password1 != password2:
-            raise serializers.ValidationError('Passwords must match.')
+    def validate_password2(self, data):
+        password1 = self.initial_data.get('password', False)
+        if password1 and data and password1 != data:
+            raise serializers.ValidationError('رمز های عبور باید یکسان باشند.')
         try:
-            validate_password(password2)
+            validate_password(data)
         except serializers.ValidationError:
             raise serializers.ValidationError()
         return data
@@ -99,7 +145,7 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError('User does not exist!')
+            raise serializers.ValidationError('کاربر با این مشخصات وجود ندارد.')
         if user.is_active:
             raise serializers.ValidationError('Account already active!')
         attrs['user'] = user
@@ -109,35 +155,34 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True, write_only=True)
     new_password = serializers.CharField(required=True, write_only=True)
-    confirm_new_password = serializers.CharField(required=True, write_only=True)
+    confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate_old_password(self, old_password):
         user: User = self.context['user']
         if not user.check_password(old_password):
-            raise serializers.ValidationError('Your old password is not correct.')
+            raise serializers.ValidationError('رمز نادرست است.')
         return old_password
 
-    def validate(self, attrs):
-        new_password = attrs.get('new_password')
-        confirm_password = attrs.get('confirm_new_password')
-        if new_password and confirm_password and new_password != confirm_password:
-            raise serializers.ValidationError('Passwords must match.')
+    def validate_confirm_password(self, data):
+        new_password = self.initial_data.get('new_password', False)
+        if new_password and data and new_password != data:
+            raise serializers.ValidationError('رمز های عبور باید یکسان باشند.')
         try:
-            validate_password(new_password)
+            validate_password(data)
         except serializers.ValidationError as e:
-            raise serializers.ValidationError({'new_password': e.messages})
-        return attrs
+            raise serializers.ValidationError({'confirm_password': e.messages})
+        return data
 
 
 class SetPasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(required=True, write_only=True)
-    confirm_new_password = serializers.CharField(required=True, write_only=True)
+    confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
         new_password = attrs.get('new_password')
-        confirm_new_password = attrs.get('confirm_new_password')
-        if new_password and confirm_new_password and new_password != confirm_new_password:
-            raise serializers.ValidationError({'new_password': 'Passwords must match.'})
+        confirm_password = attrs.get('confirm_password')
+        if new_password and confirm_password and new_password != confirm_password:
+            raise serializers.ValidationError({'new_password': 'رمز های عبور باید یکسان باشند.'})
         try:
             validate_password(new_password)
         except serializers.ValidationError as e:

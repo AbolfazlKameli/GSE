@@ -1,13 +1,13 @@
 from django.db import transaction
 
-from .models import User, UserProfile
+from .models import User
 
 
-def create_user(*, username: str, email: str, password) -> User:
-    return User.objects.create_user(username, email, password)
+def create_user(*, email: str, password) -> User:
+    return User.objects.create_user(email=email, password=password)
 
 
 @transaction.atomic
-def register(*, username: str, email: str, password: str) -> User:
-    user = create_user(username=username, email=email, password=password)
+def register(*, email: str, password: str) -> User:
+    user = create_user(email=email, password=password)
     return user

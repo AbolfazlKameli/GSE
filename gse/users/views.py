@@ -1,19 +1,41 @@
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from datetime import datetime
+
+from drf_spectacular.utils import extend_schema
+from pytz import timezone
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from gse.docs.serializers.doc_serializers import MessageSerializer
+from gse.docs.serializers.doc_serializers import ResponseSerializer, TokenResponseSerializer
 from gse.permissions import permissions
-from gse.utils import JWT_token
-from gse.utils.bucket import Bucket
+from gse.utils import JWT_token, format_errors
 from . import serializers
 from .models import User
 from .services import register
 from .tasks import send_verification_email
+from .throttle import FiveRequestPerHourThrottle, OneRequestPerHourThrottle
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = serializers.MyTokenObtainPairSerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
+
+    @extend_schema(responses={200: TokenResponseSerializer})
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            username = request.data.get("email")
+            try:
+                user = User.objects.get(email=username)
+                user.last_login = datetime.now(tz=timezone('Asia/Tehran'))
+                user.save(update_fields=['last_login'])
+            except User.DoesNotExist:
+                pass
+        return Response(data={'data': response.data}, status=response.status_code)
 
 
 class UsersListAPI(ListAPIView):
@@ -24,7 +46,7 @@ class UsersListAPI(ListAPIView):
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
-    filterset_fields = ['last_login', 'is_active', 'is_superuser']
+    filterset_fields = ['is_active', 'is_superuser', 'role']
     search_fields = ['email']
 
 
@@ -36,8 +58,9 @@ class UserRegisterAPI(CreateAPIView):
     model = User
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = [permissions.NotAuthenticated, ]
+    throttle_classes = [FiveRequestPerHourThrottle]
 
-    @extend_schema(responses={201: MessageSerializer})
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -46,11 +69,11 @@ class UserRegisterAPI(CreateAPIView):
             send_verification_email.delay_on_commit(vd['email'], user.id, 'verification',
                                                     'Verification URL from AskTech')
             return Response(
-                data={'data': {'message': 'We`ve sent you an activation link via email.'}},
+                data={'data': {'message': 'لینک فعالسازی به ایمیل شما ارسال شد.'}},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
-            data={'errors': serializer.errors},
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -62,18 +85,22 @@ class UserRegisterVerifyAPI(APIView):
     """
     permission_classes = [permissions.NotAuthenticated, ]
     http_method_names = ['get']
-    serializer_class = MessageSerializer
+    serializer_class = ResponseSerializer
+    throttle_classes = [OneRequestPerHourThrottle]
 
     def get(self, request, token):
         token_result: User = JWT_token.get_user(token)
         if not isinstance(token_result, User):
             return token_result
         if token_result.is_active:
-            return Response(data={'message': 'this account already is active.'}, status=status.HTTP_409_CONFLICT)
+            return Response(
+                data={'data': {'message': 'این حساب کاربری قبلاً فعال شده است.'}},
+                status=status.HTTP_409_CONFLICT
+            )
         token_result.is_active = True
         token_result.save()
         return Response(
-            data={'message': 'Account activated successfully.'},
+            data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
             status=status.HTTP_200_OK
         )
 
@@ -85,19 +112,23 @@ class ResendVerificationEmailAPI(APIView):
     """
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = serializers.ResendVerificationEmailSerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
-    @extend_schema(responses={202: MessageSerializer})
+    @extend_schema(responses={202: ResponseSerializer})
     def post(self, request):
-        srz_data = self.serializer_class(data=request.data)
-        if srz_data.is_valid():
-            user: User = srz_data.validated_data['user']
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user: User = serializer.validated_data['user']
             send_verification_email.delay_on_commit(user.email, user.id, 'verification',
                                                     'Verification URL from AskTech')
             return Response(
-                data={"message": "We`ve resent the activation link to your email."},
+                data={'data': {"message": "لینک فعالسازی به ایمیل شما ارسال شد."}},
                 status=status.HTTP_202_ACCEPTED,
             )
-        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class ChangePasswordAPI(APIView):
@@ -109,17 +140,23 @@ class ChangePasswordAPI(APIView):
     serializer_class = serializers.ChangePasswordSerializer
 
     @extend_schema(responses={
-        200: MessageSerializer
+        200: ResponseSerializer
     })
     def put(self, request):
-        srz_data = self.serializer_class(data=request.data, context={'user': request.user})
-        if srz_data.is_valid():
+        serializer = self.serializer_class(data=request.data, context={'user': request.user})
+        if serializer.is_valid():
             user: User = request.user
-            new_password = srz_data.validated_data['new_password']
+            new_password = serializer.validated_data['new_password']
             user.set_password(new_password)
             user.save()
-            return Response(data={'message': 'Your password changed successfully.'}, status=status.HTTP_200_OK)
-        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class SetPasswordAPI(APIView):
@@ -129,21 +166,28 @@ class SetPasswordAPI(APIView):
     """
     permission_classes = [AllowAny, ]
     serializer_class = serializers.SetPasswordSerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={
-        200: MessageSerializer
+        200: ResponseSerializer
     })
     def post(self, request, token):
-        srz_data = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         token_result: User = JWT_token.get_user(token)
         if not isinstance(token_result, User):
             return token_result
-        if srz_data.is_valid():
-            new_password = srz_data.validated_data['new_password']
+        if serializer.is_valid():
+            new_password = serializer.validated_data['new_password']
             token_result.set_password(new_password)
             token_result.save()
-            return Response(data={'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class ResetPasswordAPI(APIView):
@@ -153,23 +197,32 @@ class ResetPasswordAPI(APIView):
     """
     permission_classes = [AllowAny, ]
     serializer_class = serializers.ResetPasswordSerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={
-        202: MessageSerializer
+        202: ResponseSerializer
     })
     def post(self, request):
-        srz_data = self.serializer_class(data=request.data)
-        if srz_data.is_valid():
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
             try:
-                user: User = User.objects.get(email=srz_data.validated_data['email'])
+                user: User = User.objects.get(email=serializer.validated_data['email'])
             except User.DoesNotExist:
-                return Response(data={'errors': 'user with this Email not found.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    data={'data': {'errors': 'کاربر با این مشخصات یافت نشد.'}},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
             send_verification_email.delay_on_commit(user.email, user.id, 'reset_password', 'Reset Password Link:')
+
             return Response(
-                data={'message': 'A password reset link has been sent to your email.'},
+                data={'data': {'message': 'لینک بازنشانی رمز عبور به ایمیل شما ارسال شد.'}},
                 status=status.HTTP_202_ACCEPTED
             )
-        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            data={'errors': format_errors.format_errors(serializer.errors)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class BlockTokenAPI(APIView):
@@ -180,62 +233,72 @@ class BlockTokenAPI(APIView):
     serializer_class = serializers.TokenSerializer
     permission_classes = [AllowAny, ]
 
-    @extend_schema(responses={200: MessageSerializer})
+    @extend_schema(responses={200: ResponseSerializer})
     def post(self, request):
-        srz_data = self.serializer_class(data=request.data)
-        if srz_data.is_valid():
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
             try:
                 token = RefreshToken(request.data['refresh'])
             except TokenError:
                 return Response(
-                    data={'errors': {'refresh': 'The provided token is invalid or has expired.'}},
+                    data={'data': {'errors': {'refresh': 'توکن ارسالی نامعتبر یا منقضی شده است.'}}},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             token.blacklist()
-            return Response(data={'message': 'Token blocked successfully!'}, status=status.HTTP_204_NO_CONTENT)
-        return Response(data={'errors': srz_data.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                data={'data': {'message': 'توکن با موفقیت بلاک شد.'}},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        return Response(
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
-@extend_schema_view(
-    patch=extend_schema(
-        responses={200: MessageSerializer}
-    ),
-)
-class UserProfileAPI(RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, update, or delete user profile.
-    Allowed methods: GET, PATCH, DELETE.
-    GET: Retrieve the profile.
-    PATCH: Partially update the profile.
-    DELETE: Delete the account.
-    """
-    permission_classes = [permissions.IsOwnerOrReadOnly]
+class UserProfileAPI(RetrieveAPIView):
     serializer_class = serializers.UserSerializer
     lookup_url_kwarg = 'id'
     lookup_field = 'id'
     queryset = User.objects.filter(is_active=True)
-    http_method_names = ['get', 'patch', 'delete']
+    http_method_names = ['get', 'options', 'head']
 
+
+class UserProfileUpdateAPI(UpdateAPIView):
+    permission_classes = [permissions.IsAdminOrOwnerOrReadOnly]
+    lookup_field = 'id'
+    lookup_url_kwarg = 'id'
+    queryset = User.objects.filter(is_active=True).select_related('profile', 'address')
+    serializer_class = serializers.UserUpdateSerializer
+    http_method_names = ['patch', 'head', 'options']
+
+    @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
         user: User = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
             email_changed = 'email' in serializer.validated_data
-            message = 'Updated profile successfully.'
+            message = 'اطلاعات شما با موفقیت به روز رسانی شد.'
             if email_changed:
                 user.is_active = False
                 user.save()
                 send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id, 'verification',
                                                         'Verification URL from AskTech.')
-                message += ' A verification link has been sent to your new email address.'
+                message += 'و لینک فعالسازی برای آدرس ایمیل جدید شما ارسال شد.'
 
             serializer.save()
 
-            return Response(data={'message': message}, status=status.HTTP_200_OK)
-        return Response(data={'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                data={'data': {'message': message}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    def destroy(self, request, *args, **kwargs):
-        user: User = self.get_object()
-        if user.profile.avatar:
-            Bucket().delete_object(self.get_object().profile.avatar.name)
-        return super().destroy(request, *args, **kwargs)
+
+class DeleteUserAccountAPI(DestroyAPIView):
+    permission_classes = [permissions.IsAdminOrOwner]
+    lookup_field = 'id'
+    lookup_url_kwarg = 'id'
+    queryset = User.objects.filter(is_active=True)

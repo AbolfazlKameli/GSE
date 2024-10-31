@@ -4,14 +4,14 @@ from gse.users.choices import USER_ROLE_ADMIN, USER_ROLE_SUPPORT
 
 
 class NotAuthenticated(BasePermission):
-    message = 'You already authenticated!'
+    message = 'شما قبلاً احراز هویت کرده‌اید!'
 
     def has_permission(self, request, view):
         return bool(request.user and not request.user.is_authenticated)
 
 
-class IsOwnerOrReadOnly(BasePermission):
-    message = 'you are not the owner!'
+class IsAdminOrOwnerOrReadOnly(BasePermission):
+    message = 'شما مالک نیستید!'
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
@@ -19,11 +19,29 @@ class IsOwnerOrReadOnly(BasePermission):
         condition = obj.id
         if hasattr(obj, 'owner'):
             condition = obj.owner.id
-        return bool(request.user and request.user.is_authenticated and condition == request.user.id)
+        return bool(
+            request.user and request.user.is_authenticated and (
+                    condition == request.user.id or request.user.role in (USER_ROLE_ADMIN, USER_ROLE_SUPPORT)
+            )
+        )
+
+
+class IsAdminOrOwner(BasePermission):
+    message = 'شما مالک نیستید!'
+
+    def has_object_permission(self, request, view, obj):
+        condition = obj.id
+        if hasattr(obj, 'owner'):
+            condition = obj.owner.id
+        return bool(
+            request.user and request.user.is_authenticated and (
+                    condition == request.user.id or request.user.role in (USER_ROLE_ADMIN, USER_ROLE_SUPPORT)
+            )
+        )
 
 
 class IsSupporterOrAdminOrReadOnly(BasePermission):
-    message = 'دسترسی ندارید'
+    message = 'برای دسترسی به این صفحه باید ادمین یا پشتیبان باشید.'
 
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
