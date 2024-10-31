@@ -120,7 +120,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate_password2(self, data):
         password1 = self.initial_data.get('password', False)
         if password1 and data and password1 != data:
-            raise serializers.ValidationError('Passwords must match.')
+            raise serializers.ValidationError('رمز های عبور باید یکسان باشند.')
         try:
             validate_password(data)
         except serializers.ValidationError:
@@ -136,7 +136,7 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError('User does not exist!')
+            raise serializers.ValidationError('کاربر با این مشخصات وجود ندارد.')
         if user.is_active:
             raise serializers.ValidationError('Account already active!')
         attrs['user'] = user
@@ -151,13 +151,13 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate_old_password(self, old_password):
         user: User = self.context['user']
         if not user.check_password(old_password):
-            raise serializers.ValidationError('Your old password is not correct.')
+            raise serializers.ValidationError('رمز نادرست است.')
         return old_password
 
     def validate_confirm_password(self, data):
         new_password = self.initial_data.get('new_password', False)
         if new_password and data and new_password != data:
-            raise serializers.ValidationError('Passwords must match.')
+            raise serializers.ValidationError('رمز های عبور باید یکسان باشند.')
         try:
             validate_password(data)
         except serializers.ValidationError as e:
@@ -173,7 +173,7 @@ class SetPasswordSerializer(serializers.Serializer):
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_password')
         if new_password and confirm_password and new_password != confirm_password:
-            raise serializers.ValidationError({'new_password': 'Passwords must match.'})
+            raise serializers.ValidationError({'new_password': 'رمز های عبور باید یکسان باشند.'})
         try:
             validate_password(new_password)
         except serializers.ValidationError as e:
