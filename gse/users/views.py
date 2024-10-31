@@ -17,10 +17,12 @@ from . import serializers
 from .models import User
 from .services import register
 from .tasks import send_verification_email
+from .throttle import FiveRequestPerHourThrottle, OneRequestPerHourThrottle
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = serializers.MyTokenObtainPairSerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={200: TokenResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -56,6 +58,7 @@ class UserRegisterAPI(CreateAPIView):
     model = User
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = [permissions.NotAuthenticated, ]
+    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -83,6 +86,7 @@ class UserRegisterVerifyAPI(APIView):
     permission_classes = [permissions.NotAuthenticated, ]
     http_method_names = ['get']
     serializer_class = ResponseSerializer
+    throttle_classes = [OneRequestPerHourThrottle]
 
     def get(self, request, token):
         token_result: User = JWT_token.get_user(token)
@@ -108,6 +112,7 @@ class ResendVerificationEmailAPI(APIView):
     """
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = serializers.ResendVerificationEmailSerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={202: ResponseSerializer})
     def post(self, request):
@@ -161,6 +166,7 @@ class SetPasswordAPI(APIView):
     """
     permission_classes = [AllowAny, ]
     serializer_class = serializers.SetPasswordSerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={
         200: ResponseSerializer
@@ -191,6 +197,7 @@ class ResetPasswordAPI(APIView):
     """
     permission_classes = [AllowAny, ]
     serializer_class = serializers.ResetPasswordSerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={
         202: ResponseSerializer
