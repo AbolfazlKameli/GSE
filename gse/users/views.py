@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema
 from pytz import timezone
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from gse.docs.serializers.doc_serializers import MessageSerializer
+from gse.docs.serializers.doc_serializers import ResponseSerializer, TokenResponseSerializer
 from gse.permissions import permissions
 from gse.utils import JWT_token, format_errors
 from . import serializers
@@ -20,6 +20,9 @@ from .tasks import send_verification_email
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = serializers.MyTokenObtainPairSerializer
+
+    @extend_schema(responses={200: TokenResponseSerializer})
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
@@ -30,7 +33,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 user.save(update_fields=['last_login'])
             except User.DoesNotExist:
                 pass
-        return response
+        return Response(data={'data': response.data}, status=response.status_code)
 
 
 class UsersListAPI(ListAPIView):
@@ -41,7 +44,7 @@ class UsersListAPI(ListAPIView):
     permission_classes = [IsAdminUser, ]
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
-    filterset_fields = ['last_login', 'is_active', 'is_superuser', 'role']
+    filterset_fields = ['is_active', 'is_superuser', 'role']
     search_fields = ['email']
 
 
@@ -54,7 +57,7 @@ class UserRegisterAPI(CreateAPIView):
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = [permissions.NotAuthenticated, ]
 
-    @extend_schema(responses={201: MessageSerializer})
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -79,7 +82,7 @@ class UserRegisterVerifyAPI(APIView):
     """
     permission_classes = [permissions.NotAuthenticated, ]
     http_method_names = ['get']
-    serializer_class = MessageSerializer
+    serializer_class = ResponseSerializer
 
     def get(self, request, token):
         token_result: User = JWT_token.get_user(token)
@@ -106,7 +109,7 @@ class ResendVerificationEmailAPI(APIView):
     permission_classes = [permissions.NotAuthenticated, ]
     serializer_class = serializers.ResendVerificationEmailSerializer
 
-    @extend_schema(responses={202: MessageSerializer})
+    @extend_schema(responses={202: ResponseSerializer})
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -132,7 +135,7 @@ class ChangePasswordAPI(APIView):
     serializer_class = serializers.ChangePasswordSerializer
 
     @extend_schema(responses={
-        200: MessageSerializer
+        200: ResponseSerializer
     })
     def put(self, request):
         serializer = self.serializer_class(data=request.data, context={'user': request.user})
@@ -160,7 +163,7 @@ class SetPasswordAPI(APIView):
     serializer_class = serializers.SetPasswordSerializer
 
     @extend_schema(responses={
-        200: MessageSerializer
+        200: ResponseSerializer
     })
     def post(self, request, token):
         serializer = self.serializer_class(data=request.data)
@@ -190,7 +193,7 @@ class ResetPasswordAPI(APIView):
     serializer_class = serializers.ResetPasswordSerializer
 
     @extend_schema(responses={
-        202: MessageSerializer
+        202: ResponseSerializer
     })
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -223,7 +226,7 @@ class BlockTokenAPI(APIView):
     serializer_class = serializers.TokenSerializer
     permission_classes = [AllowAny, ]
 
-    @extend_schema(responses={200: MessageSerializer})
+    @extend_schema(responses={200: ResponseSerializer})
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -245,11 +248,6 @@ class BlockTokenAPI(APIView):
         )
 
 
-@extend_schema_view(
-    patch=extend_schema(
-        responses={200: MessageSerializer}
-    ),
-)
 class UserProfileAPI(RetrieveAPIView):
     serializer_class = serializers.UserSerializer
     lookup_url_kwarg = 'id'
@@ -264,7 +262,9 @@ class UserProfileUpdateAPI(UpdateAPIView):
     lookup_url_kwarg = 'id'
     queryset = User.objects.filter(is_active=True).select_related('profile', 'address')
     serializer_class = serializers.UserUpdateSerializer
+    http_method_names = ['patch', 'head', 'options']
 
+    @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
         user: User = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
