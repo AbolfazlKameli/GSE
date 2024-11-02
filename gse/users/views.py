@@ -12,12 +12,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer, TokenResponseSerializer
 from gse.permissions import permissions
-from gse.utils import JWT_token, format_errors
+from gse.utils import format_errors
 from . import serializers
 from .models import User
+from .selectors import get_user_by_email
 from .services import register
 from .tasks import send_verification_email
-from .throttle import FiveRequestPerHourThrottle, OneRequestPerHourThrottle
+from .throttle import FiveRequestPerHourThrottle
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -65,11 +66,14 @@ class UserRegisterAPI(CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             vd = serializer.validated_data
-            user = register(email=vd['email'], password=vd['password'])
-            send_verification_email.delay_on_commit(vd['email'], user.id, 'verification',
-                                                    'Verification URL from AskTech')
+            register(email=vd['email'], password=vd['password'])
+            send_verification_email.delay_on_commit(
+                email_address=vd['email'],
+                content='کد تایید حساب کاربری',
+                subject='آسانسور گستران شرق'
+            )
             return Response(
-                data={'data': {'message': 'لینک فعالسازی به ایمیل شما ارسال شد.'}},
+                data={'data': {'message': 'کد فعالسازی به ایمیل شما ارسال شد.'}},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
@@ -84,24 +88,35 @@ class UserRegisterVerifyAPI(APIView):
     allowed methods: GET.
     """
     permission_classes = [permissions.NotAuthenticated, ]
-    http_method_names = ['get']
-    serializer_class = ResponseSerializer
-    throttle_classes = [OneRequestPerHourThrottle]
+    http_method_names = ['post', 'head', 'options']
+    serializer_class = serializers.UserRegisterVerifySerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
-    def get(self, request, token):
-        token_result: User = JWT_token.get_user(token)
-        if not isinstance(token_result, User):
-            return token_result
-        if token_result.is_active:
+    @extend_schema(responses={200: ResponseSerializer})
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = get_user_by_email(serializer.validated_data.get('email'))
+            if user is None:
+                return Response(
+                    data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            if user.is_active:
+                return Response(
+                    data={'data': {'message': 'این حساب کاربری قبلاً فعال شده است.'}},
+                    status=status.HTTP_409_CONFLICT
+                )
+            user.is_active = True
+            user.save()
             return Response(
-                data={'data': {'message': 'این حساب کاربری قبلاً فعال شده است.'}},
-                status=status.HTTP_409_CONFLICT
+                data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
+                status=status.HTTP_200_OK
             )
-        token_result.is_active = True
-        token_result.save()
         return Response(
-            data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
-            status=status.HTTP_200_OK
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
 
@@ -119,8 +134,11 @@ class ResendVerificationEmailAPI(APIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user: User = serializer.validated_data['user']
-            send_verification_email.delay_on_commit(user.email, user.id, 'verification',
-                                                    'Verification URL from AskTech')
+            send_verification_email.delay_on_commit(
+                email_address=user.email,
+                content='کد تایید حساب کاربری',
+                subject='آسانسور گستران شرق'
+            )
             return Response(
                 data={'data': {"message": "لینک فعالسازی به ایمیل شما ارسال شد."}},
                 status=status.HTTP_202_ACCEPTED,
@@ -171,15 +189,21 @@ class SetPasswordAPI(APIView):
     @extend_schema(responses={
         200: ResponseSerializer
     })
-    def post(self, request, token):
+    def post(self, request):
+        email: str = request.data.get('email')
+        user = get_user_by_email(email)
+        if user is None:
+            return Response(
+                data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         serializer = self.serializer_class(data=request.data)
-        token_result: User = JWT_token.get_user(token)
-        if not isinstance(token_result, User):
-            return token_result
+
         if serializer.is_valid():
             new_password = serializer.validated_data['new_password']
-            token_result.set_password(new_password)
-            token_result.save()
+            user.set_password(new_password)
+            user.save()
             return Response(
                 data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
                 status=status.HTTP_200_OK
@@ -205,15 +229,18 @@ class ResetPasswordAPI(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            try:
-                user: User = User.objects.get(email=serializer.validated_data['email'])
-            except User.DoesNotExist:
+            user = get_user_by_email(serializer.validated_data.get('email'))
+            if user is None:
                 return Response(
-                    data={'data': {'errors': 'کاربر با این مشخصات یافت نشد.'}},
+                    data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            send_verification_email.delay_on_commit(user.email, user.id, 'reset_password', 'Reset Password Link:')
+            send_verification_email.delay_on_commit(
+                email_address=user.email,
+                content='کد فراموشی رمز:',
+                subject='آسانسور گستران شرق'
+            )
 
             return Response(
                 data={'data': {'message': 'لینک بازنشانی رمز عبور به ایمیل شما ارسال شد.'}},
@@ -247,7 +274,7 @@ class BlockTokenAPI(APIView):
             token.blacklist()
             return Response(
                 data={'data': {'message': 'توکن با موفقیت بلاک شد.'}},
-                status=status.HTTP_204_NO_CONTENT
+                status=status.HTTP_200_OK
             )
         return Response(
             data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
@@ -281,8 +308,11 @@ class UserProfileUpdateAPI(UpdateAPIView):
             if email_changed:
                 user.is_active = False
                 user.save()
-                send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id, 'verification',
-                                                        'Verification URL from AskTech.')
+                send_verification_email.delay_on_commit(
+                    email_address=serializer.validated_data['email'],
+                    content='کد تایید حساب کاربری',
+                    subject='آسانسور گستران شرق'
+                )
                 message += 'و لینک فعالسازی برای آدرس ایمیل جدید شما ارسال شد.'
 
             serializer.save()
