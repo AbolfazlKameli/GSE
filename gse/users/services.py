@@ -16,7 +16,7 @@ def register(*, email: str, password: str) -> User:
     return user
 
 
-def generate_otp_code(*, email: str):
+def generate_otp_code(*, email: str) -> str:
     while True:
         otp_code: str = str(randint(10000, 99999))
 
@@ -26,6 +26,7 @@ def generate_otp_code(*, email: str):
             return otp_code
 
 
-def check_otp_code(*, email: str, otp_code: str):
+def check_otp_code(*, email: str, otp_code: str) -> bool:
     stored_code: str = cache.get(f'otp_code_{email}')
+    print(stored_code)
     return stored_code == otp_code
