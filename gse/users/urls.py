@@ -13,7 +13,7 @@ token = [
 
 password = [
     path('change/', views.ChangePasswordAPI.as_view(), name='change-password'),
-    path('set/<str:token>/', views.SetPasswordAPI.as_view(), name='set-password'),
+    path('set/', views.SetPasswordAPI.as_view(), name='set-password'),
     path('reset/', views.ResetPasswordAPI.as_view(), name='reset-password'),
 ]
 
@@ -26,7 +26,7 @@ profile = [
 urlpatterns = [
     path('', views.UsersListAPI.as_view(), name='users-list'),
     path('register/', views.UserRegisterAPI.as_view(), name='user-register'),
-    path('register/verify/<str:token>/', views.UserRegisterVerifyAPI.as_view(), name='user-register-verify'),
+    path('register/verify/', views.UserRegisterVerifyAPI.as_view(), name='user-register-verify'),
     path('resend-email/', views.ResendVerificationEmailAPI.as_view(), name='user-register-resend-email'),
     path('profile/', include(profile)),
     path('token/', include(token)),
