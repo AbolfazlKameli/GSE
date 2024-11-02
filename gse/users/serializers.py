@@ -144,7 +144,7 @@ class UserRegisterVerifySerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
-            raise serializers.ValidationError('کد وارد شده نامعتبر است.')
+            raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
         return attrs
 
 
