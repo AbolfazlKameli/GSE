@@ -65,11 +65,14 @@ class UserRegisterAPI(CreateAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             vd = serializer.validated_data
-            user = register(email=vd['email'], password=vd['password'])
-            send_verification_email.delay_on_commit(vd['email'], user.id, 'verification',
-                                                    'Verification URL from AskTech')
+            register(email=vd['email'], password=vd['password'])
+            send_verification_email.delay_on_commit(
+                email_address=vd['email'],
+                content='کد تایید حساب کاربری',
+                subject='آسانسور گستران شرق'
+            )
             return Response(
-                data={'data': {'message': 'لینک فعالسازی به ایمیل شما ارسال شد.'}},
+                data={'data': {'message': 'کد فعالسازی به ایمیل شما ارسال شد.'}},
                 status=status.HTTP_201_CREATED,
             )
         return Response(
