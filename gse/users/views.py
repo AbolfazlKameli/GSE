@@ -308,8 +308,11 @@ class UserProfileUpdateAPI(UpdateAPIView):
             if email_changed:
                 user.is_active = False
                 user.save()
-                send_verification_email.delay_on_commit(serializer.validated_data['email'], user.id, 'verification',
-                                                        'Verification URL from AskTech.')
+                send_verification_email.delay_on_commit(
+                    email_address=serializer.validated_data['email'],
+                    content='کد تایید حساب کاربری',
+                    subject='آسانسور گستران شرق'
+                )
                 message += 'و لینک فعالسازی برای آدرس ایمیل جدید شما ارسال شد.'
 
             serializer.save()
