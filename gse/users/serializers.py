@@ -158,8 +158,7 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError('کاربر با این مشخصات وجود ندارد.')
         if user.is_active:
-            # TODO: translate
-            raise serializers.ValidationError('Account already active!')
+            raise serializers.ValidationError('این حساب کاربری قبلاً فعال شده است.')
         attrs['user'] = user
         return attrs
 

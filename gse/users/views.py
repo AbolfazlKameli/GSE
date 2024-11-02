@@ -133,8 +133,11 @@ class ResendVerificationEmailAPI(APIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user: User = serializer.validated_data['user']
-            send_verification_email.delay_on_commit(user.email, user.id, 'verification',
-                                                    'Verification URL from AskTech')
+            send_verification_email.delay_on_commit(
+                email_address=user.email,
+                content='کد تایید حساب کاربری',
+                subject='آسانسور گستران شرق'
+            )
             return Response(
                 data={'data': {"message": "لینک فعالسازی به ایمیل شما ارسال شد."}},
                 status=status.HTTP_202_ACCEPTED,
