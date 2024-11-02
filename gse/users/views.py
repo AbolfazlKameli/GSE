@@ -12,12 +12,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer, TokenResponseSerializer
 from gse.permissions import permissions
-from gse.utils import JWT_token, format_errors
+from gse.utils import format_errors
 from . import serializers
 from .models import User
+from .selectors import get_user_by_email
 from .services import register
 from .tasks import send_verification_email
-from .throttle import FiveRequestPerHourThrottle, OneRequestPerHourThrottle
+from .throttle import FiveRequestPerHourThrottle
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -95,13 +96,13 @@ class UserRegisterVerifyAPI(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            try:
-                user: User = User.objects.get(email=serializer.validated_data.get('email'))
-            except User.DoesNotExist:
+            user = get_user_by_email(serializer.validated_data.get('email'))
+            if user is None:
                 return Response(
-                    data={'data': {'message': 'حساب کاربری با این مشخصات یافت نشد.'}},
+                    data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
                     status=status.HTTP_404_NOT_FOUND
                 )
+
             if user.is_active:
                 return Response(
                     data={'data': {'message': 'این حساب کاربری قبلاً فعال شده است.'}},
@@ -188,15 +189,21 @@ class SetPasswordAPI(APIView):
     @extend_schema(responses={
         200: ResponseSerializer
     })
-    def post(self, request, token):
+    def post(self, request):
+        email: str = request.data.get('email')
+        user = get_user_by_email(email)
+        if user is None:
+            return Response(
+                data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         serializer = self.serializer_class(data=request.data)
-        token_result: User = JWT_token.get_user(token)
-        if not isinstance(token_result, User):
-            return token_result
+
         if serializer.is_valid():
             new_password = serializer.validated_data['new_password']
-            token_result.set_password(new_password)
-            token_result.save()
+            user.set_password(new_password)
+            user.save()
             return Response(
                 data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
                 status=status.HTTP_200_OK
@@ -222,15 +229,18 @@ class ResetPasswordAPI(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            try:
-                user: User = User.objects.get(email=serializer.validated_data['email'])
-            except User.DoesNotExist:
+            user = get_user_by_email(serializer.validated_data.get('email'))
+            if user is None:
                 return Response(
-                    data={'data': {'errors': 'کاربر با این مشخصات یافت نشد.'}},
+                    data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            send_verification_email.delay_on_commit(user.email, user.id, 'reset_password', 'Reset Password Link:')
+            send_verification_email.delay_on_commit(
+                email_address=user.email,
+                content='کد فراموشی رمز:',
+                subject='آسانسور گستران شرق'
+            )
 
             return Response(
                 data={'data': {'message': 'لینک بازنشانی رمز عبور به ایمیل شما ارسال شد.'}},

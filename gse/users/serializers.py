@@ -186,13 +186,18 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class SetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, max_length=50)
+    code = serializers.CharField(required=True, max_length=5)
     new_password = serializers.CharField(required=True, write_only=True)
     confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
+        if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
+            raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
+
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_password')
-        if new_password and confirm_password and new_password != confirm_password:
+        if new_password != confirm_password:
             raise serializers.ValidationError({'new_password': 'رمز های عبور باید یکسان باشند.'})
         try:
             validate_password(new_password)

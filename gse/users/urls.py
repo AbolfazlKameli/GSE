@@ -13,7 +13,7 @@ token = [
 
 password = [
     path('change/', views.ChangePasswordAPI.as_view(), name='change-password'),
-    path('set/<str:token>/', views.SetPasswordAPI.as_view(), name='set-password'),
+    path('set/', views.SetPasswordAPI.as_view(), name='set-password'),
     path('reset/', views.ResetPasswordAPI.as_view(), name='reset-password'),
 ]
 
