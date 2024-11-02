@@ -1,7 +1,7 @@
 from random import randint
 
-from django.db import transaction
 from django.core.cache import cache
+from django.db import transaction
 
 from .models import User
 
@@ -28,5 +28,4 @@ def generate_otp_code(*, email: str) -> str:
 
 def check_otp_code(*, email: str, otp_code: str) -> bool:
     stored_code: str = cache.get(f'otp_code_{email}')
-    print(stored_code)
     return stored_code == otp_code
