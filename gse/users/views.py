@@ -87,24 +87,35 @@ class UserRegisterVerifyAPI(APIView):
     allowed methods: GET.
     """
     permission_classes = [permissions.NotAuthenticated, ]
-    http_method_names = ['get']
-    serializer_class = ResponseSerializer
-    throttle_classes = [OneRequestPerHourThrottle]
+    http_method_names = ['post', 'head', 'options']
+    serializer_class = serializers.UserRegisterVerifySerializer
+    throttle_classes = [FiveRequestPerHourThrottle]
 
-    def get(self, request, token):
-        token_result: User = JWT_token.get_user(token)
-        if not isinstance(token_result, User):
-            return token_result
-        if token_result.is_active:
+    @extend_schema(responses={200: ResponseSerializer})
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            try:
+                user: User = User.objects.get(email=serializer.validated_data.get('email'))
+            except User.DoesNotExist:
+                return Response(
+                    data={'data': {'message': 'حساب کاربری با این مشخصات یافت نشد.'}},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            if user.is_active:
+                return Response(
+                    data={'data': {'message': 'این حساب کاربری قبلاً فعال شده است.'}},
+                    status=status.HTTP_409_CONFLICT
+                )
+            user.is_active = True
+            user.save()
             return Response(
-                data={'data': {'message': 'این حساب کاربری قبلاً فعال شده است.'}},
-                status=status.HTTP_409_CONFLICT
+                data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
+                status=status.HTTP_200_OK
             )
-        token_result.is_active = True
-        token_result.save()
         return Response(
-            data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
-            status=status.HTTP_200_OK
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
 
@@ -250,7 +261,7 @@ class BlockTokenAPI(APIView):
             token.blacklist()
             return Response(
                 data={'data': {'message': 'توکن با موفقیت بلاک شد.'}},
-                status=status.HTTP_204_NO_CONTENT
+                status=status.HTTP_200_OK
             )
         return Response(
             data={'data': {'errors': format_errors.format_errors(serializer.errors)}},

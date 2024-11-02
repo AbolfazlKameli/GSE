@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User
+from .services import check_otp_code
 from .validators import validate_iranian_phone_number, validate_postal_code
 
 
@@ -137,6 +138,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
 
 
+class UserRegisterVerifySerializer(serializers.Serializer):
+    email = serializers.EmailField(max_length=50)
+    code = serializers.CharField(max_length=5)
+
+    def validate(self, attrs):
+        if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
+            raise serializers.ValidationError('کد وارد شده نامعتبر است.')
+        return attrs
+
+
 class ResendVerificationEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
@@ -147,6 +158,7 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError('کاربر با این مشخصات وجود ندارد.')
         if user.is_active:
+            # TODO: translate
             raise serializers.ValidationError('Account already active!')
         attrs['user'] = user
         return attrs
