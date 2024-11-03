@@ -77,7 +77,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -107,11 +107,8 @@ DATABASES = {
 # caches
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": config('REDIS_LOCATION', default="redis://127.0.0.1:6379"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
     }
 }
 # Password validation

@@ -11,6 +11,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(
         max_length=20,
         choices=choices.USER_ROLE_CHOICES,
+        default=choices.USER_ROLE_CUSTOMER,
         verbose_name='نقش'
     )
 
