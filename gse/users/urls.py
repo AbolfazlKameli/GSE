@@ -30,5 +30,7 @@ urlpatterns = [
     path('resend-email/', views.ResendVerificationEmailAPI.as_view(), name='user-register-resend-email'),
     path('profile/', include(profile)),
     path('token/', include(token)),
-    path('password/', include(password))
+    path('password/', include(password)),
+    path('google/callback/', views.UserRedirectAPI.as_view(), name='test'),
+    path('~redirect/', views.UserRedirectAPI.as_view(), name='redirect')
 ]

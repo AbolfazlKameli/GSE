@@ -3,6 +3,8 @@ from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
+import gse.users.views
+
 documents = [
     path('', SpectacularAPIView.as_view(), name='schema'),
     path('swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
@@ -12,6 +14,8 @@ documents = [
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('gse.users.urls', namespace='users')),
+    path('dj-rest-auth/', include('dj_rest_auth.urls')),
+    path('dj-rest-auth/google/', gse.users.views.GoogleLogin.as_view(), name='google_login'),
     path('schema/', include(documents))
 ]
 
