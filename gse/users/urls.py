@@ -31,6 +31,4 @@ urlpatterns = [
     path('profile/', include(profile)),
     path('token/', include(token)),
     path('password/', include(password)),
-    path('google/callback/', views.UserRedirectAPI.as_view(), name='test'),
-    path('~redirect/', views.UserRedirectAPI.as_view(), name='redirect')
 ]

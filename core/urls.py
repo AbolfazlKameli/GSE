@@ -14,8 +14,6 @@ documents = [
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('gse.users.urls', namespace='users')),
-    path('dj-rest-auth/', include('dj_rest_auth.urls')),
-    path('dj-rest-auth/google/', gse.users.views.GoogleLogin.as_view(), name='google_login'),
     path('schema/', include(documents))
 ]
 

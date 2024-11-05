@@ -51,12 +51,7 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'django_filters',
     'rest_framework.authtoken',
-    'dj_rest_auth',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'dj_rest_auth.registration',
+    'sslserver'
 ]
 
 LOCAL_APPS = [
@@ -76,8 +71,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'allauth.account.middleware.AccountMiddleware'
-
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -108,6 +101,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 # caches
 CACHES = {
     "default": {
@@ -188,20 +182,6 @@ REST_FRAMEWORK = {
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'gse.utils.paginators.NeatPagination',
-}
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_VERIFICATION = False
-
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '16299025902-ra1otjg6otpefbpf3mk8sg84rdlgs6n2.apps.googleusercontent.com'
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
-
-REST_AUTH = {
-    'JWT_AUTH_COOKIE': 'jwt-access',
-    'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh',
-    'USE_JWT': True,
 }
 
 from core.configs.celery_configs import *

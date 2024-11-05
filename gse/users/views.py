@@ -1,10 +1,5 @@
 from datetime import datetime
 
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import RedirectView
-from dj_rest_auth.registration.views import SocialLoginView
 from drf_spectacular.utils import extend_schema
 from pytz import timezone
 from rest_framework import status
@@ -337,17 +332,3 @@ class DeleteUserAccountAPI(DestroyAPIView):
     lookup_field = 'id'
     lookup_url_kwarg = 'id'
     queryset = User.objects.filter(is_active=True)
-
-
-class GoogleLogin(SocialLoginView):
-    adapter_class = GoogleOAuth2Adapter
-    callback_url = 'http://localhost:8000/'
-    client_class = OAuth2Client
-
-
-class UserRedirectAPI(LoginRequiredMixin, RedirectView):
-
-    permanent = False
-
-    def get_redirect_url(self, *args, **kwargs):
-        return 'http://127.0.0.1:8000'
