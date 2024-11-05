@@ -184,6 +184,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'gse.utils.paginators.NeatPagination',
 }
 
+# Google OAuth2 settings
+GOOGLE_OAUTH2_CLIENT_ID = config('GOOGLE_OAUTH2_CLIENT_ID')
+GOOGLE_OAUTH2_CLIENT_SECRET = config('GOOGLE_OAUTH2_CLIENT_SECRET')
+BASE_FRONTEND_URL = config('BASE_FRONTEND_URL')
+
 from core.configs.celery_configs import *
 from core.configs.drf_spectacular import *
 from core.configs.jwt import *

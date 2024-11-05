@@ -1,5 +1,7 @@
 from datetime import datetime
+from urllib.parse import urlencode
 
+from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from pytz import timezone
 from rest_framework import status
@@ -7,6 +9,7 @@ from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView,
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -14,9 +17,10 @@ from gse.docs.serializers.doc_serializers import ResponseSerializer, TokenRespon
 from gse.permissions import permissions
 from gse.utils import format_errors
 from . import serializers
+from .mixins import ApiErrorsMixin
 from .models import User
 from .selectors import get_user_by_email
-from .services import register
+from .services import register, google_get_access_token, google_get_user_info, update_profile
 from .tasks import send_verification_email
 from .throttle import FiveRequestPerHourThrottle
 
@@ -147,6 +151,58 @@ class ResendVerificationEmailAPI(APIView):
             data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+def generate_tokens_for_user(user):
+    """
+    Generate access and refresh tokens for the given user
+    """
+    serializer = TokenObtainPairSerializer()
+    token_data = serializer.get_token(user)
+    access_token = token_data.access_token
+    refresh_token = token_data
+    return access_token, refresh_token
+
+
+class GoogleLoginApi(ApiErrorsMixin, APIView):
+    permission_classes = ()
+    authentication_classes = ()
+    serializer_class = serializers.GoogleLoginSerializer
+
+    def get(self, request, *args, **kwargs):
+        input_serializer = self.serializer_class(data=request.GET)
+        input_serializer.is_valid(raise_exception=True)
+
+        validated_data = input_serializer.validated_data
+
+        code = validated_data.get('code')
+        error = validated_data.get('error')
+
+        if error or not code:
+            errors = urlencode({'error': error})
+            print(error, code)
+            return Response({'data': {'errors': format_errors.format_errors(errors)}})
+
+        redirect_uri = f'{settings.BASE_FRONTEND_URL}'
+        access_token = google_get_access_token(code=code, redirect_uri=redirect_uri)
+
+        user_data = google_get_user_info(access_token=access_token)
+
+        user = get_user_by_email(user_data['email'])
+        if user is None:
+            user: User = register(email=user_data['email'], is_active=True)
+            profile_data = {
+                'first_name': user_data['given_name'],
+                'last_name': user_data['family_name']
+            }
+            update_profile(user_id=user.id, profile_data=profile_data)
+        access_token, refresh_token = generate_tokens_for_user(user)
+        response_data = {
+            'user': serializers.UserSerializer(user).data,
+            'access_token': str(access_token),
+            'refresh_token': str(refresh_token)
+        }
+        return Response(response_data)
 
 
 class ChangePasswordAPI(APIView):
