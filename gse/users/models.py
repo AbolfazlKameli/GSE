@@ -70,4 +70,4 @@ class UserProfile(models.Model):
 class Address(models.Model):
     owner_profile = models.OneToOneField(User, on_delete=models.CASCADE, related_name='address', verbose_name='owner')
     address = models.TextField()
-    postal_code = models.CharField(max_length=10, unique=True, validators=[validate_postal_code])
+    postal_code = models.CharField(max_length=10, validators=[validate_postal_code])
