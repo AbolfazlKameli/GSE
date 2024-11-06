@@ -27,8 +27,10 @@ urlpatterns = [
     path('', views.UsersListAPI.as_view(), name='users-list'),
     path('register/', views.UserRegisterAPI.as_view(), name='user-register'),
     path('register/verify/', views.UserRegisterVerifyAPI.as_view(), name='user-register-verify'),
+    path('register/google/auth/redirect/', views.GoogleLoginRedirectAPI.as_view(), name='google_login_redirect'),
+    path('register/google/auth/callback/', views.GoogleLoginApi.as_view(), name='google_login'),
     path('resend-email/', views.ResendVerificationEmailAPI.as_view(), name='user-register-resend-email'),
     path('profile/', include(profile)),
     path('token/', include(token)),
-    path('password/', include(password))
+    path('password/', include(password)),
 ]
