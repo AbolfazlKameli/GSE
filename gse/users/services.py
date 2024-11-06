@@ -1,11 +1,13 @@
-from random import randint
+from random import randint, SystemRandom
 from typing import Dict, Any
+from urllib.parse import urlencode
 
 import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User, UserProfile
@@ -13,6 +15,7 @@ from .models import User, UserProfile
 GOOGLE_ID_TOKEN_INFO_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
 GOOGLE_ACCESS_TOKEN_OBTAIN_URL = 'https://oauth2.googleapis.com/token'
 GOOGLE_USER_INFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
+GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
 
 
 def create_user(*, email: str, password) -> User:
@@ -104,3 +107,35 @@ def get_error_message(err):
     elif hasattr(err, 'messages'):
         return ', '.join(err.messages)
     return str(err)
+
+
+def generate_state_session_token(length=30, chars=UNICODE_ASCII_CHARACTER_SET):
+    rand = SystemRandom()
+    state = "".join(rand.choice(chars) for _ in range(length))
+    return state
+
+
+def get_authorization_url():
+    state = generate_state_session_token()
+    redirect_uri = f'https://{settings.DOMAIN}/users/register/google/auth/callback/'
+    scopes = [
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "openid",
+    ]
+
+    params = {
+        "response_type": "code",
+        "client_id": settings.GOOGLE_OAUTH2_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "scope": " ".join(scopes),
+        "state": state,
+        "access_type": "offline",
+        "include_granted_scopes": "true",
+        "prompt": "select_account",
+    }
+
+    query_params = urlencode(params)
+    authorization_url = f"{GOOGLE_AUTH_URL}?{query_params}"
+
+    return authorization_url, state
