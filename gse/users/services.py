@@ -1,5 +1,6 @@
+from datetime import datetime
 from random import randint, SystemRandom
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 from urllib.parse import urlencode
 
 import requests
@@ -8,9 +9,12 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
+from pytz import timezone
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import Token
 
 from .models import User, UserProfile
+from .selectors import get_user_by_email
 
 GOOGLE_ID_TOKEN_INFO_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
 GOOGLE_ACCESS_TOKEN_OBTAIN_URL = 'https://oauth2.googleapis.com/token'
@@ -20,6 +24,15 @@ GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
 
 def create_user(*, email: str, password) -> User:
     return User.objects.create_user(email=email, password=password)
+
+
+def update_last_login(email) -> User | None:
+    user: User | None = get_user_by_email(email=email)
+    if user is None:
+        return user
+    user.last_login = datetime.now(tz=timezone('Asia/Tehran'))
+    user.save(update_fields=['last_login'])
+    return user
 
 
 @transaction.atomic
@@ -56,7 +69,7 @@ def check_otp_code(*, email: str, otp_code: str) -> bool:
     return stored_code == otp_code
 
 
-def generate_tokens_for_user(user):
+def generate_tokens_for_user(user: User) -> tuple[Any, Token]:
     """
     Generate access and refresh tokens for the given user
     """
@@ -64,6 +77,11 @@ def generate_tokens_for_user(user):
     token_data = serializer.get_token(user)
     access_token = token_data.access_token
     refresh_token = token_data
+
+    user: User | None = update_last_login(user.email)
+    if user is None:
+        pass
+
     return access_token, refresh_token
 
 
@@ -109,13 +127,13 @@ def get_error_message(err):
     return str(err)
 
 
-def generate_state_session_token(length=30, chars=UNICODE_ASCII_CHARACTER_SET):
+def generate_state_session_token(length: int = 30, chars: str = UNICODE_ASCII_CHARACTER_SET) -> str:
     rand = SystemRandom()
     state = "".join(rand.choice(chars) for _ in range(length))
     return state
 
 
-def get_authorization_url():
+def get_authorization_url() -> tuple[str, str]:
     state = generate_state_session_token()
     redirect_uri = f'https://{settings.DOMAIN}/users/register/google/auth/callback/'
     scopes = [
