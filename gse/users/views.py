@@ -111,7 +111,7 @@ class UserRegisterVerifyAPI(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            user = get_user_by_email(serializer.validated_data.get('email'))
+            user: User | None = get_user_by_email(serializer.validated_data.get('email'))
             if user is None:
                 return Response(
                     data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
@@ -218,7 +218,7 @@ class GoogleLoginApi(ApiErrorsMixin, APIView):
         access_token = google_get_access_token(code=code, redirect_uri=redirect_uri)
         user_data = google_get_user_info(access_token=access_token)
 
-        user: User = get_user_by_email(user_data['email'])
+        user: User | None = get_user_by_email(user_data['email'])
         if user is None:
             user: User = register(email=user_data['email'], is_active=True)
             profile_data = {
@@ -278,7 +278,7 @@ class SetPasswordAPI(APIView):
     })
     def post(self, request):
         email: str = request.data.get('email')
-        user = get_user_by_email(email)
+        user: User | None = get_user_by_email(email)
         if user is None:
             return Response(
                 data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
@@ -316,7 +316,7 @@ class ResetPasswordAPI(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            user = get_user_by_email(serializer.validated_data.get('email'))
+            user: User | None = get_user_by_email(serializer.validated_data.get('email'))
             if user is None:
                 return Response(
                     data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
