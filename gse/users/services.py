@@ -1,3 +1,4 @@
+from datetime import datetime
 from random import randint, SystemRandom
 from typing import Dict, Any
 from urllib.parse import urlencode
@@ -8,9 +9,11 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
+from pytz import timezone
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import User, UserProfile
+from .selectors import get_user_by_email
 
 GOOGLE_ID_TOKEN_INFO_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
 GOOGLE_ACCESS_TOKEN_OBTAIN_URL = 'https://oauth2.googleapis.com/token'
@@ -20,6 +23,15 @@ GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
 
 def create_user(*, email: str, password) -> User:
     return User.objects.create_user(email=email, password=password)
+
+
+def update_last_login(email) -> User | None:
+    user: User | None = get_user_by_email(email=email)
+    if user is None:
+        return user
+    user.last_login = datetime.now(tz=timezone('Asia/Tehran'))
+    user.save(update_fields=['last_login'])
+    return user
 
 
 @transaction.atomic
@@ -64,6 +76,11 @@ def generate_tokens_for_user(user):
     token_data = serializer.get_token(user)
     access_token = token_data.access_token
     refresh_token = token_data
+
+    user: User | None = update_last_login(user.email)
+    if user is None:
+        pass
+
     return access_token, refresh_token
 
 
