@@ -60,7 +60,7 @@ class UsersListAPI(ListAPIView):
     allowed methods: GET.
     """
     permission_classes = [IsAdminUser, ]
-    queryset = User.objects.all()
+    queryset = User.objects.all().select_related('profile', 'address')
     serializer_class = serializers.UserSerializer
     filterset_fields = ['is_active', 'is_superuser', 'role']
     search_fields = ['email']
