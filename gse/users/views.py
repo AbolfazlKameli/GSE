@@ -1,11 +1,9 @@
-from datetime import datetime
 from urllib.parse import urlencode
 
 from django.conf import settings
 from django.core.cache import cache
 from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
-from pytz import timezone
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
@@ -31,7 +29,8 @@ from .services import (
     google_get_user_info,
     update_profile,
     get_authorization_url,
-    generate_tokens_for_user
+    generate_tokens_for_user,
+    update_last_login
 )
 from .tasks import send_verification_email
 from .throttle import FiveRequestPerHourThrottle
@@ -45,13 +44,13 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
-            username = request.data.get("email")
-            try:
-                user = User.objects.get(email=username)
-                user.last_login = datetime.now(tz=timezone('Asia/Tehran'))
-                user.save(update_fields=['last_login'])
-            except User.DoesNotExist:
-                pass
+            email = request.data.get("email")
+            user = update_last_login(email)
+            if user is None:
+                return Response(
+                    data={'data': {'errors': {'email': 'کاربر با این مشخصات یافت نشد'}}},
+                    status=status.HTTP_404_NOT_FOUND
+                )
         return Response(data={'data': response.data}, status=response.status_code)
 
 
