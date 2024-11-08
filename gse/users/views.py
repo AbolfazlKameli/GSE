@@ -14,7 +14,11 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from gse.docs.serializers.doc_serializers import ResponseSerializer, TokenResponseSerializer
+from gse.docs.serializers.doc_serializers import (
+    ResponseSerializer,
+    TokenResponseSerializer,
+    GoogleAuthCallbackSerializer
+)
 from gse.permissions import permissions
 from gse.utils import format_errors
 from . import serializers
@@ -162,6 +166,10 @@ class ResendVerificationEmailAPI(APIView):
 
 
 class GoogleLoginRedirectAPI(APIView):
+    """
+    This endpoint will redirect the user to the google consent screen.
+    """
+
     def get(self, request, *args, **kwargs):
         authorization_url, state = get_authorization_url()
         cache.set(f'state_{state}', state, timeout=600)
@@ -169,10 +177,21 @@ class GoogleLoginRedirectAPI(APIView):
 
 
 class GoogleLoginApi(ApiErrorsMixin, APIView):
+    """
+    The endpoint that google redirect the user after successful authentication.
+    """
     permission_classes = ()
     authentication_classes = ()
     serializer_class = serializers.GoogleLoginSerializer
 
+    @extend_schema(
+        parameters=[
+            serializer_class
+        ],
+        responses={
+            200: GoogleAuthCallbackSerializer
+        }
+    )
     def get(self, request, *args, **kwargs):
         input_serializer = self.serializer_class(data=request.GET)
         input_serializer.is_valid(raise_exception=True)
@@ -215,7 +234,7 @@ class GoogleLoginApi(ApiErrorsMixin, APIView):
             'access_token': str(access_token),
             'refresh_token': str(refresh_token)
         }
-        return Response(response_data)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class ChangePasswordAPI(APIView):
