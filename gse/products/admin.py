@@ -10,7 +10,7 @@ class ProductDetailInline(admin.TabularInline):
 
 class ProductMediaInline(admin.TabularInline):
     model = ProductMedia
-    fields = ('media_type', 'media_url')
+    fields = ('media_type', 'media_url', 'is_primary')
 
 
 @admin.register(Product)

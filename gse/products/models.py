@@ -59,5 +59,6 @@ class ProductMedia(models.Model):
         max_length=10
     )
     media_url = models.FileField(validators=[FileExtensionValidator(['png', 'jpg', 'jpeg', 'mp4', 'gif'])])
+    is_primary = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
