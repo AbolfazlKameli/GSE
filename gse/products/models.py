@@ -22,3 +22,9 @@ class Product(models.Model):
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
+
+
+class ProductDetail(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='details')
+    attribute = models.CharField(max_length=250)
+    value = models.CharField(max_length=250)
