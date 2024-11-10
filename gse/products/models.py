@@ -40,6 +40,9 @@ class Product(models.Model):
             self.slug = slugify_title(self.title)
         super().save(*args, **kwargs)
 
+    class Meta:
+        ordering = ('-created_date',)
+
 
 class ProductDetail(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='details')
