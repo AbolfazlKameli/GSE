@@ -1,8 +1,9 @@
+from django.core.validators import FileExtensionValidator
 from django.core.validators import MaxValueValidator
 from django.db import models
-from django.core.validators import FileExtensionValidator
 
 from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE
+from .services import slugify_title
 
 
 class ProductCategory(models.Model):
@@ -13,6 +14,14 @@ class ProductCategory(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify_title(self.title)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = 'categories'
+
 
 class Product(models.Model):
     category = models.ManyToManyField(ProductCategory, related_name='products', blank=True)
@@ -22,9 +31,14 @@ class Product(models.Model):
     description = models.TextField()
     available = models.BooleanField(default=True)
     unit_price = models.DecimalField(max_digits=15, decimal_places=0)
-    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
+    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], blank=True, null=True)
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify_title(self.title)
+        super().save(*args, **kwargs)
 
 
 class ProductDetail(models.Model):
@@ -41,6 +55,6 @@ class ProductMedia(models.Model):
         verbose_name='نوع رسانه',
         max_length=10
     )
-    media_url = models.FileField(validators=[FileExtensionValidator(['png', 'jpg', 'jpeg'])])
+    media_url = models.FileField(validators=[FileExtensionValidator(['png', 'jpg', 'jpeg', 'mp4', 'gif'])])
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
