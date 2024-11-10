@@ -1,5 +1,8 @@
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.core.validators import FileExtensionValidator
+
+from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE
 
 
 class ProductCategory(models.Model):
@@ -28,3 +31,16 @@ class ProductDetail(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='details')
     attribute = models.CharField(max_length=250)
     value = models.CharField(max_length=250)
+
+
+class ProductMedia(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='media')
+    media_type = models.CharField(
+        choices=MEDIA_TYPE_CHOICES,
+        default=MEDIA_TYPE_IMAGE,
+        verbose_name='نوع رسانه',
+        max_length=10
+    )
+    media_url = models.FileField(validators=[FileExtensionValidator(['png', 'jpg', 'jpeg'])])
+    created_date = models.DateTimeField(auto_now_add=True)
+    update_date = models.DateTimeField(auto_now=True)
