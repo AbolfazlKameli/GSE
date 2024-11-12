@@ -49,7 +49,7 @@ class ProductCreateAPI(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                data={'data': {'message': 'product Created.'}},
+                data={'data': {'message': 'محصول با موفقیت ثبت شد.'}},
                 status=status.HTTP_201_CREATED
             )
         return Response(
