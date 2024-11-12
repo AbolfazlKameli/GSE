@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -10,7 +10,7 @@ from .selectors import (
 from .serializers import (
     ProductDetailsSerializer,
     ProductListSerializer,
-    ProductCreateSerializer
+    ProductOperationsSerializer
 )
 
 
@@ -41,8 +41,7 @@ class ProductCreateAPI(APIView):
     """
     Creates a Product object.
     """
-    serializer_class = ProductCreateSerializer
-    queryset = get_all_products()
+    serializer_class = ProductOperationsSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -56,3 +55,8 @@ class ProductCreateAPI(APIView):
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class ProductDestroyAPI(DestroyAPIView):
+    serializer_class = ProductOperationsSerializer
+    queryset = get_all_products()

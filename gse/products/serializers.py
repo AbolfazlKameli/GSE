@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from .models import Product, ProductMedia, ProductCategory, ProductDetail
@@ -53,7 +54,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ProductCreateSerializer(serializers.ModelSerializer):
+class ProductOperationsSerializer(serializers.ModelSerializer):
     details = ProductDetailSerializer(many=True, write_only=True, required=True)
     media = ProductMediaSerializer(many=True, write_only=True, required=True)
     category = serializers.SlugRelatedField(
@@ -63,6 +64,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         required=True
     )
 
+    @transaction.atomic
     def create(self, validated_data):
         detail_data = validated_data.pop('details')
         media_data = validated_data.pop('media')
