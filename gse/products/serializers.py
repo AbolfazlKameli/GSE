@@ -23,8 +23,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class ProductDetailsSerializer(serializers.ModelSerializer):
-    media = ProductMediaSerializer(required=False, many=True)
-    details = ProductDetailSerializer(required=False, many=True)
+    media = ProductMediaSerializer(required=False, many=True, read_only=True)
+    details = ProductDetailSerializer(required=False, many=True, read_only=True)
+    category = serializers.SlugRelatedField(
+        many=True,
+        slug_field='title',
+        read_only=True
+    )
 
     class Meta:
         model = Product
@@ -33,6 +38,11 @@ class ProductDetailsSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     media = serializers.SerializerMethodField()
+    category = serializers.SlugRelatedField(
+        many=True,
+        slug_field='title',
+        read_only=True
+    )
 
     def get_media(self, obj):
         image = get_primary_image(obj)
