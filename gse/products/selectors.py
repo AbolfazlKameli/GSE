@@ -8,3 +8,7 @@ def get_primary_image(product: Product) -> ProductMedia:
     if media is None:
         return product.media.filter(media_type=MEDIA_TYPE_IMAGE).first()
     return media
+
+
+def get_all_products() -> list[Product]:
+    return Product.objects.prefetch_related('media', 'details').all()
