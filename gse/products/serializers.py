@@ -51,3 +51,36 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+
+
+class ProductCreateSerializer(serializers.ModelSerializer):
+    details = ProductDetailSerializer(many=True, write_only=True, required=True)
+    media = ProductMediaSerializer(many=True, write_only=True, required=True)
+    category = serializers.SlugRelatedField(
+        many=True,
+        queryset=ProductCategory.objects.all(),
+        slug_field='title',
+        required=True
+    )
+
+    def create(self, validated_data):
+        detail_data = validated_data.pop('details')
+        media_data = validated_data.pop('media')
+        category_data = validated_data.pop('category')
+
+        product: Product = Product.objects.create(**validated_data)
+
+        for category in category_data:
+            product.category.add(category)
+
+        for detail in detail_data:
+            ProductDetail.objects.create(product=product, **detail)
+
+        for media in media_data:
+            ProductMedia.objects.create(product=product, **media)
+
+        return product
+
+    class Meta:
+        model = Product
+        exclude = ('slug',)
