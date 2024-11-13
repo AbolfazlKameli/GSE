@@ -92,6 +92,27 @@ class ProductDestroyAPI(DestroyAPIView):
     queryset = get_all_products()
 
 
+class ProductDetailCreateAPI(APIView):
+    """
+    Creates a ProductDetail object.
+    """
+    serializer_class = ProductDetailSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            product: Product | None = Product.objects.filter(id=kwargs.get('pk')).first()
+            serializer.save(product=product)
+            return Response(
+                data={'data': {'message': 'جزییات محصول با موفقیت ثبت شد.'}},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
 class ProductDetailUpdateAPI(UpdateAPIView):
     """
     Updates a Detail object.
