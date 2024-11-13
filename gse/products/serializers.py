@@ -86,3 +86,9 @@ class ProductOperationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         exclude = ('slug',)
+
+
+class ProductUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
