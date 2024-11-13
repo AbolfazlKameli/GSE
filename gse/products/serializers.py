@@ -75,11 +75,11 @@ class ProductOperationsSerializer(serializers.ModelSerializer):
         for category in category_data:
             product.category.add(category)
 
-        for detail in detail_data:
-            ProductDetail.objects.create(product=product, **detail)
+        details = [ProductDetail(product=product, **detail) for detail in detail_data]
+        ProductDetail.objects.bulk_create(details)
 
-        for media in media_data:
-            ProductMedia.objects.create(product=product, **media)
+        media = [ProductMedia(product=product, **media) for media in media_data]
+        ProductMedia.objects.bulk_create(media)
 
         return product
 
