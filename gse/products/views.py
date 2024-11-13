@@ -1,11 +1,12 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from gse.utils.format_errors import format_errors
-from .models import Product
+from gse.utils.update_response import update_response
+from .models import Product, ProductDetail
 from .selectors import (
     get_all_products
 )
@@ -13,7 +14,7 @@ from .serializers import (
     ProductDetailsSerializer,
     ProductListSerializer,
     ProductOperationsSerializer,
-    ProductUpdateSerializer
+    ProductUpdateSerializer, ProductDetailSerializer
 )
 
 
@@ -27,7 +28,7 @@ class ProductsListAPI(ListAPIView):
 
 class ProductRetrieveAPI(RetrieveAPIView):
     """
-    Retrieve a product object.
+    Retrieves a product object.
     """
     queryset = get_all_products()
     serializer_class = ProductDetailsSerializer
@@ -62,7 +63,7 @@ class ProductCreateAPI(APIView):
 
 class ProductUpdateAPI(APIView):
     """
-    Updated a Product object.
+    Updates a Product object.
     """
     serializer_class = ProductUpdateSerializer
 
@@ -82,5 +83,25 @@ class ProductUpdateAPI(APIView):
 
 
 class ProductDestroyAPI(DestroyAPIView):
+    """
+    Deletes a Product object.
+    """
     serializer_class = ProductOperationsSerializer
     queryset = get_all_products()
+
+
+class ProductDetailUpdateAPI(UpdateAPIView):
+    """
+    Updates a Detail object.
+    """
+    serializer_class = ProductDetailSerializer
+    queryset = ProductDetail.objects.select_related('product').all()
+    http_method_names = ['patch', 'options', 'head']
+    lookup_field = 'id'
+    lookup_url_kwarg = 'detail_id'
+
+    def patch(self, request, *args, **kwargs):
+        return update_response(
+            super().patch(request, *args, **kwargs),
+            "جزییات محصول با موفقیت به روزرسانی شد.",
+        )
