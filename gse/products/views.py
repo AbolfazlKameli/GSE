@@ -6,15 +6,17 @@ from rest_framework.views import APIView
 
 from gse.utils.format_errors import format_errors
 from gse.utils.update_response import update_response
-from .models import Product, ProductDetail
+from .models import Product
 from .selectors import (
-    get_all_products
+    get_all_products,
+    get_all_details
 )
 from .serializers import (
     ProductDetailsSerializer,
     ProductListSerializer,
     ProductOperationsSerializer,
-    ProductUpdateSerializer, ProductDetailSerializer
+    ProductUpdateSerializer,
+    ProductDetailSerializer
 )
 
 
@@ -95,7 +97,7 @@ class ProductDetailUpdateAPI(UpdateAPIView):
     Updates a Detail object.
     """
     serializer_class = ProductDetailSerializer
-    queryset = ProductDetail.objects.select_related('product').all()
+    queryset = get_all_details()
     http_method_names = ['patch', 'options', 'head']
     lookup_field = 'id'
     lookup_url_kwarg = 'detail_id'
@@ -105,3 +107,14 @@ class ProductDetailUpdateAPI(UpdateAPIView):
             super().patch(request, *args, **kwargs),
             "جزییات محصول با موفقیت به روزرسانی شد.",
         )
+
+
+class ProductDetailDeleteAPI(DestroyAPIView):
+    """
+    Deletes a Detail object.
+    """
+    serializer_class = ProductDetailSerializer
+    queryset = get_all_details()
+    http_method_names = ['delete', 'options', 'head']
+    lookup_field = 'id'
+    lookup_url_kwarg = 'detail_id'
