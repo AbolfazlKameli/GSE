@@ -20,4 +20,5 @@ urlpatterns = [
     # Media
     path('<int:pk>/media/add/', views.ProductMediaCreateAPI.as_view(), name='media_create'),
     path('<int:pk>/media/<int:media_id>/update/', views.ProductMediaUpdateAPI.as_view(), name='media_update'),
+    path('<int:pk>/media/<int:media_id>/delete/', views.ProductMediaDeleteAPI.as_view(), name='media_delete'),
 ]

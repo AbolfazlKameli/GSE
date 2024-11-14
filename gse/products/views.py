@@ -198,3 +198,22 @@ class ProductMediaUpdateAPI(UpdateAPIView):
             super().patch(request, *args, **kwargs),
             "رسانه محصول با موفقیت به روزرسانی شد.",
         )
+
+
+class ProductMediaDeleteAPI(DestroyAPIView):
+    """
+    Deletes a ProductMedia object.
+    """
+    serializer_class = ProductMediaSerializer
+    queryset = get_all_media()
+    http_method_names = ['delete', 'options', 'head']
+    lookup_field = 'id'
+    lookup_url_kwarg = 'media_id'
+
+    def destroy(self, request, *args, **kwargs):
+        if not is_child_of(Product, ProductMedia, kwargs.get('pk'), kwargs.get('media_id')):
+            return Response(
+                data={'data': {'errors': 'محصول مرتبط یافت نشد.'}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return super().destroy(request, *args, **kwargs)
