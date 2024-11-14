@@ -12,5 +12,6 @@ urlpatterns = [
     path('add/', views.ProductCreateAPI.as_view(), name='product_create'),
     path('<int:pk>/details/<int:detail_id>/update/', views.ProductDetailUpdateAPI.as_view(), name='detail_update'),
     path('<int:pk>/details/<int:detail_id>/delete/', views.ProductDetailDeleteAPI.as_view(), name='detail_delete'),
-    path('<int:pk>/details/add/', views.ProductDetailCreateAPI.as_view(), name='detail_create')
+    path('<int:pk>/details/add/', views.ProductDetailCreateAPI.as_view(), name='detail_create'),
+    path('<int:pk>/media/add/', views.ProductMediaCreateAPI.as_view(), name='media_create')
 ]

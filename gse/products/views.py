@@ -17,7 +17,8 @@ from .serializers import (
     ProductListSerializer,
     ProductOperationsSerializer,
     ProductUpdateSerializer,
-    ProductDetailSerializer
+    ProductDetailSerializer,
+    ProductMediaSerializer
 )
 
 
@@ -153,3 +154,24 @@ class ProductDetailDeleteAPI(DestroyAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         return super().destroy(request, *args, **kwargs)
+
+
+class ProductMediaCreateAPI(APIView):
+    """
+    Creates a ProductMedia object.
+    """
+    serializer_class = ProductMediaSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
+        if serializer.is_valid():
+            serializer.save(product=product)
+            return Response(
+                data={'data': {'message': 'رسانه محصول با موفقیت ثبت شد.'}},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
