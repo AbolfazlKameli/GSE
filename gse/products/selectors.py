@@ -15,3 +15,7 @@ def get_all_products() -> list[Product]:
 
 def get_all_details() -> list[ProductDetail]:
     return ProductDetail.objects.select_related('product').all()
+
+
+def get_all_media() -> list[ProductMedia]:
+    return ProductMedia.objects.select_related('product').all()

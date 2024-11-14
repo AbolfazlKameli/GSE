@@ -7,10 +7,11 @@ from rest_framework.views import APIView
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from gse.utils.update_response import update_response
-from .models import Product, ProductDetail
+from .models import Product, ProductDetail, ProductMedia
 from .selectors import (
     get_all_products,
-    get_all_details
+    get_all_details,
+    get_all_media
 )
 from .serializers import (
     ProductDetailsSerializer,
@@ -174,4 +175,26 @@ class ProductMediaCreateAPI(APIView):
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class ProductMediaUpdateAPI(UpdateAPIView):
+    """
+    Updates a ProductMedia object.
+    """
+    serializer_class = ProductMediaSerializer
+    queryset = get_all_media()
+    http_method_names = ['patch', 'options', 'head']
+    lookup_field = 'id'
+    lookup_url_kwarg = 'media_id'
+
+    def patch(self, request, *args, **kwargs):
+        if not is_child_of(Product, ProductMedia, kwargs.get('pk'), kwargs.get('media_id')):
+            return Response(
+                data={'data': {'errors': 'محصول مرتبط یافت نشد.'}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return update_response(
+            super().patch(request, *args, **kwargs),
+            "رسانه محصول با موفقیت به روزرسانی شد.",
         )
