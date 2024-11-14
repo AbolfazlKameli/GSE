@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -51,6 +52,7 @@ class ProductCreateAPI(APIView):
     Creates a Product object.
     """
     serializer_class = ProductOperationsSerializer
+    permission_classes = [IsAdminUser]
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -71,6 +73,7 @@ class ProductUpdateAPI(APIView):
     Updates a Product object.
     """
     serializer_class = ProductUpdateSerializer
+    permission_classes = [IsAdminUser]
 
     def patch(self, request, *args, **kwargs):
         product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
@@ -93,6 +96,7 @@ class ProductDestroyAPI(DestroyAPIView):
     """
     serializer_class = ProductOperationsSerializer
     queryset = get_all_products()
+    permission_classes = [IsAdminUser]
 
 
 class ProductDetailCreateAPI(APIView):
@@ -100,6 +104,7 @@ class ProductDetailCreateAPI(APIView):
     Creates a ProductDetail object.
     """
     serializer_class = ProductDetailSerializer
+    permission_classes = [IsAdminUser]
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -123,6 +128,7 @@ class ProductDetailUpdateAPI(UpdateAPIView):
     serializer_class = ProductDetailSerializer
     queryset = get_all_details()
     http_method_names = ['patch', 'options', 'head']
+    permission_classes = [IsAdminUser]
     lookup_field = 'id'
     lookup_url_kwarg = 'detail_id'
 
@@ -144,6 +150,7 @@ class ProductDetailDeleteAPI(DestroyAPIView):
     """
     serializer_class = ProductDetailSerializer
     queryset = get_all_details()
+    permission_classes = [IsAdminUser]
     http_method_names = ['delete', 'options', 'head']
     lookup_field = 'id'
     lookup_url_kwarg = 'detail_id'
@@ -162,6 +169,7 @@ class ProductMediaCreateAPI(APIView):
     Creates a ProductMedia object.
     """
     serializer_class = ProductMediaSerializer
+    permission_classes = [IsAdminUser]
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -184,6 +192,7 @@ class ProductMediaUpdateAPI(UpdateAPIView):
     """
     serializer_class = ProductMediaSerializer
     queryset = get_all_media()
+    permission_classes = [IsAdminUser]
     http_method_names = ['patch', 'options', 'head']
     lookup_field = 'id'
     lookup_url_kwarg = 'media_id'
@@ -206,6 +215,7 @@ class ProductMediaDeleteAPI(DestroyAPIView):
     """
     serializer_class = ProductMediaSerializer
     queryset = get_all_media()
+    permission_classes = [IsAdminUser]
     http_method_names = ['delete', 'options', 'head']
     lookup_field = 'id'
     lookup_url_kwarg = 'media_id'
