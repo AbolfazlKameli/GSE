@@ -1,8 +1,9 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.core.validators import MaxValueValidator
 from django.db import models
 
-from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE
+from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .services import slugify_title
 
 
@@ -53,7 +54,6 @@ class ProductMedia(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='media')
     media_type = models.CharField(
         choices=MEDIA_TYPE_CHOICES,
-        default=MEDIA_TYPE_IMAGE,
         verbose_name='نوع رسانه',
         max_length=10
     )
@@ -61,3 +61,14 @@ class ProductMedia(models.Model):
     is_primary = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.file.name.lower().endswith(
+                ('png', 'jpg', 'jpeg')):
+            raise ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
+        elif self.media_type == MEDIA_TYPE_VIDEO and not self.media_url.name.lower().endswith(('.mp4', '.mov', '.avi')):
+            raise ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
