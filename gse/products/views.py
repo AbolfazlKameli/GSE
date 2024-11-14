@@ -4,9 +4,10 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from gse.utils.update_response import update_response
-from .models import Product
+from .models import Product, ProductDetail
 from .selectors import (
     get_all_products,
     get_all_details
@@ -70,7 +71,7 @@ class ProductUpdateAPI(APIView):
     serializer_class = ProductUpdateSerializer
 
     def patch(self, request, *args, **kwargs):
-        product: Product | None = get_object_or_404(Product, id=kwargs.get('pk'))
+        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
         serializer = self.serializer_class(data=request.data, instance=product, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -100,8 +101,8 @@ class ProductDetailCreateAPI(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
+        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
         if serializer.is_valid():
-            product: Product | None = Product.objects.filter(id=kwargs.get('pk')).first()
             serializer.save(product=product)
             return Response(
                 data={'data': {'message': 'جزییات محصول با موفقیت ثبت شد.'}},
@@ -124,6 +125,11 @@ class ProductDetailUpdateAPI(UpdateAPIView):
     lookup_url_kwarg = 'detail_id'
 
     def patch(self, request, *args, **kwargs):
+        if not is_child_of(Product, ProductDetail, kwargs.get('pk'), kwargs.get('detail_id')):
+            return Response(
+                data={'data': {'errors': 'محصول مرتبط یافت نشد.'}},
+                status=status.HTTP_404_NOT_FOUND
+            )
         return update_response(
             super().patch(request, *args, **kwargs),
             "جزییات محصول با موفقیت به روزرسانی شد.",
@@ -139,3 +145,11 @@ class ProductDetailDeleteAPI(DestroyAPIView):
     http_method_names = ['delete', 'options', 'head']
     lookup_field = 'id'
     lookup_url_kwarg = 'detail_id'
+
+    def destroy(self, request, *args, **kwargs):
+        if not is_child_of(Product, ProductDetail, kwargs.get('pk'), kwargs.get('detail_id')):
+            return Response(
+                data={'data': {'errors': 'محصول مرتبط یافت نشد.'}},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return super().destroy(request, *args, **kwargs)
