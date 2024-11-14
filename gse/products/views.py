@@ -1,10 +1,12 @@
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from gse.utils.update_response import update_response
@@ -54,6 +56,7 @@ class ProductCreateAPI(APIView):
     serializer_class = ProductOperationsSerializer
     permission_classes = [IsAdminUser]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -75,6 +78,7 @@ class ProductUpdateAPI(APIView):
     serializer_class = ProductUpdateSerializer
     permission_classes = [IsAdminUser]
 
+    @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
         product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
         serializer = self.serializer_class(data=request.data, instance=product, partial=True)
@@ -106,6 +110,7 @@ class ProductDetailCreateAPI(APIView):
     serializer_class = ProductDetailSerializer
     permission_classes = [IsAdminUser]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
@@ -132,6 +137,7 @@ class ProductDetailUpdateAPI(UpdateAPIView):
     lookup_field = 'id'
     lookup_url_kwarg = 'detail_id'
 
+    @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
         if not is_child_of(Product, ProductDetail, kwargs.get('pk'), kwargs.get('detail_id')):
             return Response(
@@ -171,6 +177,7 @@ class ProductMediaCreateAPI(APIView):
     serializer_class = ProductMediaSerializer
     permission_classes = [IsAdminUser]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
@@ -197,6 +204,7 @@ class ProductMediaUpdateAPI(UpdateAPIView):
     lookup_field = 'id'
     lookup_url_kwarg = 'media_id'
 
+    @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
         if not is_child_of(Product, ProductMedia, kwargs.get('pk'), kwargs.get('media_id')):
             return Response(
