@@ -63,7 +63,7 @@ class ProductMedia(models.Model):
     update_date = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.file.name.lower().endswith(
+        if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.name.lower().endswith(
                 ('png', 'jpg', 'jpeg')):
             raise ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
         elif self.media_type == MEDIA_TYPE_VIDEO and not self.media_url.name.lower().endswith(('.mp4', '.mov', '.avi')):

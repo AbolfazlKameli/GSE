@@ -1,6 +1,8 @@
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import serializers
 
+from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .models import Product, ProductMedia, ProductCategory, ProductDetail
 from .selectors import get_primary_image
 
@@ -15,6 +17,19 @@ class ProductMediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductMedia
         exclude = ('product',)
+
+    def validate_media_url(self, value):
+        media_type = self.initial_data.get('media_type')
+        max_media_size = 100 * 1024 * 1024
+        if value.size > max_media_size:
+            raise serializers.ValidationError('حجم فایل باید کمتر از ۱۰۰ مگابایت باشد.')
+
+        if media_type == MEDIA_TYPE_IMAGE and not value.name.lower().endswith(('png', 'jpg', 'jpeg')):
+            raise serializers.ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
+
+        elif media_type == MEDIA_TYPE_VIDEO and not value.name.lower().endswith(('.mp4', '.mov', '.avi')):
+            raise serializers.ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
+        return value
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
