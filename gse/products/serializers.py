@@ -23,11 +23,12 @@ class ProductMediaSerializer(serializers.ModelSerializer):
         max_media_size = 500 * 1024 * 1024
         h, w = get_image_dimensions(value)
 
-        if not 900 <= w <= 1000:
-            raise serializers.ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
+        if media_type == MEDIA_TYPE_IMAGE:
+            if not 900 <= w <= 1000:
+                raise serializers.ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 
-        elif not 900 <= h <= 1000:
-            raise serializers.ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
+            if not 900 <= h <= 1000:
+                raise serializers.ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 
         if value.size > max_media_size:
             raise serializers.ValidationError('حجم فایل باید کمتر از ۵۰۰ مگابایت باشد.')

@@ -65,11 +65,13 @@ class ProductMedia(models.Model):
 
     def clean(self):
         h, w = get_image_dimensions(self.media_url)
-        if not 900 <= w <= 1000:
-            raise ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 
-        elif not 900 <= h <= 1000:
-            raise ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
+        if self.media_type == MEDIA_TYPE_IMAGE:
+            if not 900 <= w <= 1000:
+                raise ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
+
+            if not 900 <= h <= 1000:
+                raise ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 
         if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.name.lower().endswith(
                 ('png', 'jpg', 'jpeg')):
