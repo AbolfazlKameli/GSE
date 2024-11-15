@@ -1,4 +1,4 @@
-from django.core.exceptions import ValidationError
+from django.core.files.images import get_image_dimensions
 from django.db import transaction
 from rest_framework import serializers
 
@@ -20,9 +20,17 @@ class ProductMediaSerializer(serializers.ModelSerializer):
 
     def validate_media_url(self, value):
         media_type = self.initial_data.get('media_type')
-        max_media_size = 100 * 1024 * 1024
+        max_media_size = 500 * 1024 * 1024
+        h, w = get_image_dimensions(value)
+
+        if not 900 <= w <= 1000:
+            raise serializers.ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
+
+        elif not 900 <= h <= 1000:
+            raise serializers.ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
+
         if value.size > max_media_size:
-            raise serializers.ValidationError('حجم فایل باید کمتر از ۱۰۰ مگابایت باشد.')
+            raise serializers.ValidationError('حجم فایل باید کمتر از ۵۰۰ مگابایت باشد.')
 
         if media_type == MEDIA_TYPE_IMAGE and not value.name.lower().endswith(('png', 'jpg', 'jpeg')):
             raise serializers.ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
