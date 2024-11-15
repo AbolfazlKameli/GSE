@@ -64,9 +64,8 @@ class ProductMedia(models.Model):
     update_date = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        h, w = get_image_dimensions(self.media_url)
-
         if self.media_type == MEDIA_TYPE_IMAGE:
+            h, w = get_image_dimensions(self.media_url)
             if not 900 <= w <= 1000:
                 raise ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 

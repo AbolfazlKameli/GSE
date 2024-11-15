@@ -21,9 +21,11 @@ class ProductMediaSerializer(serializers.ModelSerializer):
     def validate_media_url(self, value):
         media_type = self.initial_data.get('media_type')
         max_media_size = 500 * 1024 * 1024
-        h, w = get_image_dimensions(value)
+        if media_type == MEDIA_TYPE_IMAGE and not value.name.lower().endswith(('png', 'jpg', 'jpeg')):
+            raise serializers.ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
 
         if media_type == MEDIA_TYPE_IMAGE:
+            h, w = get_image_dimensions(value)
             if not 900 <= w <= 1000:
                 raise serializers.ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 
@@ -32,9 +34,6 @@ class ProductMediaSerializer(serializers.ModelSerializer):
 
         if value.size > max_media_size:
             raise serializers.ValidationError('حجم فایل باید کمتر از ۵۰۰ مگابایت باشد.')
-
-        if media_type == MEDIA_TYPE_IMAGE and not value.name.lower().endswith(('png', 'jpg', 'jpeg')):
-            raise serializers.ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
 
         elif media_type == MEDIA_TYPE_VIDEO and not value.name.lower().endswith(('.mp4', '.mov', '.avi')):
             raise serializers.ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
