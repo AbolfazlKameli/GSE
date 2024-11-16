@@ -55,7 +55,8 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    "gse.users.apps.UsersConfig"
+    "gse.users.apps.UsersConfig",
+    "gse.products.apps.ProductsConfig"
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -162,6 +163,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
+    ],
+    'DEFAULT_PAGINATOR_CLASSES': [
+        'gse.utils.paginators.NeatPagination'
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',

@@ -1,0 +1,7 @@
+MEDIA_TYPE_VIDEO = 'video'
+MEDIA_TYPE_IMAGE = 'image'
+
+MEDIA_TYPE_CHOICES = (
+    (MEDIA_TYPE_IMAGE, 'عکس'),
+    (MEDIA_TYPE_VIDEO, 'ویدیو')
+)
