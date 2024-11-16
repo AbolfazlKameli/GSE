@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -22,3 +23,12 @@ class CartItem(models.Model):
     quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
+
+    def clean(self, *args, **kwargs):
+        if self.product.quantity < self.quantity:
+            raise ValidationError('این تعداد از این محصول در انبار موجود نمیباشد.')
+        super().save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
