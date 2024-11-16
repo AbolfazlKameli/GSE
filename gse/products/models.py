@@ -83,6 +83,16 @@ class ProductMedia(models.Model):
     update_date = models.DateTimeField(auto_now=True)
 
     def clean(self):
+        if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.name.lower().endswith(
+                ('png', 'jpg', 'jpeg')):
+            raise ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
+
+        if self.media_type == MEDIA_TYPE_VIDEO and not self.media_url.name.lower().endswith(('.mp4', '.mov', '.avi')):
+            raise ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
+
+        if self.media_type == MEDIA_TYPE_VIDEO and self.is_primary:
+            raise ValidationError("ویدیو نمیتواند به عنوان رسانه اصلی استفاده شود.")
+
         if self.media_type == MEDIA_TYPE_IMAGE:
             h, w = get_image_dimensions(self.media_url)
             if not 900 <= w <= 1000:
@@ -90,13 +100,6 @@ class ProductMedia(models.Model):
 
             if not 900 <= h <= 1000:
                 raise ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
-
-        if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.name.lower().endswith(
-                ('png', 'jpg', 'jpeg')):
-            raise ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
-
-        elif self.media_type == MEDIA_TYPE_VIDEO and not self.media_url.name.lower().endswith(('.mp4', '.mov', '.avi')):
-            raise ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
 
     def save(self, *args, **kwargs):
         self.clean()
