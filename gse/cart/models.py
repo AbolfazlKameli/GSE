@@ -10,6 +10,11 @@ class Cart(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
 
+    def get_total_price(self):
+        return sum(
+            item.product.get_price() * item.quantity for item in self.items.all()
+        )
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
