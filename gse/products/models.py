@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
 from django.core.validators import FileExtensionValidator
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
@@ -34,13 +34,22 @@ class Product(models.Model):
     quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(1000)])
     description = models.TextField()
     available = models.BooleanField(default=True)
-    unit_price = models.DecimalField(max_digits=15, decimal_places=0)
+    unit_price = models.DecimalField(validators=[MinValueValidator(0)], max_digits=15, decimal_places=0)
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
+    final_price = models.DecimalField(
+        validators=[MinValueValidator(0)],
+        max_digits=15,
+        decimal_places=0,
+        default=0
+    )
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         self.slug = slugify_title(self.title)
+        self.final_price = self.get_price()
+        if self.quantity == 0:
+            self.available = False
         super().save(*args, **kwargs)
 
     def get_price(self):
@@ -74,6 +83,16 @@ class ProductMedia(models.Model):
     update_date = models.DateTimeField(auto_now=True)
 
     def clean(self):
+        if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.name.lower().endswith(
+                ('png', 'jpg', 'jpeg')):
+            raise ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
+
+        if self.media_type == MEDIA_TYPE_VIDEO and not self.media_url.name.lower().endswith(('.mp4', '.mov', '.avi')):
+            raise ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
+
+        if self.media_type == MEDIA_TYPE_VIDEO and self.is_primary:
+            raise ValidationError("ویدیو نمیتواند به عنوان رسانه اصلی استفاده شود.")
+
         if self.media_type == MEDIA_TYPE_IMAGE:
             h, w = get_image_dimensions(self.media_url)
             if not 900 <= w <= 1000:
@@ -81,13 +100,6 @@ class ProductMedia(models.Model):
 
             if not 900 <= h <= 1000:
                 raise ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
-
-        if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.name.lower().endswith(
-                ('png', 'jpg', 'jpeg')):
-            raise ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
-
-        elif self.media_type == MEDIA_TYPE_VIDEO and not self.media_url.name.lower().endswith(('.mp4', '.mov', '.avi')):
-            raise ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
 
     def save(self, *args, **kwargs):
         self.clean()
