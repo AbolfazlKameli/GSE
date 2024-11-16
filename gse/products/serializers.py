@@ -68,7 +68,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    def get_media(self, obj):
+    def get_media(self, obj) -> ProductMediaSerializer:
         image = get_primary_image(obj)
         return ProductMediaSerializer(instance=image).data
 
