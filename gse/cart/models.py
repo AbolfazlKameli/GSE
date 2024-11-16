@@ -13,7 +13,7 @@ class Cart(models.Model):
 
     def get_total_price(self):
         return sum(
-            item.product.get_price() * item.quantity for item in self.items.all()
+            item.product.final_price * item.quantity for item in self.items.all()
         )
 
 
@@ -27,7 +27,6 @@ class CartItem(models.Model):
     def clean(self, *args, **kwargs):
         if self.product.quantity < self.quantity:
             raise ValidationError('این تعداد از این محصول در انبار موجود نمیباشد.')
-        super().save(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self.clean()
