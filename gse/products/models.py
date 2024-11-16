@@ -36,11 +36,18 @@ class Product(models.Model):
     available = models.BooleanField(default=True)
     unit_price = models.DecimalField(validators=[MinValueValidator(0)], max_digits=15, decimal_places=0)
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
+    final_price = models.DecimalField(
+        validators=[MinValueValidator(0)],
+        max_digits=15,
+        decimal_places=0,
+        default=0
+    )
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         self.slug = slugify_title(self.title)
+        self.final_price = self.get_price()
         super().save(*args, **kwargs)
 
     def get_price(self):
