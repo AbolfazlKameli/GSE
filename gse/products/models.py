@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.files.images import get_image_dimensions
 from django.core.validators import FileExtensionValidator
@@ -40,6 +42,14 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         self.slug = slugify_title(self.title)
         super().save(*args, **kwargs)
+
+    def get_price(self):
+        if self.discount_percent > 0:
+            discount_amount = self.unit_price * Decimal(self.discount_percent / 100)
+            discounted_amount = self.unit_price - discount_amount
+            return round(discounted_amount)
+        else:
+            return round(self.unit_price)
 
     class Meta:
         ordering = ('-created_date',)
