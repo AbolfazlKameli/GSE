@@ -48,6 +48,8 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         self.slug = slugify_title(self.title)
         self.final_price = self.get_price()
+        if self.quantity == 0:
+            self.available = False
         super().save(*args, **kwargs)
 
     def get_price(self):
