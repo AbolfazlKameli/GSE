@@ -419,3 +419,4 @@ class DeleteUserAccountAPI(DestroyAPIView):
     lookup_field = 'id'
     lookup_url_kwarg = 'id'
     queryset = User.objects.filter(is_active=True)
+    serializer_class = serializers.UserSerializer
