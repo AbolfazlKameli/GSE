@@ -16,6 +16,9 @@ class Cart(models.Model):
             item.product.final_price * item.quantity for item in self.items.all()
         )
 
+    class Meta:
+        ordering = ('-created_date',)
+
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
@@ -31,3 +34,6 @@ class CartItem(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ('-created_date',)
