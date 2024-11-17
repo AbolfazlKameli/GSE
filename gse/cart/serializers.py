@@ -19,3 +19,9 @@ class CartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cart
         fields = '__all__'
+
+
+class CartItemAddSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        exclude = ('cart',)
