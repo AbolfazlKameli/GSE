@@ -34,10 +34,10 @@ class Product(models.Model):
     quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(1000)])
     description = models.TextField()
     available = models.BooleanField(default=True)
-    unit_price = models.DecimalField(validators=[MinValueValidator(0)], max_digits=15, decimal_places=0)
+    unit_price = models.DecimalField(validators=[MinValueValidator(Decimal(0))], max_digits=15, decimal_places=0)
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
     final_price = models.DecimalField(
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal(0))],
         max_digits=15,
         decimal_places=0,
         default=0

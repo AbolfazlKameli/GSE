@@ -13,8 +13,11 @@ class Cart(models.Model):
 
     def get_total_price(self):
         return sum(
-            item.product.get_price() * item.quantity for item in self.items.all()
+            item.product.final_price * item.quantity for item in self.items.select_related('product').all()
         )
+
+    class Meta:
+        ordering = ('-created_date',)
 
 
 class CartItem(models.Model):
@@ -27,8 +30,10 @@ class CartItem(models.Model):
     def clean(self, *args, **kwargs):
         if self.product.quantity < self.quantity:
             raise ValidationError('این تعداد از این محصول در انبار موجود نمیباشد.')
-        super().save(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ('-created_date',)
