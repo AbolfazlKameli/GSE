@@ -12,7 +12,7 @@ from .services import slugify_title
 
 class ProductCategory(models.Model):
     title = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=250)
+    slug = models.SlugField(max_length=250, allow_unicode=True)
     is_sub = models.BooleanField(default=False)
     sub_category = models.ForeignKey('self', on_delete=models.CASCADE, related_name='s_category', blank=True, null=True)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -30,7 +30,7 @@ class ProductCategory(models.Model):
 class Product(models.Model):
     category = models.ManyToManyField(ProductCategory, related_name='products', blank=True)
     title = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=250)
+    slug = models.SlugField(max_length=250, allow_unicode=True)
     quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(1000)])
     description = models.TextField()
     available = models.BooleanField(default=True)

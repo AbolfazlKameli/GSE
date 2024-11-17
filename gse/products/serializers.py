@@ -70,7 +70,7 @@ class ProductDetailsSerializer(serializers.ModelSerializer):
 
 
 class ProductListSerializer(serializers.ModelSerializer):
-    media = serializers.SerializerMethodField()
+    media = serializers.SerializerMethodField(read_only=True)
     category = serializers.SlugRelatedField(
         many=True,
         slug_field='title',
