@@ -19,6 +19,9 @@ class UserManager(BaseUserManager):
         profile = apps.get_model('users', 'UserProfile')
         profile.objects.create(owner=user)
 
+        cart = apps.get_model('cart', 'Cart')
+        cart.objects.create(owner=user)
+
         address = apps.get_model('users', 'Address')
         address.objects.create(owner_profile=user)
 
