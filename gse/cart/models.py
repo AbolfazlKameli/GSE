@@ -13,7 +13,7 @@ class Cart(models.Model):
 
     def get_total_price(self):
         return sum(
-            item.product.final_price * item.quantity for item in self.items.all()
+            item.product.final_price * item.quantity for item in self.items.select_related('product').all()
         )
 
     class Meta:
