@@ -43,16 +43,33 @@ class CartItemAddSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def create(self, validated_data):
-        product = validated_data.get('product')
-        quantity = validated_data.get('quantity')
+
+class CartItemUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ('quantity',)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError({'quantity': 'این فیلد نمیتواند خالی باشد.'})
+
+        product = self.context.get('product')
+        quantity = attrs.get('quantity')
         request = self.context.get('request')
+
+        if quantity > product.quantity:
+            raise serializers.ValidationError({'quantity': 'این تعداد از این محصول در انبار موجود نمیباشد.'})
 
         item_obj = get_cart_item_by_product_id(product_id=product.id, owner_id=request.user.id)
         if item_obj and product.id == item_obj.product.id:
             item_obj.quantity += quantity
-            item_obj.save()
-            return item_obj
+            if product.quantity < item_obj.quantity:
+                raise serializers.ValidationError({'quantity': 'این تعداد از این محصول در انبار موجود نمیباشد.'})
 
-        item_obj = CartItem.objects.create(**validated_data)
-        return item_obj
+        return attrs
+
+    def update(self, instance, validated_data):
+        quantity = validated_data.get('quantity')
+        instance.quantity += quantity
+        instance.save()
+        return instance
