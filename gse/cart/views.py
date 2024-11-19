@@ -1,16 +1,16 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from gse.utils.format_errors import format_errors
 from .models import CartItem
-from .selectors import get_all_carts
+from .selectors import get_all_carts, get_all_cart_items
 from .serializers import (
     CartSerializer,
-    CartItemAddSerializer, CartItemUpdateSerializer
+    CartItemAddSerializer, CartItemUpdateSerializer, CartItemSerializer
 )
 
 
@@ -65,3 +65,9 @@ class CartItemUpdateAPI(APIView):
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class CartItemDeleteAPI(DestroyAPIView):
+    serializer_class = CartItemSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = get_all_cart_items()
