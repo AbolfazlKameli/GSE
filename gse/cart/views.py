@@ -1,14 +1,17 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.utils.format_errors import format_errors
-from .selectors import get_all_carts
+from .selectors import get_all_carts, get_all_cart_items
 from .serializers import (
     CartSerializer,
-    CartItemAddSerializer
+    CartItemAddSerializer,
+    CartItemSerializer
 )
 
 
@@ -28,8 +31,9 @@ class CartItemAddAPI(APIView):
     serializer_class = CartItemAddSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save(cart=request.user.cart)
             return Response(
@@ -40,3 +44,9 @@ class CartItemAddAPI(APIView):
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class CartItemDeleteAPI(DestroyAPIView):
+    serializer_class = CartItemSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = get_all_cart_items()

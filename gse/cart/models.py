@@ -12,9 +12,12 @@ class Cart(models.Model):
     update_date = models.DateTimeField(auto_now=True)
 
     def get_total_price(self):
-        return sum(
+        return round(sum(
             item.product.final_price * item.quantity for item in self.items.select_related('product').all()
-        )
+        ))
+
+    def get_total_quantity(self):
+        return sum(item.quantity for item in self.items.all())
 
     class Meta:
         ordering = ('-created_date',)
