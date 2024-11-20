@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -7,6 +8,7 @@ from rest_framework.views import APIView
 
 from gse.utils.format_errors import format_errors
 from .models import CartItem
+from gse.docs.serializers.doc_serializers import ResponseSerializer
 from .selectors import get_all_carts, get_all_cart_items
 from .serializers import (
     CartSerializer,
@@ -30,6 +32,7 @@ class CartItemAddAPI(APIView):
     serializer_class = CartItemAddSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -48,6 +51,7 @@ class CartItemUpdateAPI(APIView):
     serializer_class = CartItemUpdateSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={200: ResponseSerializer})
     def put(self, request, *args, **kwargs):
         item: CartItem = get_object_or_404(CartItem, id=kwargs.get('pk'))
         serializer = self.serializer_class(
