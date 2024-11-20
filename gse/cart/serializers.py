@@ -16,6 +16,10 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     owner = serializers.SlugRelatedField(read_only=True, slug_field='email')
     items = CartItemSerializer(many=True)
+    total_price = serializers.SerializerMethodField(read_only=True)
+
+    def get_total_price(self, obj) -> int:
+        return obj.get_total_price()
 
     class Meta:
         model = Cart
