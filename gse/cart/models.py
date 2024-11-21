@@ -9,7 +9,7 @@ from gse.users.models import User
 class Cart(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
     created_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def get_total_price(self):
         return round(sum(
@@ -28,7 +28,7 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='cart_items')
     quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
     created_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def get_total_price(self):
         return round(self.quantity * self.product.final_price)

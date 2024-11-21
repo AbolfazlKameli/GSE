@@ -30,7 +30,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items')
     quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
     created_date = models.DateTimeField(auto_now_add=True)
-    updated_data = models.DateTimeField(auto_now=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     @property
     def total_price(self):

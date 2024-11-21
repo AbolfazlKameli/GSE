@@ -43,7 +43,7 @@ class Product(models.Model):
         default=0
     )
     created_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         self.slug = slugify_title(self.title)
@@ -80,7 +80,7 @@ class ProductMedia(models.Model):
     media_url = models.FileField(validators=[FileExtensionValidator(['png', 'jpg', 'jpeg', 'mp4', 'gif'])])
     is_primary = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
-    update_date = models.DateTimeField(auto_now=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def clean(self):
         if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.name.lower().endswith(
