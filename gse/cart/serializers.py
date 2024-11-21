@@ -8,6 +8,10 @@ from .utils import check_cart_total_quantity
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)
+    total_price = serializers.SerializerMethodField()
+
+    def get_total_price(self, obj):
+        return obj.get_total_price()
 
     class Meta:
         model = CartItem

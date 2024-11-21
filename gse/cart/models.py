@@ -30,6 +30,9 @@ class CartItem(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
 
+    def get_total_price(self):
+        return round(self.quantity * self.product.final_price)
+
     def clean(self, *args, **kwargs):
         if self.product.quantity < self.quantity:
             raise ValidationError('این تعداد از این محصول در انبار موجود نمیباشد.')
