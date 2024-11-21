@@ -378,7 +378,7 @@ class UserProfileAPI(RetrieveAPIView):
 
 
 class UserProfileUpdateAPI(UpdateAPIView):
-    permission_classes = [permissions.IsAdminOrOwnerOrReadOnly]
+    permission_classes = [permissions.IsAdminOrOwner]
     lookup_field = 'id'
     lookup_url_kwarg = 'id'
     queryset = User.objects.filter(is_active=True).select_related('profile', 'address')

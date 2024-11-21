@@ -10,22 +10,6 @@ class NotAuthenticated(BasePermission):
         return bool(request.user and not request.user.is_authenticated)
 
 
-class IsAdminOrOwnerOrReadOnly(BasePermission):
-    message = 'شما مالک نیستید!'
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        condition = obj.id
-        if hasattr(obj, 'owner'):
-            condition = obj.owner.id
-        return bool(
-            request.user and request.user.is_authenticated and (
-                    condition == request.user.id or request.user.role in (USER_ROLE_ADMIN, USER_ROLE_SUPPORT)
-            )
-        )
-
-
 class IsAdminOrOwner(BasePermission):
     message = 'شما مالک نیستید!'
 
