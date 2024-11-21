@@ -1,6 +1,4 @@
-from decimal import Decimal
-
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator
 from django.db import models
 
 from gse.products.models import Product
@@ -20,19 +18,23 @@ class Order(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    @property
+    def total_price(self):
+        return round(sum(
+            item.quantity * item.product.final_price for item in self.items.select_related('product').all()
+        ))
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items')
-    total_price = models.DecimalField(
-        validators=[MinValueValidator(Decimal(0))],
-        max_digits=15,
-        decimal_places=0,
-        default=0
-    )
     quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
     created_date = models.DateTimeField(auto_now_add=True)
     updated_data = models.DateTimeField(auto_now=True)
+
+    @property
+    def total_price(self):
+        return self.quantity * self.product.final_price
 
 
 class Coupon(models.Model):

@@ -1,11 +1,15 @@
 from rest_framework import serializers
 
 from .models import Order, OrderItem
-from ..products.serializers import ProductListSerializer
+from gse.products.serializers import ProductListSerializer
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)
+    total_price = serializers.SerializerMethodField()
+
+    def get_total_price(self, obj):
+        return obj.total_price
 
     class Meta:
         model = OrderItem
@@ -14,6 +18,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
+    total_price = serializers.SerializerMethodField()
+
+    def get_total_price(self, obj):
+        return obj.total_price
 
     class Meta:
         model = Order

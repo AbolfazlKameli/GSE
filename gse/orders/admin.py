@@ -5,7 +5,6 @@ from .models import Order, OrderItem, Coupon
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
-    readonly_fields = ('total_price',)
 
 
 @admin.register(Order)
@@ -18,8 +17,7 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('order__id', 'product__id', 'total_price', 'quantity')
-    readonly_fields = ('total_price',)
+    list_display = ('order__id', 'product__id', 'quantity')
 
 
 @admin.register(Coupon)
