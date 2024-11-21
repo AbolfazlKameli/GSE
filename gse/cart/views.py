@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
+from gse.permissions.permissions import IsAdminOrOwner
 from gse.utils.format_errors import format_errors
 from .selectors import get_all_carts, get_all_cart_items
 from .serializers import (
@@ -18,6 +19,7 @@ from .serializers import (
 class CartRetrieveAPI(RetrieveAPIView):
     serializer_class = CartSerializer
     queryset = get_all_carts()
+    permission_classes = [IsAdminOrOwner]
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -48,5 +50,5 @@ class CartItemAddAPI(APIView):
 
 class CartItemDeleteAPI(DestroyAPIView):
     serializer_class = CartItemSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrOwner]
     queryset = get_all_cart_items()
