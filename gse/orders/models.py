@@ -1,6 +1,9 @@
-from django.core.validators import MaxValueValidator
+from decimal import Decimal
+
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from gse.products.models import Product
 from gse.users.models import User
 from .choices import ORDER_STATUS_CHOICES, ORDER_STATUS_PENDING
 
@@ -16,3 +19,17 @@ class Order(models.Model):
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items')
+    total_price = models.DecimalField(
+        validators=[MinValueValidator(Decimal(0))],
+        max_digits=15,
+        decimal_places=0,
+        default=0
+    )
+    quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_data = models.DateTimeField(auto_now=True)
