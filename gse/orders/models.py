@@ -33,3 +33,13 @@ class OrderItem(models.Model):
     quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
     created_date = models.DateTimeField(auto_now_add=True)
     updated_data = models.DateTimeField(auto_now=True)
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
+    max_usage_limit = models.PositiveIntegerField(default=100)
+    expiration_date = models.DateTimeField()
+    is_usable = models.BooleanField(default=False)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
