@@ -36,6 +36,12 @@ class OrderItem(models.Model):
     def total_price(self):
         return self.quantity * self.product.final_price
 
+    def save(self, *args, **kwargs):
+        if self.quantity == 0:
+            self.delete()
+        else:
+            super().save(*args, **kwargs)
+
 
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True)
