@@ -1,11 +1,11 @@
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .selectors import get_all_orders
-from .serializers import OrderSerializer, OrderCreateSerializer
+from .selectors import get_all_orders, get_all_order_items
+from .serializers import OrderSerializer, OrderCreateSerializer, OrderItemSerializer
 
 
 class OrderRetrieveAPI(RetrieveAPIView):
@@ -36,3 +36,9 @@ class OrderCreateAPI(APIView):
             data={'data': {'errors': serializer.errors}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class OrderItemDeleteAPI(DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderItemSerializer
+    queryset = get_all_order_items()
