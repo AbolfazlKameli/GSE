@@ -24,6 +24,13 @@ class Order(models.Model):
             item.quantity * item.product.final_price for item in self.items.select_related('product').all()
         ))
 
+    def save(self, *args, **kwargs):
+        items_count = self.items.all().count()
+        if items_count == 0:
+            self.delete()
+        else:
+            super().save(*args, **kwargs)
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
@@ -35,6 +42,12 @@ class OrderItem(models.Model):
     @property
     def total_price(self):
         return self.quantity * self.product.final_price
+
+    def save(self, *args, **kwargs):
+        if self.quantity == 0:
+            self.delete()
+        else:
+            super().save(*args, **kwargs)
 
 
 class Coupon(models.Model):
