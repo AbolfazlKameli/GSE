@@ -56,7 +56,9 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "gse.users.apps.UsersConfig",
-    "gse.products.apps.ProductsConfig"
+    "gse.products.apps.ProductsConfig",
+    "gse.cart.apps.CartConfig",
+    "gse.orders.apps.OrdersConfig"
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

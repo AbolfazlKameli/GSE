@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .forms import UserChangeForm, UserCreationForm
 from .models import User, UserProfile, Address
+from gse.cart.models import Cart
 
 
 class UserProfileInline(admin.StackedInline):
@@ -11,6 +12,10 @@ class UserProfileInline(admin.StackedInline):
 
 class UserAddressInline(admin.StackedInline):
     model = Address
+
+
+class UserCartInline(admin.TabularInline):
+    model = Cart
 
 
 class UserAdmin(BaseUserAdmin):
@@ -32,7 +37,7 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('email',)
     ordering = ('email',)
 
-    inlines = [UserProfileInline, UserAddressInline]
+    inlines = [UserProfileInline, UserAddressInline, UserCartInline]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
