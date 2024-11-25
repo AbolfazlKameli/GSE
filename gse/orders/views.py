@@ -1,3 +1,4 @@
+from django.http import Http404
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -5,12 +6,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from gse.permissions.permissions import IsAdminOrOwner
+from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .choices import ORDER_STATUS_PENDING
-from .models import Order
+from .models import Order, OrderItem
 from .selectors import (
     get_all_orders,
-    get_all_order_items,
     get_order_by_id,
     check_order_status,
     get_all_coupons
@@ -85,7 +86,18 @@ class OrderCancelAPI(APIView):
 class OrderItemDeleteAPI(DestroyAPIView):
     permission_classes = [IsAdminOrOwner]
     serializer_class = OrderItemSerializer
-    queryset = get_all_order_items()
+    allowed_statuses = [ORDER_STATUS_PENDING]
+
+    def get_object(self):
+        order: Order | None = get_order_by_id(self.kwargs.get('order_id'))
+        if order is None or not check_order_status(order, self.allowed_statuses):
+            raise Http404({'data': {'errors': 'سفارش درحال پردازشی با این مشخصات پیدا نشد.'}})
+
+        item: OrderItem | None = order.items.filter(id=self.kwargs.get('pk')).first()
+        if item is None or not is_child_of(Order, OrderItem, order.id, item.id):
+            raise Http404({'data': {'errors': 'آیتم مربوط به این سفارش با این مشخصات پیدا نشد.'}})
+
+        return item
 
 
 class CouponRetrieveAPI(RetrieveAPIView):
