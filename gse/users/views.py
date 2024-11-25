@@ -371,19 +371,22 @@ class BlockTokenAPI(APIView):
 
 class UserProfileAPI(RetrieveAPIView):
     serializer_class = serializers.UserSerializer
-    lookup_url_kwarg = 'id'
-    lookup_field = 'id'
     queryset = User.objects.filter(is_active=True)
+    permission_classes = [permissions.IsAdminOrOwner]
     http_method_names = ['get', 'options', 'head']
+
+    def get_object(self):
+        return self.request.user
 
 
 class UserProfileUpdateAPI(UpdateAPIView):
     permission_classes = [permissions.IsAdminOrOwner]
-    lookup_field = 'id'
-    lookup_url_kwarg = 'id'
     queryset = User.objects.filter(is_active=True).select_related('profile', 'address')
     serializer_class = serializers.UserUpdateSerializer
     http_method_names = ['patch', 'head', 'options']
+
+    def get_object(self):
+        return self.request.user
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
@@ -416,7 +419,8 @@ class UserProfileUpdateAPI(UpdateAPIView):
 
 class DeleteUserAccountAPI(DestroyAPIView):
     permission_classes = [permissions.IsAdminOrOwner]
-    lookup_field = 'id'
-    lookup_url_kwarg = 'id'
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
+
+    def get_object(self):
+        return self.request.user

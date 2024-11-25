@@ -21,6 +21,9 @@ class CartRetrieveAPI(RetrieveAPIView):
     queryset = get_all_carts()
     permission_classes = [IsAdminOrOwner]
 
+    def get_object(self):
+        return self.request.user.cart
+
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         return Response(
