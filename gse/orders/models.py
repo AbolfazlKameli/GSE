@@ -24,12 +24,8 @@ class Order(models.Model):
             item.quantity * item.product.final_price for item in self.items.select_related('product').all()
         ))
 
-    def save(self, *args, **kwargs):
-        items_count = self.items.all().count()
-        if items_count == 0:
-            self.delete()
-        else:
-            super().save(*args, **kwargs)
+    class Meta:
+        ordering = ('-updated_date',)
 
 
 class OrderItem(models.Model):

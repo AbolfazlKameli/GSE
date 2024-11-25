@@ -1,13 +1,26 @@
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView, DestroyAPIView
+from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from gse.utils.format_errors import format_errors
 from .choices import ORDER_STATUS_PENDING
 from .models import Order
-from .selectors import get_all_orders, get_all_order_items, get_order_by_id, check_order_status
-from .serializers import OrderSerializer, OrderCreateSerializer, OrderItemSerializer
+from .selectors import (
+    get_all_orders,
+    get_all_order_items,
+    get_order_by_id,
+    check_order_status,
+    get_all_coupons
+)
+from .serializers import (
+    OrderSerializer,
+    OrderCreateSerializer,
+    OrderItemSerializer,
+    OrderListSerializer,
+    CouponSerializer
+)
 from .services import cancel_order
 
 
@@ -23,6 +36,14 @@ class OrderRetrieveAPI(RetrieveAPIView):
         )
 
 
+class UserOrdersListAPI(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderListSerializer
+
+    def get_queryset(self):
+        return self.request.user.orders.all()
+
+
 class OrderCreateAPI(APIView):
     serializer_class = OrderCreateSerializer
     permission_classes = [IsAuthenticated]
@@ -36,7 +57,7 @@ class OrderCreateAPI(APIView):
                 status=status.HTTP_201_CREATED
             )
         return Response(
-            data={'data': {'errors': serializer.errors}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -63,3 +84,8 @@ class OrderItemDeleteAPI(DestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderItemSerializer
     queryset = get_all_order_items()
+
+
+class CouponRetrieveAPI(RetrieveAPIView):
+    serializer_class = CouponSerializer
+    queryset = get_all_coupons()
