@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from gse.products.serializers import ProductListSerializer
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Coupon
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -71,3 +71,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         order.save()
 
         return order
+
+
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = '__all__'

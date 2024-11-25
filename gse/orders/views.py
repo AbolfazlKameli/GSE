@@ -4,12 +4,24 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from gse.utils.format_errors import format_errors
 from .choices import ORDER_STATUS_PENDING
 from .models import Order
-from .selectors import get_all_orders, get_all_order_items, get_order_by_id, check_order_status
-from .serializers import OrderSerializer, OrderCreateSerializer, OrderItemSerializer, OrderListSerializer
+from .selectors import (
+    get_all_orders,
+    get_all_order_items,
+    get_order_by_id,
+    check_order_status,
+    get_all_coupons
+)
+from .serializers import (
+    OrderSerializer,
+    OrderCreateSerializer,
+    OrderItemSerializer,
+    OrderListSerializer,
+    CouponSerializer
+)
 from .services import cancel_order
-from ..utils.format_errors import format_errors
 
 
 class OrderRetrieveAPI(RetrieveAPIView):
@@ -72,3 +84,8 @@ class OrderItemDeleteAPI(DestroyAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderItemSerializer
     queryset = get_all_order_items()
+
+
+class CouponRetrieveAPI(RetrieveAPIView):
+    serializer_class = CouponSerializer
+    queryset = get_all_coupons()
