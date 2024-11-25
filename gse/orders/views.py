@@ -40,6 +40,7 @@ class OrderRetrieveAPI(RetrieveAPIView):
 class UserOrdersListAPI(ListAPIView):
     permission_classes = [IsAdminOrOwner]
     serializer_class = OrderListSerializer
+    filterset_fields = ['status']
 
     def get_queryset(self):
         return self.request.user.orders.all()
