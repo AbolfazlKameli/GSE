@@ -1,4 +1,4 @@
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Coupon
 
 
 def get_all_orders() -> list[Order]:
@@ -15,3 +15,7 @@ def get_order_by_id(order_id: int) -> Order | None:
 
 def check_order_status(order: Order, statuses: list) -> bool:
     return order.status in statuses
+
+
+def get_all_coupons() -> list[Coupon]:
+    return Coupon.objects.all()
