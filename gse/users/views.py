@@ -59,7 +59,7 @@ class UsersListAPI(ListAPIView):
     Returns list of users.\n
     allowed methods: GET.
     """
-    permission_classes = [IsAdminUser, ]
+    permission_classes = [IsAdminUser]
     queryset = User.objects.all().select_related('profile', 'address')
     serializer_class = serializers.UserSerializer
     filterset_fields = ['is_active', 'is_superuser', 'role']
@@ -73,7 +73,7 @@ class UserRegisterAPI(CreateAPIView):
     """
     model = User
     serializer_class = serializers.UserRegisterSerializer
-    permission_classes = [permissions.NotAuthenticated, ]
+    permission_classes = [permissions.NotAuthenticated]
     throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={201: ResponseSerializer})
@@ -102,7 +102,7 @@ class UserRegisterVerifyAPI(APIView):
     Verification view for registration.\n
     allowed methods: GET.
     """
-    permission_classes = [permissions.NotAuthenticated, ]
+    permission_classes = [permissions.NotAuthenticated]
     http_method_names = ['post', 'head', 'options']
     serializer_class = serializers.UserRegisterVerifySerializer
     throttle_classes = [FiveRequestPerHourThrottle]
@@ -140,7 +140,7 @@ class ResendVerificationEmailAPI(APIView):
     Generates a new token and sends it via email.
     Allowed methods: POST.
     """
-    permission_classes = [permissions.NotAuthenticated, ]
+    permission_classes = [permissions.NotAuthenticated]
     serializer_class = serializers.ResendVerificationEmailSerializer
     throttle_classes = [FiveRequestPerHourThrottle]
 
@@ -168,6 +168,7 @@ class GoogleLoginRedirectAPI(APIView):
     """
     This endpoint will redirect the user to the google consent screen.
     """
+    permission_classes = [permissions.NotAuthenticated]
 
     def get(self, request, *args, **kwargs):
         authorization_url, state = get_authorization_url()
@@ -179,8 +180,6 @@ class GoogleLoginApi(ApiErrorsMixin, APIView):
     """
     The endpoint that google redirect the user after successful authentication.
     """
-    permission_classes = ()
-    authentication_classes = ()
     serializer_class = serializers.GoogleLoginSerializer
 
     @extend_schema(
@@ -241,7 +240,7 @@ class ChangePasswordAPI(APIView):
     Changes a user password.\n
     allowed methods: POST.
     """
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [permissions.IsAdminOrOwner]
     serializer_class = serializers.ChangePasswordSerializer
 
     @extend_schema(responses={
@@ -269,7 +268,7 @@ class SetPasswordAPI(APIView):
     set user password for reset_password.\n
     allowed methods: POST.
     """
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
     serializer_class = serializers.SetPasswordSerializer
     throttle_classes = [FiveRequestPerHourThrottle]
 
@@ -306,7 +305,7 @@ class ResetPasswordAPI(APIView):
     reset user passwrd.\n
     allowed methods: POST.
     """
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
     serializer_class = serializers.ResetPasswordSerializer
     throttle_classes = [FiveRequestPerHourThrottle]
 
@@ -345,7 +344,7 @@ class BlockTokenAPI(APIView):
     Allowed methods: POST.
     """
     serializer_class = serializers.TokenSerializer
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
 
     @extend_schema(responses={200: ResponseSerializer})
     def post(self, request):
@@ -371,19 +370,22 @@ class BlockTokenAPI(APIView):
 
 class UserProfileAPI(RetrieveAPIView):
     serializer_class = serializers.UserSerializer
-    lookup_url_kwarg = 'id'
-    lookup_field = 'id'
     queryset = User.objects.filter(is_active=True)
+    permission_classes = [permissions.IsAdminOrOwner]
     http_method_names = ['get', 'options', 'head']
+
+    def get_object(self):
+        return self.request.user
 
 
 class UserProfileUpdateAPI(UpdateAPIView):
     permission_classes = [permissions.IsAdminOrOwner]
-    lookup_field = 'id'
-    lookup_url_kwarg = 'id'
     queryset = User.objects.filter(is_active=True).select_related('profile', 'address')
     serializer_class = serializers.UserUpdateSerializer
     http_method_names = ['patch', 'head', 'options']
+
+    def get_object(self):
+        return self.request.user
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
@@ -416,7 +418,8 @@ class UserProfileUpdateAPI(UpdateAPIView):
 
 class DeleteUserAccountAPI(DestroyAPIView):
     permission_classes = [permissions.IsAdminOrOwner]
-    lookup_field = 'id'
-    lookup_url_kwarg = 'id'
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
+
+    def get_object(self):
+        return self.request.user

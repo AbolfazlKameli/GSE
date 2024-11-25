@@ -18,9 +18,9 @@ password = [
 ]
 
 profile = [
-    path('<int:id>/', views.UserProfileAPI.as_view(), name='user-profile'),
-    path('<int:id>/update/', views.UserProfileUpdateAPI.as_view(), name='update-user-profile'),
-    path('<int:id>/delete/', views.DeleteUserAccountAPI.as_view(), name='update-user-profile'),
+    path('', views.UserProfileAPI.as_view(), name='user-profile'),
+    path('update/', views.UserProfileUpdateAPI.as_view(), name='update-user-profile'),
+    path('delete/', views.DeleteUserAccountAPI.as_view(), name='update-user-profile'),
 ]
 
 urlpatterns = [
