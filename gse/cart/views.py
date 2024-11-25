@@ -1,7 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -34,7 +33,7 @@ class CartRetrieveAPI(RetrieveAPIView):
 
 class CartItemAddAPI(APIView):
     serializer_class = CartItemAddSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrOwner]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):

@@ -1,9 +1,10 @@
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from gse.permissions.permissions import IsAdminOrOwner
 from gse.utils.format_errors import format_errors
 from .choices import ORDER_STATUS_PENDING
 from .models import Order
@@ -37,7 +38,7 @@ class OrderRetrieveAPI(RetrieveAPIView):
 
 
 class UserOrdersListAPI(ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrOwner]
     serializer_class = OrderListSerializer
 
     def get_queryset(self):
@@ -63,7 +64,7 @@ class OrderCreateAPI(APIView):
 
 
 class OrderCancelAPI(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrOwner]
     allowed_statuses = [ORDER_STATUS_PENDING]
 
     def post(self, request, *args, **kwargs):
@@ -81,7 +82,7 @@ class OrderCancelAPI(APIView):
 
 
 class OrderItemDeleteAPI(DestroyAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrOwner]
     serializer_class = OrderItemSerializer
     queryset = get_all_order_items()
 
@@ -89,3 +90,4 @@ class OrderItemDeleteAPI(DestroyAPIView):
 class CouponRetrieveAPI(RetrieveAPIView):
     serializer_class = CouponSerializer
     queryset = get_all_coupons()
+    permission_classes = [IsAdminUser]
