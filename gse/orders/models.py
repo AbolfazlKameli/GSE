@@ -24,6 +24,9 @@ class Order(models.Model):
             item.quantity * item.product.final_price for item in self.items.select_related('product').all()
         ))
 
+    class Meta:
+        ordering = ('-updated_date',)
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
