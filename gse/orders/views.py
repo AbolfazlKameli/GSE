@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView, DestroyAPIView
+from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,8 +7,9 @@ from rest_framework.views import APIView
 from .choices import ORDER_STATUS_PENDING
 from .models import Order
 from .selectors import get_all_orders, get_all_order_items, get_order_by_id, check_order_status
-from .serializers import OrderSerializer, OrderCreateSerializer, OrderItemSerializer
+from .serializers import OrderSerializer, OrderCreateSerializer, OrderItemSerializer, OrderListSerializer
 from .services import cancel_order
+from ..utils.format_errors import format_errors
 
 
 class OrderRetrieveAPI(RetrieveAPIView):
@@ -21,6 +22,14 @@ class OrderRetrieveAPI(RetrieveAPIView):
             data={'data': response.data},
             status=status.HTTP_200_OK
         )
+
+
+class UserOrdersListAPI(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderListSerializer
+
+    def get_queryset(self):
+        return self.request.user.orders.all()
 
 
 class OrderCreateAPI(APIView):
@@ -36,7 +45,7 @@ class OrderCreateAPI(APIView):
                 status=status.HTTP_201_CREATED
             )
         return Response(
-            data={'data': {'errors': serializer.errors}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
