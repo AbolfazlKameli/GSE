@@ -54,7 +54,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if not bool(items):
             raise serializers.ValidationError({'items': 'هیچ محصولی در دیتای اسالی وجود ندارد.'})
 
-        for item in attrs.get('items'):
+        for item in items:
             cart_item = request.user.cart.items.filter(product=item.get('product')).exists()
             if not cart_item:
                 raise serializers.ValidationError(

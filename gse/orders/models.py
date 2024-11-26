@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
 
@@ -39,7 +40,12 @@ class OrderItem(models.Model):
     def total_price(self):
         return self.quantity * self.product.final_price
 
+    def clean(self):
+        if self.quantity > self.product.quantity:
+            raise ValidationError('این تعداد از این محصول در انبار موجود نمیباشد.')
+
     def save(self, *args, **kwargs):
+        self.clean()
         if self.quantity == 0:
             self.delete()
         else:
