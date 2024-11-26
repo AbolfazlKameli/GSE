@@ -104,3 +104,22 @@ class CouponRetrieveAPI(RetrieveAPIView):
     serializer_class = CouponSerializer
     queryset = get_all_coupons()
     permission_classes = [IsAdminUser]
+
+
+class CouponCreateAPI(APIView):
+    serializer_class = CouponSerializer
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            print(serializer.validated_data)
+            serializer.save()
+            return Response(
+                data={'data': {'messages': 'کد تخفیف با موفقیت ثبت شد.'}},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
