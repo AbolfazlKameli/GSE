@@ -1,6 +1,9 @@
+from datetime import datetime
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
+from pytz import timezone
 
 from gse.products.models import Product
 from gse.users.models import User
@@ -60,3 +63,9 @@ class Coupon(models.Model):
     is_usable = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        now = datetime.now(tz=timezone('Asia/Tehran'))
+        if self.expiration_date < now:
+            self.is_usable = False
+        super().save(*args, **kwargs)
