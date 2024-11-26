@@ -9,12 +9,12 @@ from gse.permissions.permissions import IsAdminOrOwner
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .choices import ORDER_STATUS_PENDING
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Coupon
 from .selectors import (
     get_all_orders,
     get_order_by_id,
     check_order_status,
-    get_all_coupons
+    get_all_coupons, get_coupon_by_id
 )
 from .serializers import (
     OrderSerializer,
@@ -113,11 +113,31 @@ class CouponCreateAPI(APIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            print(serializer.validated_data)
             serializer.save()
             return Response(
                 data={'data': {'messages': 'کد تخفیف با موفقیت ثبت شد.'}},
                 status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class CouponUpdateAPI(APIView):
+    serializer_class = CouponSerializer
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, *args, **kwargs):
+        coupon_object: Coupon | None = get_coupon_by_id(coupon_id=kwargs.get('pk'))
+        if coupon_object is None:
+            raise Http404('کد تخفیف با این مشخصات یافت نشد.')
+        serializer = self.serializer_class(data=request.data, instance=coupon_object, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'کد تخفیف با موفقیت ویرایش شد.'}},
+                status=status.HTTP_200_OK
             )
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
