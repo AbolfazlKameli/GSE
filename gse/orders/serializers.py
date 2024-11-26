@@ -80,4 +80,9 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 class CouponSerializer(serializers.ModelSerializer):
     class Meta:
         model = Coupon
-        fields = '__all__'
+        fields = ('code', 'discount_percent', 'max_usage_limit', 'expiration_date', 'is_usable')
+        extra_kwargs = {
+            'discount_percent': {'required': True},
+            'max_usage_limit': {'required': True},
+            'is_usable': {'required': True}
+        }
