@@ -19,3 +19,7 @@ def check_order_status(order: Order, statuses: list) -> bool:
 
 def get_all_coupons() -> list[Coupon]:
     return Coupon.objects.all()
+
+
+def get_coupon_by_id(coupon_id: int) -> Coupon | None:
+    return Coupon.objects.filter(id=coupon_id).first()
