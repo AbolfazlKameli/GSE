@@ -55,10 +55,14 @@ class OrderCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'items': 'هیچ محصولی در دیتای اسالی وجود ندارد.'})
 
         for item in items:
-            cart_item = request.user.cart.items.filter(product=item.get('product')).exists()
-            if not cart_item:
+            cart_item = request.user.cart.items.filter(product=item.get('product'))
+            if not cart_item.exists():
                 raise serializers.ValidationError(
                     {'product': 'تنها محصولات ثبت شده در سبد خرید به سفارش اضافه میشوند.'}
+                )
+            if item.get('quantity') != cart_item.first().quantity:
+                raise serializers.ValidationError(
+                    {'quantity': 'تعداد باید با تعداد ثبت شده در سبد خرید یکسان باشد.'}
                 )
         return attrs
 
