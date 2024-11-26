@@ -143,3 +143,9 @@ class CouponUpdateAPI(APIView):
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class CouponDeleteAPI(DestroyAPIView):
+    serializer_class = CouponSerializer
+    permission_classes = [IsAdminUser]
+    queryset = get_all_coupons()
