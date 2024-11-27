@@ -14,14 +14,16 @@ from .selectors import (
     get_all_orders,
     get_order_by_id,
     check_order_status,
-    get_all_coupons, get_coupon_by_id
+    get_all_coupons,
+    get_coupon_by_id
 )
 from .serializers import (
     OrderSerializer,
     OrderCreateSerializer,
     OrderItemSerializer,
     OrderListSerializer,
-    CouponSerializer
+    CouponSerializer,
+    CouponApplySerializer
 )
 from .services import cancel_order
 
@@ -149,3 +151,21 @@ class CouponDeleteAPI(DestroyAPIView):
     serializer_class = CouponSerializer
     permission_classes = [IsAdminUser]
     queryset = get_all_coupons()
+
+
+class CouponApplyAPI(APIView):
+    serializer_class = CouponApplySerializer
+    permission_classes = [IsAdminOrOwner]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'کد تخفیف با موفقیت روی سفارش اعمال شد.'}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'error': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
