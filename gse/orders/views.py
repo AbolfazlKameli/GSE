@@ -23,7 +23,8 @@ from .serializers import (
     OrderItemSerializer,
     OrderListSerializer,
     CouponSerializer,
-    CouponApplySerializer
+    CouponApplySerializer,
+    CouponDiscardSerializer
 )
 from .services import cancel_order
 
@@ -167,5 +168,23 @@ class CouponApplyAPI(APIView):
             )
         return Response(
             data={'data': {'error': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class CouponDiscardAPI(APIView):
+    serializer_class = CouponDiscardSerializer
+    permission_classes = [IsAdminOrOwner]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'کد تخفیف غیرفعال شد.'}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
