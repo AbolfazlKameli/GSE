@@ -19,11 +19,25 @@ def apply_coupon(order: Order, coupon: Coupon) -> Order | None:
     if coupon.expiration_date < now:
         return None
 
-    order.discount_percent = order.discount_percent + coupon.discount_percent
+    order.discount_percent += coupon.discount_percent
     order.coupon_applied = True
     order.full_clean()
     order.save()
     coupon.max_usage_limit -= 1
+    coupon.full_clean()
+    coupon.save()
+
+    return order
+
+
+@transaction.atomic()
+def discard_coupon(order: Order, coupon: Coupon) -> Order | None:
+    order.discount_percent -= coupon.discount_percent
+    order.coupon_applied = False
+    order.full_clean()
+    order.save()
+    coupon.max_usage_limit += 1
+    coupon.full_clean()
     coupon.save()
 
     return order
