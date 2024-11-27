@@ -1,9 +1,6 @@
-from datetime import datetime
-
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
-from pytz import timezone
 
 from gse.products.models import Product
 from gse.users.models import User
@@ -19,6 +16,7 @@ class Order(models.Model):
         max_length=10
     )
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
+    coupon_applied = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
