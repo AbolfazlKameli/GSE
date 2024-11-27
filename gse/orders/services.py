@@ -20,7 +20,7 @@ def apply_coupon(order: Order, coupon: Coupon) -> Order | None:
         return None
 
     order.discount_percent += coupon.discount_percent
-    order.coupon_applied = True
+    order.coupon = coupon
     order.full_clean()
     order.save()
     coupon.max_usage_limit -= 1
@@ -33,7 +33,7 @@ def apply_coupon(order: Order, coupon: Coupon) -> Order | None:
 @transaction.atomic()
 def discard_coupon(order: Order, coupon: Coupon) -> Order | None:
     order.discount_percent -= coupon.discount_percent
-    order.coupon_applied = False
+    order.coupon = None
     order.full_clean()
     order.save()
     coupon.max_usage_limit += 1

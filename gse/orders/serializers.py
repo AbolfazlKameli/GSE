@@ -19,9 +19,20 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = ('code', 'discount_percent', 'max_usage_limit', 'expiration_date')
+        extra_kwargs = {
+            'discount_percent': {'required': True},
+            'max_usage_limit': {'required': True},
+        }
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
-    total_price = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField(read_only=True)
+    coupon = CouponSerializer(read_only=True)
 
     def get_total_price(self, obj):
         return obj.total_price
@@ -80,16 +91,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return order
 
 
-class CouponSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Coupon
-        fields = ('code', 'discount_percent', 'max_usage_limit', 'expiration_date')
-        extra_kwargs = {
-            'discount_percent': {'required': True},
-            'max_usage_limit': {'required': True},
-        }
-
-
 class CouponApplySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=50, required=True, write_only=True)
     order_id = serializers.IntegerField(required=True, write_only=True)
@@ -101,7 +102,7 @@ class CouponApplySerializer(serializers.Serializer):
         order: Order | None = get_order_by_id(order_id=order_id)
         if order is None:
             raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
-        if order.coupon_applied:
+        if order.coupon is not None:
             raise serializers.ValidationError({'order': 'نمیتوان دو کد تخفیف برای یک سفارش اعمال کرد.'})
 
         coupon_obj: Coupon | None = get_usable_coupon_by_code(coupon_code=code)
@@ -131,7 +132,7 @@ class CouponDiscardSerializer(serializers.Serializer):
         order: Order | None = get_order_by_id(order_id=order_id)
         if order is None:
             raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
-        if not order.coupon_applied:
+        if order.coupon is None:
             raise serializers.ValidationError({'order': 'کد تخفیفی روی این سفارش اعمال نشده.'})
 
         coupon_obj: Coupon | None = get_usable_coupon_by_code(coupon_code=code)
