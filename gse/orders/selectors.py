@@ -29,6 +29,10 @@ def get_coupon_by_id(coupon_id: int) -> Coupon | None:
     return Coupon.objects.filter(id=coupon_id).first()
 
 
+def get_coupon_by_code(code: str) -> Coupon | None:
+    return Coupon.objects.filter(code__exact=code).first()
+
+
 def get_usable_coupon_by_code(coupon_code: str) -> Coupon | None:
     now = datetime.now(tz=timezone('Asia/Tehran'))
     return Coupon.objects.filter(code__exact=coupon_code, expiration_date__gt=now).first()
