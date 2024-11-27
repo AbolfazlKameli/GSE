@@ -16,7 +16,7 @@ class Order(models.Model):
         max_length=10
     )
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
-    coupon_applied = models.BooleanField(default=False)
+    coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, related_name='order', blank=True, null=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
