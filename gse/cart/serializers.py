@@ -51,7 +51,7 @@ class CartItemAddSerializer(serializers.ModelSerializer):
         if not product.available:
             raise serializers.ValidationError({'product': 'محصول موجود نمیباشد.'})
 
-        if quantity > product.quantity:
+        if quantity > product.quantity or (not quantity > 0):
             raise serializers.ValidationError({'quantity': 'این تعداد از این محصول در انبار موجود نمیباشد.'})
 
         item_obj = get_cart_item_by_product_id(product_id=product.id, owner_id=request.user.id)
@@ -63,10 +63,10 @@ class CartItemAddSerializer(serializers.ModelSerializer):
                     {'quantity': 'در یک سبد خرید تعداد محصولات نمیتواند بیشتر از ۱۰۰ باشد.'}
                 )
 
-            if product.quantity <= item_obj.quantity:
+            if product.quantity < item_obj.quantity or (not item_obj.quantity > 0):
                 raise serializers.ValidationError({'quantity': 'این تعداد از این محصول در انبار موجود نمیباشد.'})
 
-            if item_obj.quantity >= 100:
+            if item_obj.quantity > 100:
                 raise serializers.ValidationError({'quantity': 'شما نمیتوانید تعدادی بیشتر از ۱۰۰ انتخاب کنید.'})
 
         return attrs
