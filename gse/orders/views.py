@@ -9,19 +9,22 @@ from gse.permissions.permissions import IsAdminOrOwner
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .choices import ORDER_STATUS_PENDING
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Coupon
 from .selectors import (
     get_all_orders,
     get_order_by_id,
     check_order_status,
-    get_all_coupons
+    get_all_coupons,
+    get_coupon_by_id
 )
 from .serializers import (
     OrderSerializer,
     OrderCreateSerializer,
     OrderItemSerializer,
     OrderListSerializer,
-    CouponSerializer
+    CouponSerializer,
+    CouponApplySerializer,
+    CouponDiscardSerializer
 )
 from .services import cancel_order
 
@@ -99,8 +102,99 @@ class OrderItemDeleteAPI(DestroyAPIView):
 
         return item
 
+    def destroy(self, request, *args, **kwargs):
+        super().destroy(request, *args, **kwargs)
+        order: Order | None = get_order_by_id(kwargs.get('order_id'))
+        if order is None or not check_order_status(order, self.allowed_statuses):
+            raise Http404({'data': {'errors': 'سفارش درحال پردازشی با این مشخصات پیدا نشد.'}})
+        order.remove_if_no_item()
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
 
 class CouponRetrieveAPI(RetrieveAPIView):
     serializer_class = CouponSerializer
     queryset = get_all_coupons()
     permission_classes = [IsAdminUser]
+
+
+class CouponCreateAPI(APIView):
+    serializer_class = CouponSerializer
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'messages': 'کد تخفیف با موفقیت ثبت شد.'}},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class CouponUpdateAPI(APIView):
+    serializer_class = CouponSerializer
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, *args, **kwargs):
+        coupon_object: Coupon | None = get_coupon_by_id(coupon_id=kwargs.get('pk'))
+        if coupon_object is None:
+            raise Http404('کد تخفیف با این مشخصات یافت نشد.')
+        serializer = self.serializer_class(data=request.data, instance=coupon_object, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'کد تخفیف با موفقیت ویرایش شد.'}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class CouponDeleteAPI(DestroyAPIView):
+    serializer_class = CouponSerializer
+    permission_classes = [IsAdminUser]
+    queryset = get_all_coupons()
+
+
+class CouponApplyAPI(APIView):
+    serializer_class = CouponApplySerializer
+    permission_classes = [IsAdminOrOwner]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'کد تخفیف با موفقیت روی سفارش اعمال شد.'}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'error': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class CouponDiscardAPI(APIView):
+    serializer_class = CouponDiscardSerializer
+    permission_classes = [IsAdminOrOwner]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'کد تخفیف غیرفعال شد.'}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )

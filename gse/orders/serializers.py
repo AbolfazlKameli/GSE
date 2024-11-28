@@ -1,7 +1,10 @@
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
 from gse.products.serializers import ProductListSerializer
 from .models import Order, OrderItem, Coupon
+from .selectors import get_usable_coupon_by_code, get_order_by_id, get_coupon_by_code
+from .services import apply_coupon, discard_coupon
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -16,9 +19,20 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = ('code', 'discount_percent', 'max_usage_limit', 'expiration_date')
+        extra_kwargs = {
+            'discount_percent': {'required': True},
+            'max_usage_limit': {'required': True},
+        }
+
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
-    total_price = serializers.SerializerMethodField()
+    total_price = serializers.SerializerMethodField(read_only=True)
+    coupon = CouponSerializer(read_only=True)
 
     def get_total_price(self, obj):
         return obj.total_price
@@ -29,9 +43,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(serializers.ModelSerializer):
+    coupon = CouponSerializer(read_only=True)
+
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ('id', 'status', 'discount_percent', 'created_date', 'updated_date', 'owner', 'coupon')
 
 
 class OrderItemCreateSerializer(serializers.ModelSerializer):
@@ -54,11 +70,15 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if not bool(items):
             raise serializers.ValidationError({'items': 'هیچ محصولی در دیتای اسالی وجود ندارد.'})
 
-        for item in attrs.get('items'):
-            cart_item = request.user.cart.items.filter(product=item.get('product')).exists()
-            if not cart_item:
+        for item in items:
+            cart_item = request.user.cart.items.filter(product=item.get('product'))
+            if not cart_item.exists():
                 raise serializers.ValidationError(
                     {'product': 'تنها محصولات ثبت شده در سبد خرید به سفارش اضافه میشوند.'}
+                )
+            if item.get('quantity') != cart_item.first().quantity:
+                raise serializers.ValidationError(
+                    {'quantity': 'تعداد باید با تعداد ثبت شده در سبد خرید یکسان باشد.'}
                 )
         return attrs
 
@@ -73,7 +93,62 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         return order
 
 
-class CouponSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Coupon
-        fields = '__all__'
+class CouponApplySerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=50, required=True, write_only=True)
+    order_id = serializers.IntegerField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        code = attrs.get('code')
+        order_id = attrs.get('order_id')
+
+        order: Order | None = get_order_by_id(order_id=order_id)
+        if order is None:
+            raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
+        if order.coupon is not None:
+            raise serializers.ValidationError({'order': 'نمیتوان دو کد تخفیف برای یک سفارش اعمال کرد.'})
+
+        coupon_obj: Coupon | None = get_usable_coupon_by_code(coupon_code=code)
+        if coupon_obj is None:
+            raise serializers.ValidationError({'code': 'این کد منقضی یا نامعتبر است.'})
+
+        attrs['order'] = order
+        return attrs
+
+    def save(self, **kwargs):
+        coupon: Coupon | None = get_usable_coupon_by_code(coupon_code=self.validated_data.get('code'))
+        order: Order = self.validated_data.get('order')
+        try:
+            apply_coupon(order, coupon)
+        except ValidationError:
+            raise serializers.ValidationError({'data': {'errors': {'order': 'درصد تخفیف نمیتواند بیشتر از ۱۰۰ باشد.'}}})
+
+
+class CouponDiscardSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=50, required=True, write_only=True)
+    order_id = serializers.IntegerField(required=True, write_only=True)
+
+    def validate(self, attrs):
+        code = attrs.get('code')
+        order_id = attrs.get('order_id')
+
+        order: Order | None = get_order_by_id(order_id=order_id)
+        if order is None:
+            raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
+        if order.coupon is None:
+            raise serializers.ValidationError({'order': 'کد تخفیفی روی این سفارش اعمال نشده.'})
+
+        coupon_obj: Coupon | None = get_coupon_by_code(code=code)
+        if coupon_obj is None:
+            raise serializers.ValidationError({'code': 'عملیات با خطا مواجه شد. دوباره امتحان کنید.'})
+
+        attrs['order'] = order
+        return attrs
+
+    def save(self, *args, **kwargs):
+        coupon: Coupon | None = get_coupon_by_code(code=self.validated_data.get('code'))
+        order: Order = self.validated_data.get('order')
+
+        try:
+            discard_coupon(order, coupon)
+        except Exception:
+            raise serializers.ValidationError({'data': {'errors': {'order': 'عملیات با شکست مواجه شد.'}}})
