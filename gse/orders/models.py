@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
@@ -27,9 +29,13 @@ class Order(models.Model):
 
     @property
     def total_price(self):
-        return round(sum(
-            item.total_price for item in self.items.all()
-        ))
+        if self.discount_percent > 0:
+            price = round(sum(item.total_price for item in self.items.all()))
+            discount_amount = price * Decimal(self.discount_percent / 100)
+            discounted_amount = price - discount_amount
+            return discounted_amount
+        else:
+            return round(sum(item.total_price for item in self.items.all()))
 
     class Meta:
         ordering = ('-updated_date',)
