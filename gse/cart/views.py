@@ -16,6 +16,9 @@ from .serializers import (
 
 
 class CartRetrieveAPI(RetrieveAPIView):
+    """
+    API for retrieving the authenticated user's cart details, accessible only to the cart owner or an admin or support.
+    """
     serializer_class = CartSerializer
     queryset = get_all_carts()
     permission_classes = [IsAdminOrOwner]
@@ -32,6 +35,9 @@ class CartRetrieveAPI(RetrieveAPIView):
 
 
 class CartItemAddAPI(GenericAPIView):
+    """
+    API for adding an item to the authenticated user's cart, accessible only to the cart owner or an admin or support.
+    """
     serializer_class = CartItemAddSerializer
     permission_classes = [IsAdminOrOwner]
 
@@ -51,6 +57,10 @@ class CartItemAddAPI(GenericAPIView):
 
 
 class CartItemDeleteAPI(DestroyAPIView):
+    """
+    API for deleting an item from the authenticated user's cart,
+    accessible only to the cart owner or an admin or support.
+    """
     serializer_class = CartItemSerializer
     permission_classes = [IsAdminOrOwner]
     queryset = get_all_cart_items()

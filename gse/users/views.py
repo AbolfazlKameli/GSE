@@ -43,6 +43,9 @@ from .throttle import FiveRequestPerHourThrottle
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom API for obtaining JWT tokens, with a limit of five requests per hour for each IP.
+    """
     serializer_class = serializers.MyTokenObtainPairSerializer
     throttle_classes = [FiveRequestPerHourThrottle]
 
@@ -69,8 +72,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class UsersListAPI(ListAPIView):
     """
-    Returns list of users.\n
-    allowed methods: GET.
+    API for listing all users, accessible only to admin users.
     """
     permission_classes = [IsAdminUser]
     queryset = User.objects.all().select_related('profile', 'address')
@@ -81,8 +83,8 @@ class UsersListAPI(ListAPIView):
 
 class UserRegisterAPI(CreateAPIView):
     """
-    Registers a User.\n
-    allowed methods: POST.
+    API for user registration, accessible only to non-authenticated users,
+    with a limit of five requests per hour for each IP.
     """
     model = User
     serializer_class = serializers.UserRegisterSerializer
@@ -112,8 +114,8 @@ class UserRegisterAPI(CreateAPIView):
 
 class UserRegisterVerifyAPI(GenericAPIView):
     """
-    Verification view for registration.\n
-    allowed methods: GET.
+    API for verifying user registration, accessible only to non-authenticated users,
+    with a limit of five requests per hour for each IP.
     """
     permission_classes = [permissions.NotAuthenticated]
     http_method_names = ['post', 'head', 'options']
@@ -150,8 +152,8 @@ class UserRegisterVerifyAPI(GenericAPIView):
 
 class ResendVerificationEmailAPI(GenericAPIView):
     """
-    Generates a new token and sends it via email.
-    Allowed methods: POST.
+    API for resending a verification email, accessible only to non-authenticated users,
+    with a limit of five requests per hour for each IP.
     """
     permission_classes = [permissions.NotAuthenticated]
     serializer_class = serializers.ResendVerificationEmailSerializer
@@ -179,7 +181,8 @@ class ResendVerificationEmailAPI(GenericAPIView):
 
 class GoogleLoginRedirectAPI(GenericAPIView):
     """
-    This endpoint will redirect the user to the google consent screen.
+    API for redirecting the user to the Google consent screen for authentication,
+    accessible only to non-authenticated users.
     """
     permission_classes = [permissions.NotAuthenticated]
 
@@ -191,7 +194,8 @@ class GoogleLoginRedirectAPI(GenericAPIView):
 
 class GoogleLoginApi(ApiErrorsMixin, GenericAPIView):
     """
-    The endpoint that google redirect the user after successful authentication.
+    API for handling the Google OAuth2.0 callback after successful authentication,
+    accessible for authenticated or new users.
     """
     serializer_class = serializers.GoogleLoginSerializer
 
@@ -250,8 +254,7 @@ class GoogleLoginApi(ApiErrorsMixin, GenericAPIView):
 
 class ChangePasswordAPI(GenericAPIView):
     """
-    Changes a user password.\n
-    allowed methods: POST.
+    API for changing a user's password, accessible only to the user or an admin or support.
     """
     permission_classes = [permissions.IsAdminOrOwner]
     serializer_class = serializers.ChangePasswordSerializer
@@ -278,8 +281,7 @@ class ChangePasswordAPI(GenericAPIView):
 
 class SetPasswordAPI(GenericAPIView):
     """
-    set user password for reset_password.\n
-    allowed methods: POST.
+    API for setting a user's password during the reset password process, accessible to all users.
     """
     permission_classes = [AllowAny]
     serializer_class = serializers.SetPasswordSerializer
@@ -315,8 +317,7 @@ class SetPasswordAPI(GenericAPIView):
 
 class ResetPasswordAPI(GenericAPIView):
     """
-    reset user passwrd.\n
-    allowed methods: POST.
+    API for initiating the password reset process by sending a reset link to the user's email, accessible to all users.
     """
     permission_classes = [AllowAny]
     serializer_class = serializers.ResetPasswordSerializer
@@ -353,8 +354,7 @@ class ResetPasswordAPI(GenericAPIView):
 
 class BlockTokenAPI(GenericAPIView):
     """
-    Blocks a specified refresh token.
-    Allowed methods: POST.
+    API for blacklisting a specified refresh token, making it invalid for future use. Accessible to all users.
     """
     serializer_class = serializers.TokenSerializer
     permission_classes = [AllowAny]
@@ -382,6 +382,10 @@ class BlockTokenAPI(GenericAPIView):
 
 
 class UserProfileAPI(RetrieveAPIView):
+    """
+    API for retrieving the authenticated user's profile information.
+    Accessible to admins or the user themselves or support.
+    """
     serializer_class = serializers.UserSerializer
     queryset = User.objects.filter(is_active=True)
     permission_classes = [permissions.IsAdminOrOwner]
@@ -392,6 +396,11 @@ class UserProfileAPI(RetrieveAPIView):
 
 
 class UserProfileUpdateAPI(UpdateAPIView):
+    """
+    API for updating the authenticated user's profile.
+    Includes support for updating email with re-verification if changed.
+    Accessible to admins or the user themselves or support.
+    """
     permission_classes = [permissions.IsAdminOrOwner]
     queryset = User.objects.filter(is_active=True).select_related('profile', 'address')
     serializer_class = serializers.UserUpdateSerializer
@@ -430,6 +439,9 @@ class UserProfileUpdateAPI(UpdateAPIView):
 
 
 class DeleteUserAccountAPI(DestroyAPIView):
+    """
+    API for deleting the authenticated user's account. Accessible to admins or the user themselves or support.
+    """
     permission_classes = [permissions.IsAdminOrOwner]
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer
