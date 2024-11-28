@@ -102,6 +102,16 @@ class OrderItemDeleteAPI(DestroyAPIView):
 
         return item
 
+    def destroy(self, request, *args, **kwargs):
+        super().destroy(request, *args, **kwargs)
+        order: Order | None = get_order_by_id(kwargs.get('order_id'))
+        if order is None or not check_order_status(order, self.allowed_statuses):
+            raise Http404({'data': {'errors': 'سفارش درحال پردازشی با این مشخصات پیدا نشد.'}})
+        order.remove_if_no_item()
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
 
 class CouponRetrieveAPI(RetrieveAPIView):
     serializer_class = CouponSerializer

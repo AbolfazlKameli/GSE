@@ -20,6 +20,11 @@ class Order(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    def remove_if_no_item(self):
+        items_count = self.items.count()
+        if items_count == 0:
+            self.delete()
+
     @property
     def total_price(self):
         return round(sum(
