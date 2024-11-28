@@ -43,9 +43,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class OrderListSerializer(serializers.ModelSerializer):
+    coupon = CouponSerializer(read_only=True)
+
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ('id', 'status', 'discount_percent', 'created_date', 'updated_date', 'owner', 'coupon')
 
 
 class OrderItemCreateSerializer(serializers.ModelSerializer):
