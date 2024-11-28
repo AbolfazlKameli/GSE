@@ -23,7 +23,7 @@ class Order(models.Model):
     @property
     def total_price(self):
         return round(sum(
-            item.quantity * item.product.final_price for item in self.items.select_related('product').all()
+            item.total_price for item in self.items.all()
         ))
 
     class Meta:
@@ -39,7 +39,7 @@ class OrderItem(models.Model):
 
     @property
     def total_price(self):
-        return self.quantity * self.product.final_price
+        return self.quantity * self.product.get_price()
 
     def clean(self):
         if self.quantity > self.product.quantity:
