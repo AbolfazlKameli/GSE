@@ -10,7 +10,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)
     total_price = serializers.SerializerMethodField()
 
-    def get_total_price(self, obj):
+    def get_total_price(self, obj) -> int:
         return obj.get_total_price()
 
     class Meta:

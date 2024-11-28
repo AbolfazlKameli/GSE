@@ -12,7 +12,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)
     total_price = serializers.SerializerMethodField()
 
-    def get_total_price(self, obj):
+    def get_total_price(self, obj) -> int:
         return obj.total_price
 
     class Meta:
@@ -35,7 +35,7 @@ class OrderSerializer(serializers.ModelSerializer):
     total_price = serializers.SerializerMethodField(read_only=True)
     coupon = CouponSerializer(read_only=True)
 
-    def get_total_price(self, obj):
+    def get_total_price(self, obj) -> int:
         return obj.total_price
 
     class Meta:
