@@ -67,6 +67,7 @@ class OrderCreateAPI(GenericAPIView):
     serializer_class = OrderCreateSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -151,6 +152,7 @@ class CouponCreateAPI(GenericAPIView):
     serializer_class = CouponSerializer
     permission_classes = [IsAdminUser]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -172,6 +174,7 @@ class CouponUpdateAPI(GenericAPIView):
     serializer_class = CouponSerializer
     permission_classes = [IsAdminUser]
 
+    @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
         coupon_object: Coupon | None = get_coupon_by_id(coupon_id=kwargs.get('pk'))
         if coupon_object is None:
@@ -205,6 +208,7 @@ class CouponApplyAPI(GenericAPIView):
     serializer_class = CouponApplySerializer
     permission_classes = [IsAdminOrOwner]
 
+    @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -226,6 +230,7 @@ class CouponDiscardAPI(GenericAPIView):
     serializer_class = CouponDiscardSerializer
     permission_classes = [IsAdminOrOwner]
 
+    @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():

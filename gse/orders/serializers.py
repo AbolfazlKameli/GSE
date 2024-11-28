@@ -62,7 +62,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        exclude = ('owner',)
+        fields = ('items',)
 
     def validate(self, attrs):
         request = self.context.get('request')
