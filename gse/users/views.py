@@ -6,7 +6,7 @@ from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
@@ -42,8 +42,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     @extend_schema(responses={200: TokenResponseSerializer})
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 200:
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
             email = request.data.get("email")
             user = update_last_login(email)
             if user is None:
@@ -51,7 +51,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                     data={'data': {'errors': {'email': 'کاربر با این مشخصات یافت نشد'}}},
                     status=status.HTTP_404_NOT_FOUND
                 )
-        return Response(data={'data': response.data}, status=response.status_code)
+            return Response(
+                data={'data': serializer.validated_data},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class UsersListAPI(ListAPIView):
