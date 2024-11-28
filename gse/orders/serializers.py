@@ -5,7 +5,7 @@ from gse.products.serializers import ProductListSerializer
 from .choices import ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon
 from .selectors import get_usable_coupon_by_code, get_order_by_id, get_coupon_by_code, check_order_status
-from .services import apply_coupon, discard_coupon
+from .services import apply_coupon, discard_coupon, create_order
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -85,12 +85,7 @@ class OrderCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         owner = validated_data.pop('owner')
-
-        order = Order.objects.create(owner=owner)
-        order_items = [OrderItem(order=order, **item) for item in validated_data.get('items')]
-        OrderItem.objects.bulk_create(order_items)
-        order.save()
-
+        order = create_order(owner, validated_data.get('items'))
         return order
 
 
