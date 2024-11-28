@@ -5,10 +5,16 @@ from django.core.cache import cache
 from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.generics import (
+    ListAPIView,
+    CreateAPIView,
+    RetrieveAPIView,
+    UpdateAPIView,
+    DestroyAPIView,
+    GenericAPIView
+)
 from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -104,7 +110,7 @@ class UserRegisterAPI(CreateAPIView):
         )
 
 
-class UserRegisterVerifyAPI(APIView):
+class UserRegisterVerifyAPI(GenericAPIView):
     """
     Verification view for registration.\n
     allowed methods: GET.
@@ -142,7 +148,7 @@ class UserRegisterVerifyAPI(APIView):
         )
 
 
-class ResendVerificationEmailAPI(APIView):
+class ResendVerificationEmailAPI(GenericAPIView):
     """
     Generates a new token and sends it via email.
     Allowed methods: POST.
@@ -171,7 +177,7 @@ class ResendVerificationEmailAPI(APIView):
         )
 
 
-class GoogleLoginRedirectAPI(APIView):
+class GoogleLoginRedirectAPI(GenericAPIView):
     """
     This endpoint will redirect the user to the google consent screen.
     """
@@ -183,7 +189,7 @@ class GoogleLoginRedirectAPI(APIView):
         return redirect(authorization_url)
 
 
-class GoogleLoginApi(ApiErrorsMixin, APIView):
+class GoogleLoginApi(ApiErrorsMixin, GenericAPIView):
     """
     The endpoint that google redirect the user after successful authentication.
     """
@@ -242,7 +248,7 @@ class GoogleLoginApi(ApiErrorsMixin, APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class ChangePasswordAPI(APIView):
+class ChangePasswordAPI(GenericAPIView):
     """
     Changes a user password.\n
     allowed methods: POST.
@@ -270,7 +276,7 @@ class ChangePasswordAPI(APIView):
         )
 
 
-class SetPasswordAPI(APIView):
+class SetPasswordAPI(GenericAPIView):
     """
     set user password for reset_password.\n
     allowed methods: POST.
@@ -307,7 +313,7 @@ class SetPasswordAPI(APIView):
         )
 
 
-class ResetPasswordAPI(APIView):
+class ResetPasswordAPI(GenericAPIView):
     """
     reset user passwrd.\n
     allowed methods: POST.
@@ -345,7 +351,7 @@ class ResetPasswordAPI(APIView):
         )
 
 
-class BlockTokenAPI(APIView):
+class BlockTokenAPI(GenericAPIView):
     """
     Blocks a specified refresh token.
     Allowed methods: POST.

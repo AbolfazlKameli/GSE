@@ -2,7 +2,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrOwner
@@ -31,7 +31,7 @@ class CartRetrieveAPI(RetrieveAPIView):
         )
 
 
-class CartItemAddAPI(APIView):
+class CartItemAddAPI(GenericAPIView):
     serializer_class = CartItemAddSerializer
     permission_classes = [IsAdminOrOwner]
 

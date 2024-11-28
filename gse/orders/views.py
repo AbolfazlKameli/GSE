@@ -1,9 +1,8 @@
 from django.http import Http404
 from rest_framework import status
-from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView
+from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView, GenericAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from gse.permissions.permissions import IsAdminOrOwner
 from gse.utils.db_utils import is_child_of
@@ -50,7 +49,7 @@ class UserOrdersListAPI(ListAPIView):
         return self.request.user.orders.all()
 
 
-class OrderCreateAPI(APIView):
+class OrderCreateAPI(GenericAPIView):
     serializer_class = OrderCreateSerializer
     permission_classes = [IsAuthenticated]
 
@@ -68,7 +67,7 @@ class OrderCreateAPI(APIView):
         )
 
 
-class OrderCancelAPI(APIView):
+class OrderCancelAPI(GenericAPIView):
     permission_classes = [IsAdminOrOwner]
     allowed_statuses = [ORDER_STATUS_PENDING]
 
@@ -119,7 +118,7 @@ class CouponRetrieveAPI(RetrieveAPIView):
     permission_classes = [IsAdminUser]
 
 
-class CouponCreateAPI(APIView):
+class CouponCreateAPI(GenericAPIView):
     serializer_class = CouponSerializer
     permission_classes = [IsAdminUser]
 
@@ -137,7 +136,7 @@ class CouponCreateAPI(APIView):
         )
 
 
-class CouponUpdateAPI(APIView):
+class CouponUpdateAPI(GenericAPIView):
     serializer_class = CouponSerializer
     permission_classes = [IsAdminUser]
 
@@ -164,7 +163,7 @@ class CouponDeleteAPI(DestroyAPIView):
     queryset = get_all_coupons()
 
 
-class CouponApplyAPI(APIView):
+class CouponApplyAPI(GenericAPIView):
     serializer_class = CouponApplySerializer
     permission_classes = [IsAdminOrOwner]
 
@@ -182,7 +181,7 @@ class CouponApplyAPI(APIView):
         )
 
 
-class CouponDiscardAPI(APIView):
+class CouponDiscardAPI(GenericAPIView):
     serializer_class = CouponDiscardSerializer
     permission_classes = [IsAdminOrOwner]
 

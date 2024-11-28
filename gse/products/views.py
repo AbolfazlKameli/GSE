@@ -1,10 +1,10 @@
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.utils.db_utils import is_child_of
@@ -51,7 +51,7 @@ class ProductRetrieveAPI(RetrieveAPIView):
         )
 
 
-class ProductCreateAPI(APIView):
+class ProductCreateAPI(GenericAPIView):
     """
     Creates a Product object.
     """
@@ -73,7 +73,7 @@ class ProductCreateAPI(APIView):
         )
 
 
-class ProductUpdateAPI(APIView):
+class ProductUpdateAPI(GenericAPIView):
     """
     Updates a Product object.
     """
@@ -105,7 +105,7 @@ class ProductDestroyAPI(DestroyAPIView):
     permission_classes = [IsAdminUser]
 
 
-class ProductDetailCreateAPI(APIView):
+class ProductDetailCreateAPI(GenericAPIView):
     """
     Creates a ProductDetail object.
     """
@@ -172,7 +172,7 @@ class ProductDetailDeleteAPI(DestroyAPIView):
         return super().destroy(request, *args, **kwargs)
 
 
-class ProductMediaCreateAPI(APIView):
+class ProductMediaCreateAPI(GenericAPIView):
     """
     Creates a ProductMedia object.
     """
