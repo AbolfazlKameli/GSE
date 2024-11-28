@@ -137,9 +137,9 @@ class CouponDiscardSerializer(serializers.Serializer):
         if order.coupon is None:
             raise serializers.ValidationError({'order': 'کد تخفیفی روی این سفارش اعمال نشده.'})
 
-        coupon_obj: Coupon | None = get_usable_coupon_by_code(coupon_code=code)
+        coupon_obj: Coupon | None = get_coupon_by_code(code=code)
         if coupon_obj is None:
-            raise serializers.ValidationError({'code': 'این کد منقضی یا نامعتبر است.'})
+            raise serializers.ValidationError({'code': 'عملیات با خطا مواجه شد. دوباره امتحان کنید.'})
 
         attrs['order'] = order
         return attrs
