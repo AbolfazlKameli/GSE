@@ -200,7 +200,7 @@ class GoogleLoginApi(ApiErrorsMixin, APIView):
         state = validated_data.get('state')
 
         if error or not code:
-            errors = urlencode({'error': error})
+            errors = urlencode({'errors': error})
             print(error, code)
             return Response({'data': {'errors': format_errors.format_errors(errors)}})
 

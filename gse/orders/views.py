@@ -128,7 +128,7 @@ class CouponCreateAPI(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                data={'data': {'messages': 'کد تخفیف با موفقیت ثبت شد.'}},
+                data={'data': {'message': 'کد تخفیف با موفقیت ثبت شد.'}},
                 status=status.HTTP_201_CREATED
             )
         return Response(
@@ -177,7 +177,7 @@ class CouponApplyAPI(APIView):
                 status=status.HTTP_200_OK
             )
         return Response(
-            data={'data': {'error': format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
