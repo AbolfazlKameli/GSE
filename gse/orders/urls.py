@@ -13,6 +13,6 @@ urlpatterns = [
     path('coupon/add/', views.CouponCreateAPI.as_view(), name='coupon_create'),
     path('coupon/<int:pk>/update/', views.CouponUpdateAPI.as_view(), name='coupon_update'),
     path('coupon/<int:pk>/delete/', views.CouponDeleteAPI.as_view(), name='coupon_delete'),
-    path('<int:pk>/coupon/apply/', views.CouponApplyAPI.as_view(), name='coupon_apply'),
-    path('<int:pk>/coupon/discard/', views.CouponDiscardAPI.as_view(), name='coupon_discard'),
+    path('coupon/apply/', views.CouponApplyAPI.as_view(), name='coupon_apply'),
+    path('coupon/discard/', views.CouponDiscardAPI.as_view(), name='coupon_discard'),
 ]
