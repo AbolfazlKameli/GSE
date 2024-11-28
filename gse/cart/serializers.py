@@ -38,7 +38,10 @@ class CartSerializer(serializers.ModelSerializer):
 class CartItemAddSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
-        exclude = ('cart',)
+        fields = ('quantity', 'product')
+        extra_kwargs = {
+            'quantity': {'required': True}
+        }
 
     def validate(self, attrs):
         product = attrs.get('product')
