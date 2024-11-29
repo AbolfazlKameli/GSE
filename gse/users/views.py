@@ -5,10 +5,16 @@ from django.core.cache import cache
 from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.generics import ListAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.generics import (
+    ListAPIView,
+    CreateAPIView,
+    RetrieveAPIView,
+    UpdateAPIView,
+    DestroyAPIView,
+    GenericAPIView
+)
+from rest_framework.permissions import IsAdminUser, AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -37,13 +43,16 @@ from .throttle import FiveRequestPerHourThrottle
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Custom API for obtaining JWT tokens, with a limit of five requests per hour for each IP.
+    """
     serializer_class = serializers.MyTokenObtainPairSerializer
     throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={200: TokenResponseSerializer})
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 200:
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
             email = request.data.get("email")
             user = update_last_login(email)
             if user is None:
@@ -51,13 +60,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                     data={'data': {'errors': {'email': 'کاربر با این مشخصات یافت نشد'}}},
                     status=status.HTTP_404_NOT_FOUND
                 )
-        return Response(data={'data': response.data}, status=response.status_code)
+            return Response(
+                data={'data': serializer.validated_data},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class UsersListAPI(ListAPIView):
     """
-    Returns list of users.\n
-    allowed methods: GET.
+    API for listing all users, accessible only to admin users.
     """
     permission_classes = [IsAdminUser]
     queryset = User.objects.all().select_related('profile', 'address')
@@ -68,8 +83,8 @@ class UsersListAPI(ListAPIView):
 
 class UserRegisterAPI(CreateAPIView):
     """
-    Registers a User.\n
-    allowed methods: POST.
+    API for user registration, accessible only to non-authenticated users,
+    with a limit of five requests per hour for each IP.
     """
     model = User
     serializer_class = serializers.UserRegisterSerializer
@@ -97,10 +112,10 @@ class UserRegisterAPI(CreateAPIView):
         )
 
 
-class UserRegisterVerifyAPI(APIView):
+class UserRegisterVerifyAPI(GenericAPIView):
     """
-    Verification view for registration.\n
-    allowed methods: GET.
+    API for verifying user registration, accessible only to non-authenticated users,
+    with a limit of five requests per hour for each IP.
     """
     permission_classes = [permissions.NotAuthenticated]
     http_method_names = ['post', 'head', 'options']
@@ -135,10 +150,10 @@ class UserRegisterVerifyAPI(APIView):
         )
 
 
-class ResendVerificationEmailAPI(APIView):
+class ResendVerificationEmailAPI(GenericAPIView):
     """
-    Generates a new token and sends it via email.
-    Allowed methods: POST.
+    API for resending a verification email, accessible only to non-authenticated users,
+    with a limit of five requests per hour for each IP.
     """
     permission_classes = [permissions.NotAuthenticated]
     serializer_class = serializers.ResendVerificationEmailSerializer
@@ -164,9 +179,10 @@ class ResendVerificationEmailAPI(APIView):
         )
 
 
-class GoogleLoginRedirectAPI(APIView):
+class GoogleLoginRedirectAPI(GenericAPIView):
     """
-    This endpoint will redirect the user to the google consent screen.
+    API for redirecting the user to the Google consent screen for authentication,
+    accessible only to non-authenticated users.
     """
     permission_classes = [permissions.NotAuthenticated]
 
@@ -176,9 +192,10 @@ class GoogleLoginRedirectAPI(APIView):
         return redirect(authorization_url)
 
 
-class GoogleLoginApi(ApiErrorsMixin, APIView):
+class GoogleLoginApi(ApiErrorsMixin, GenericAPIView):
     """
-    The endpoint that google redirect the user after successful authentication.
+    API for handling the Google OAuth2.0 callback after successful authentication,
+    accessible for authenticated or new users.
     """
     serializer_class = serializers.GoogleLoginSerializer
 
@@ -200,7 +217,7 @@ class GoogleLoginApi(ApiErrorsMixin, APIView):
         state = validated_data.get('state')
 
         if error or not code:
-            errors = urlencode({'error': error})
+            errors = urlencode({'errors': error})
             print(error, code)
             return Response({'data': {'errors': format_errors.format_errors(errors)}})
 
@@ -235,10 +252,9 @@ class GoogleLoginApi(ApiErrorsMixin, APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class ChangePasswordAPI(APIView):
+class ChangePasswordAPI(GenericAPIView):
     """
-    Changes a user password.\n
-    allowed methods: POST.
+    API for changing a user's password, accessible only to the user or an admin or support.
     """
     permission_classes = [permissions.IsAdminOrOwner]
     serializer_class = serializers.ChangePasswordSerializer
@@ -263,10 +279,9 @@ class ChangePasswordAPI(APIView):
         )
 
 
-class SetPasswordAPI(APIView):
+class SetPasswordAPI(GenericAPIView):
     """
-    set user password for reset_password.\n
-    allowed methods: POST.
+    API for setting a user's password during the reset password process, accessible to all users.
     """
     permission_classes = [AllowAny]
     serializer_class = serializers.SetPasswordSerializer
@@ -300,10 +315,9 @@ class SetPasswordAPI(APIView):
         )
 
 
-class ResetPasswordAPI(APIView):
+class ResetPasswordAPI(GenericAPIView):
     """
-    reset user passwrd.\n
-    allowed methods: POST.
+    API for initiating the password reset process by sending a reset link to the user's email, accessible to all users.
     """
     permission_classes = [AllowAny]
     serializer_class = serializers.ResetPasswordSerializer
@@ -338,10 +352,9 @@ class ResetPasswordAPI(APIView):
         )
 
 
-class BlockTokenAPI(APIView):
+class BlockTokenAPI(GenericAPIView):
     """
-    Blocks a specified refresh token.
-    Allowed methods: POST.
+    API for blacklisting a specified refresh token, making it invalid for future use. Accessible to all users.
     """
     serializer_class = serializers.TokenSerializer
     permission_classes = [AllowAny]
@@ -369,6 +382,10 @@ class BlockTokenAPI(APIView):
 
 
 class UserProfileAPI(RetrieveAPIView):
+    """
+    API for retrieving the authenticated user's profile information.
+    Accessible to admins or the user themselves or support.
+    """
     serializer_class = serializers.UserSerializer
     queryset = User.objects.filter(is_active=True)
     permission_classes = [permissions.IsAdminOrOwner]
@@ -379,6 +396,11 @@ class UserProfileAPI(RetrieveAPIView):
 
 
 class UserProfileUpdateAPI(UpdateAPIView):
+    """
+    API for updating the authenticated user's profile.
+    Includes support for updating email with re-verification if changed.
+    Accessible to admins or the user themselves or support.
+    """
     permission_classes = [permissions.IsAdminOrOwner]
     queryset = User.objects.filter(is_active=True).select_related('profile', 'address')
     serializer_class = serializers.UserUpdateSerializer
@@ -417,6 +439,9 @@ class UserProfileUpdateAPI(UpdateAPIView):
 
 
 class DeleteUserAccountAPI(DestroyAPIView):
+    """
+    API for deleting the authenticated user's account. Accessible to admins or the user themselves or support.
+    """
     permission_classes = [permissions.IsAdminOrOwner]
     queryset = User.objects.filter(is_active=True)
     serializer_class = serializers.UserSerializer

@@ -3,8 +3,43 @@ from datetime import datetime
 from django.db import transaction
 from pytz import timezone
 
+from gse.cart.models import Cart, CartItem
+from gse.products.models import Product
+from gse.users.models import User
 from .choices import ORDER_STATUS_CANCELLED
-from .models import Order, Coupon
+from .models import Order, Coupon, OrderItem
+
+
+@transaction.atomic()
+def create_order(owner: User, items: list[dict[str, int | Product]]) -> Order:
+    cart = Cart.objects.select_related('owner').prefetch_related('items__product').get(owner=owner)
+
+    products_to_update = []
+    cart_items_to_delete = []
+    order_items = []
+
+    for item in items:
+        product = item.get('product')
+        quantity = item.get('quantity')
+
+        product.quantity -= quantity
+        products_to_update.append(product)
+
+        cart_item = cart.items.filter(product=product, quantity=quantity).first()
+        if cart_item:
+            cart_items_to_delete.append(cart_item)
+
+        order_items.append(OrderItem(order=None, product=product, quantity=quantity))
+
+    Product.objects.bulk_update(products_to_update, ['quantity'])
+    CartItem.objects.filter(id__in=[item.id for item in cart_items_to_delete]).delete()
+    order = Order.objects.create(owner=owner)
+
+    for order_item in order_items:
+        order_item.order = order
+    OrderItem.objects.bulk_create(order_items)
+
+    return order
 
 
 def cancel_order(order: Order) -> Order:
