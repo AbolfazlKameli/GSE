@@ -10,7 +10,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     product = ProductListSerializer(read_only=True)
     total_price = serializers.SerializerMethodField()
 
-    def get_total_price(self, obj):
+    def get_total_price(self, obj) -> int:
         return obj.get_total_price()
 
     class Meta:
@@ -38,18 +38,24 @@ class CartSerializer(serializers.ModelSerializer):
 class CartItemAddSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
-        exclude = ('cart',)
+        fields = ('quantity', 'product')
+        extra_kwargs = {
+            'quantity': {'required': True}
+        }
 
     def validate(self, attrs):
         product = attrs.get('product')
         quantity = attrs.get('quantity')
         request = self.context.get('request')
 
-        if quantity > product.quantity:
+        if not product.available:
+            raise serializers.ValidationError({'product': 'محصول موجود نمیباشد.'})
+
+        if quantity > product.quantity or (not quantity > 0):
             raise serializers.ValidationError({'quantity': 'این تعداد از این محصول در انبار موجود نمیباشد.'})
 
         item_obj = get_cart_item_by_product_id(product_id=product.id, owner_id=request.user.id)
-        if item_obj and product.id == item_obj.product.id:
+        if item_obj and (product.id == item_obj.product.id):
             item_obj.quantity += quantity
 
             if not check_cart_total_quantity(item_obj.cart):
@@ -57,10 +63,23 @@ class CartItemAddSerializer(serializers.ModelSerializer):
                     {'quantity': 'در یک سبد خرید تعداد محصولات نمیتواند بیشتر از ۱۰۰ باشد.'}
                 )
 
-            if product.quantity <= item_obj.quantity:
+            if product.quantity < item_obj.quantity or (not item_obj.quantity > 0):
                 raise serializers.ValidationError({'quantity': 'این تعداد از این محصول در انبار موجود نمیباشد.'})
 
-            if item_obj.quantity >= 100:
+            if item_obj.quantity > 100:
                 raise serializers.ValidationError({'quantity': 'شما نمیتوانید تعدادی بیشتر از ۱۰۰ انتخاب کنید.'})
 
         return attrs
+
+    def create(self, validated_data):
+        quantity = validated_data.get('quantity')
+        product = validated_data.get('product')
+        request = self.context.get('request')
+
+        item_obj = get_cart_item_by_product_id(product_id=product.id, owner_id=request.user.id)
+        if item_obj and (product.id == item_obj.product.id):
+            item_obj.quantity += quantity
+            item_obj.save()
+            return item_obj
+
+        return super().create(validated_data)

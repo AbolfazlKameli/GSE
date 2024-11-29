@@ -51,7 +51,8 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'django_filters',
     'rest_framework.authtoken',
-    'sslserver'
+    'sslserver',
+    'django_celery_beat'
 ]
 
 LOCAL_APPS = [

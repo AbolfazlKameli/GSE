@@ -1,10 +1,10 @@
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.utils.db_utils import is_child_of
@@ -28,15 +28,17 @@ from .serializers import (
 
 class ProductsListAPI(ListAPIView):
     """
-    List all Product objects.
+    API for listing all products, with optional filters and search functionality.
     """
     queryset = get_all_products()
     serializer_class = ProductListSerializer
+    filterset_fields = ['available']
+    search_fields = ['title', 'description', 'slug', 'category']
 
 
 class ProductRetrieveAPI(RetrieveAPIView):
     """
-    Retrieves a product object.
+    API for retrieving the details of a specific product.
     """
     queryset = get_all_products()
     serializer_class = ProductDetailsSerializer
@@ -49,9 +51,9 @@ class ProductRetrieveAPI(RetrieveAPIView):
         )
 
 
-class ProductCreateAPI(APIView):
+class ProductCreateAPI(GenericAPIView):
     """
-    Creates a Product object.
+    API for creating a new product, accessible only to admin users.
     """
     serializer_class = ProductOperationsSerializer
     permission_classes = [IsAdminUser]
@@ -71,9 +73,9 @@ class ProductCreateAPI(APIView):
         )
 
 
-class ProductUpdateAPI(APIView):
+class ProductUpdateAPI(GenericAPIView):
     """
-    Updates a Product object.
+    API for updating an existing product, accessible only to admin users.
     """
     serializer_class = ProductUpdateSerializer
     permission_classes = [IsAdminUser]
@@ -96,16 +98,16 @@ class ProductUpdateAPI(APIView):
 
 class ProductDestroyAPI(DestroyAPIView):
     """
-    Deletes a Product object.
+    API for deleting a product, accessible only to admin users.
     """
     serializer_class = ProductOperationsSerializer
     queryset = get_all_products()
     permission_classes = [IsAdminUser]
 
 
-class ProductDetailCreateAPI(APIView):
+class ProductDetailCreateAPI(GenericAPIView):
     """
-    Creates a ProductDetail object.
+    API for creating product details, accessible only to admin users.
     """
     serializer_class = ProductDetailSerializer
     permission_classes = [IsAdminUser]
@@ -128,7 +130,7 @@ class ProductDetailCreateAPI(APIView):
 
 class ProductDetailUpdateAPI(UpdateAPIView):
     """
-    Updates a Detail object.
+    API for updating product details, accessible only to admin users.
     """
     serializer_class = ProductDetailSerializer
     queryset = get_all_details()
@@ -152,7 +154,7 @@ class ProductDetailUpdateAPI(UpdateAPIView):
 
 class ProductDetailDeleteAPI(DestroyAPIView):
     """
-    Deletes a Detail object.
+    API for deleting product details, accessible only to admin users.
     """
     serializer_class = ProductDetailSerializer
     queryset = get_all_details()
@@ -170,9 +172,9 @@ class ProductDetailDeleteAPI(DestroyAPIView):
         return super().destroy(request, *args, **kwargs)
 
 
-class ProductMediaCreateAPI(APIView):
+class ProductMediaCreateAPI(GenericAPIView):
     """
-    Creates a ProductMedia object.
+    API for creating product media, accessible only to admin users.
     """
     serializer_class = ProductMediaSerializer
     permission_classes = [IsAdminUser]
@@ -195,7 +197,7 @@ class ProductMediaCreateAPI(APIView):
 
 class ProductMediaUpdateAPI(UpdateAPIView):
     """
-    Updates a ProductMedia object.
+    API for updating product media, accessible only to admin users.
     """
     serializer_class = ProductMediaSerializer
     queryset = get_all_media()
@@ -219,7 +221,7 @@ class ProductMediaUpdateAPI(UpdateAPIView):
 
 class ProductMediaDeleteAPI(DestroyAPIView):
     """
-    Deletes a ProductMedia object.
+    API for deleting product media, accessible only to admin users.
     """
     serializer_class = ProductMediaSerializer
     queryset = get_all_media()

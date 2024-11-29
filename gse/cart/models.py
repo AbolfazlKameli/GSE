@@ -13,7 +13,7 @@ class Cart(models.Model):
 
     def get_total_price(self):
         return round(sum(
-            item.product.final_price * item.quantity for item in self.items.select_related('product').all()
+            item.get_total_price() for item in self.items.all()
         ))
 
     def get_total_quantity(self):
@@ -31,7 +31,7 @@ class CartItem(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def get_total_price(self):
-        return round(self.quantity * self.product.final_price)
+        return round(self.quantity * self.product.get_price())
 
     def clean(self, *args, **kwargs):
         if self.product.quantity < self.quantity:

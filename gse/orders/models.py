@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.db import models
 
@@ -15,14 +18,24 @@ class Order(models.Model):
         max_length=10
     )
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
+    coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, related_name='order', blank=True, null=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
+    def remove_if_no_item(self):
+        items_count = self.items.count()
+        if items_count == 0:
+            self.delete()
+
     @property
     def total_price(self):
-        return round(sum(
-            item.quantity * item.product.final_price for item in self.items.select_related('product').all()
-        ))
+        if self.discount_percent > 0:
+            price = round(sum(item.total_price for item in self.items.all()))
+            discount_amount = price * Decimal(self.discount_percent / 100)
+            discounted_amount = price - discount_amount
+            return discounted_amount
+        else:
+            return round(sum(item.total_price for item in self.items.all()))
 
     class Meta:
         ordering = ('-updated_date',)
@@ -37,9 +50,14 @@ class OrderItem(models.Model):
 
     @property
     def total_price(self):
-        return self.quantity * self.product.final_price
+        return self.quantity * self.product.get_price()
+
+    def clean(self):
+        if self.quantity > self.product.quantity:
+            raise ValidationError('این تعداد از این محصول در انبار موجود نمیباشد.')
 
     def save(self, *args, **kwargs):
+        self.clean()
         if self.quantity == 0:
             self.delete()
         else:
@@ -51,6 +69,5 @@ class Coupon(models.Model):
     discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
     max_usage_limit = models.PositiveIntegerField(default=100)
     expiration_date = models.DateTimeField()
-    is_usable = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)

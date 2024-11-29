@@ -1,9 +1,8 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrOwner
@@ -17,9 +16,15 @@ from .serializers import (
 
 
 class CartRetrieveAPI(RetrieveAPIView):
+    """
+    API for retrieving the authenticated user's cart details, accessible only to the cart owner or an admin or support.
+    """
     serializer_class = CartSerializer
     queryset = get_all_carts()
     permission_classes = [IsAdminOrOwner]
+
+    def get_object(self):
+        return self.request.user.cart
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -29,9 +34,12 @@ class CartRetrieveAPI(RetrieveAPIView):
         )
 
 
-class CartItemAddAPI(APIView):
+class CartItemAddAPI(GenericAPIView):
+    """
+    API for adding an item to the authenticated user's cart, accessible only to the cart owner or an admin or support.
+    """
     serializer_class = CartItemAddSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrOwner]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -49,6 +57,10 @@ class CartItemAddAPI(APIView):
 
 
 class CartItemDeleteAPI(DestroyAPIView):
+    """
+    API for deleting an item from the authenticated user's cart,
+    accessible only to the cart owner or an admin or support.
+    """
     serializer_class = CartItemSerializer
     permission_classes = [IsAdminOrOwner]
     queryset = get_all_cart_items()
