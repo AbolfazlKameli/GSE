@@ -33,7 +33,7 @@ class Order(models.Model):
             price = round(sum(item.total_price for item in self.items.all()))
             discount_amount = price * Decimal(self.discount_percent / 100)
             discounted_amount = price - discount_amount
-            return discounted_amount
+            return round(discounted_amount)
         else:
             return round(sum(item.total_price for item in self.items.all()))
 
