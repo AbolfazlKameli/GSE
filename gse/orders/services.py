@@ -44,6 +44,9 @@ def create_order(owner: User, items: list[dict[str, int | Product]]) -> Order:
 
 def cancel_order(order: Order) -> Order:
     order.status = ORDER_STATUS_CANCELLED
+    for item in order.items.all():
+        item.product.quantity += item.quantity
+        item.product.save()
     order.save()
     return order
 
