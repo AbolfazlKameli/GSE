@@ -25,9 +25,9 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='!!!SET_DJANGO_SECRET_KEY!!!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 # Application definition
 DJANGO_APPS = [
@@ -61,6 +61,7 @@ LOCAL_APPS = [
     "gse.cart.apps.CartConfig",
     "gse.orders.apps.OrdersConfig",
     "gse.website.apps.WebsiteConfig",
+    "gse.payment.apps.PaymentConfig"
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
