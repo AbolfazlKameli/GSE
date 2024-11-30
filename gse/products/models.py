@@ -8,6 +8,7 @@ from django.db import models
 
 from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .services import slugify_title
+from .validators import VideoDurationValidator
 
 
 class ProductCategory(models.Model):
@@ -100,6 +101,12 @@ class ProductMedia(models.Model):
 
             if not 900 <= h <= 1000:
                 raise ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
+
+        if self.media_type == MEDIA_TYPE_VIDEO:
+            validator = VideoDurationValidator(max_duration=600)
+            validator(self.media_url)
+
+        super().clean()
 
     def save(self, *args, **kwargs):
         self.clean()

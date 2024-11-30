@@ -25,9 +25,9 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='!!!SET_DJANGO_SECRET_KEY!!!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 DJANGO_APPS = [
@@ -59,7 +59,8 @@ LOCAL_APPS = [
     "gse.users.apps.UsersConfig",
     "gse.products.apps.ProductsConfig",
     "gse.cart.apps.CartConfig",
-    "gse.orders.apps.OrdersConfig"
+    "gse.orders.apps.OrdersConfig",
+    "gse.website.apps.WebsiteConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -189,6 +190,7 @@ REST_FRAMEWORK = {
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'gse.utils.paginators.NeatPagination',
+    'EXCEPTION_HANDLER': 'gse.website.exceptions.handle_404',
 }
 
 # Google OAuth2 settings
