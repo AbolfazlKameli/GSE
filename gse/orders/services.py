@@ -42,15 +42,6 @@ def create_order(owner: User, items: list[dict[str, int | Product]]) -> Order:
     return order
 
 
-def cancel_order(order: Order) -> Order:
-    order.status = ORDER_STATUS_CANCELLED
-    for item in order.items.all():
-        item.product.quantity += item.quantity
-        item.product.save()
-    order.save()
-    return order
-
-
 @transaction.atomic()
 def apply_coupon(order: Order, coupon: Coupon) -> Order | None:
     now = datetime.now(tz=timezone('Asia/Tehran'))
@@ -78,4 +69,14 @@ def discard_coupon(order: Order, coupon: Coupon) -> Order | None:
     coupon.full_clean()
     coupon.save()
 
+    return order
+
+
+def cancel_order(order: Order) -> Order:
+    order.status = ORDER_STATUS_CANCELLED
+    for item in order.items.all():
+        item.product.quantity += item.quantity
+        item.product.save()
+    discard_coupon(order=order, coupon=order.coupon)
+    order.save()
     return order
