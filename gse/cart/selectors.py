@@ -13,3 +13,11 @@ def get_cart_item_by_product_id(product_id: int, owner_id: int) -> CartItem | No
     return CartItem.objects.select_related('cart__owner', 'product') \
         .filter(product_id=product_id, cart__owner_id=owner_id) \
         .first()
+
+
+def get_cart_item_by_id(item_id: int) -> CartItem | None:
+    return CartItem.objects.filter(id=item_id).first()
+
+
+def get_cart_by_item_id(item_id: int) -> CartItem | None:
+    return Cart.objects.filter(items__id=item_id).first()
