@@ -5,6 +5,7 @@ from rest_framework import serializers
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .models import Product, ProductMedia, ProductCategory, ProductDetail
 from .selectors import get_primary_image
+from .validators import VideoDurationValidator
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
@@ -43,6 +44,10 @@ class ProductMediaSerializer(serializers.ModelSerializer):
 
         if media_type == MEDIA_TYPE_VIDEO and is_primary:
             raise serializers.ValidationError("ویدیو نمیتواند به عنوان رسانه اصلی استفاده شود.")
+
+        if media_type == MEDIA_TYPE_VIDEO:
+            validator = VideoDurationValidator(max_duration=600)
+            validator(media_url)
 
         return attrs
 
