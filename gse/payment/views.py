@@ -104,3 +104,10 @@ class PaymentReceiptAPI(RetrieveAPIView):
         self.check_object_permissions(self.request, order)
 
         return payment
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        return Response(
+            data={'data': response.data},
+            status=response.status_code
+        )
