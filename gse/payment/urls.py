@@ -4,5 +4,5 @@ from . import views
 
 app_name = 'payment'
 urlpatterns = [
-
+    path('pay/<int:order_id>/', views.ZPPaymentAPI.as_view(), name='ZP_pay'),
 ]
