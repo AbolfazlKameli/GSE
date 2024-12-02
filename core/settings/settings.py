@@ -198,6 +198,21 @@ GOOGLE_OAUTH2_CLIENT_ID = config('GOOGLE_OAUTH2_CLIENT_ID')
 GOOGLE_OAUTH2_CLIENT_SECRET = config('GOOGLE_OAUTH2_CLIENT_SECRET')
 BASE_FRONTEND_URL = config('BASE_FRONTEND_URL')
 
+# ZarinPal
+MERCHANT = config('ZP_MERCHANT', default='00000000-0000-0000-0000-000000000000')
+if DEBUG:
+    sandbox = 'sandbox'
+    api = 'sandbox'
+else:
+    sandbox = 'www'
+    api = 'api'
+
+ZP_API_REQUEST = f"https://{api}.zarinpal.com/pg/v4/payment/request.json"
+ZP_API_VERIFY = f"https://{api}.zarinpal.com/pg/v4/payment/verify.json"
+ZP_API_STARTPAY = f"https://{sandbox}.zarinpal.com/pg/StartPay/"
+DESCRIPTION = "آسانسور گستران شرق"
+CALLBACK_URL = config('ZP_CALLBACK')
+
 from core.configs.celery_configs import *
 from core.configs.drf_spectacular import *
 from core.configs.jwt import *
