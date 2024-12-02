@@ -7,10 +7,10 @@ from .choices import PAYMENT_STATUS_CHOICES, PAYMENT_STATUS_PENDING
 class Payment(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
     authority_id = models.CharField(max_length=250)
-    ref_id = models.CharField(max_length=250)
+    ref_id = models.CharField(max_length=250, blank=True, null=True)
     amount = models.DecimalField(max_digits=15, decimal_places=0)
-    response_json = models.JSONField()
-    response_code = models.IntegerField()
+    response_json = models.JSONField(blank=True, null=True)
+    response_code = models.IntegerField(blank=True, null=True)
     status = models.CharField(
         choices=PAYMENT_STATUS_CHOICES,
         verbose_name='وضعیت پرداخت',
