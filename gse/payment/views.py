@@ -1,12 +1,13 @@
+from django.http import Http404
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
 from gse.orders.choices import ORDER_STATUS_PENDING
 from gse.orders.models import Order
-from gse.orders.selectors import get_pending_orders
+from gse.orders.selectors import get_order_by_id, check_order_status, get_pending_orders
 from gse.permissions.permissions import IsAdminOrOwner, FullCredentialsUser
-from .services import payment_request
+from .services import payment_request, verify
 
 
 class ZPPaymentAPI(GenericAPIView):
@@ -37,5 +38,30 @@ class ZPPaymentAPI(GenericAPIView):
                     }
                 }
             },
+            status=response.get('code')
+        )
+
+
+class ZPVerifyAPI(GenericAPIView):
+    allowed_statuses = [ORDER_STATUS_PENDING]
+
+    def get_object(self):
+        order_id = self.request.query_params.get('order_id')
+        order: Order | None = get_order_by_id(order_id, check_owner=True, owner=self.request.user)
+        if order is None or not check_order_status(order, self.allowed_statuses):
+            raise Http404('سفارش درحال پردازشی با این مشخصات پیدا نشد.')
+        return order
+
+    def get(self, request, *args, **kwargs):
+        order: Order = self.get_object()
+        amount = order.total_price
+        response = verify(request.query_params.get('Status'), request.query_params.get('Authority'), amount, order)
+        if response.get('code') == 200:
+            return Response(
+                data={'data': {'message': response.get('message')}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': response}},
             status=response.get('code')
         )
