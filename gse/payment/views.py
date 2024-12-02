@@ -1,7 +1,7 @@
 from django.http import Http404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -9,6 +9,9 @@ from gse.orders.choices import ORDER_STATUS_PENDING
 from gse.orders.models import Order
 from gse.orders.selectors import get_order_by_id, check_order_status, get_pending_orders
 from gse.permissions.permissions import IsAdminOrOwner, FullCredentialsUser
+from .models import Payment
+from .selectors import get_payment_by_id
+from .serializer import PaymentSerializer
 from .services import payment_request, verify
 
 
@@ -84,3 +87,20 @@ class ZPVerifyAPI(GenericAPIView):
             data={'data': {'errors': response}},
             status=response.get('code')
         )
+
+
+class PaymentReceiptAPI(RetrieveAPIView):
+    permission_classes = [IsAdminOrOwner, FullCredentialsUser]
+    serializer_class = PaymentSerializer
+    lookup_url_kwarg = 'payment_id'
+    lookup_field = 'id'
+
+    def get_object(self):
+        payment: Payment | None = get_payment_by_id(payment_id=self.kwargs.get('payment_id'))
+        if payment is None:
+            raise Http404('تراکنشی با این مشخصات وجود ندارد.')
+        order = payment.order
+
+        self.check_object_permissions(self.request, order)
+
+        return payment
