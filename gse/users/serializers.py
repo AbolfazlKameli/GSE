@@ -7,6 +7,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import User
 from .services import check_otp_code
 from .validators import validate_iranian_phone_number, validate_postal_code
+from ..orders.serializers import OrderListSerializer
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -37,6 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
     phone_number = serializers.CharField(source='profile.phone_number', required=False)
     address = serializers.CharField(source='address.address', required=False)
     postal_code = serializers.CharField(source='address.postal_code', required=False)
+    orders = OrderListSerializer(many=True)
 
     class Meta:
         model = User
@@ -47,7 +49,8 @@ class UserSerializer(serializers.ModelSerializer):
             'groups',
             'user_permissions',
             'is_active',
-            'role'
+            'role',
+            'orders',
         )
 
 
