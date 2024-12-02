@@ -1,6 +1,8 @@
 from django.http import Http404
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from gse.orders.choices import ORDER_STATUS_PENDING
@@ -11,6 +13,9 @@ from .services import payment_request, verify
 
 
 class ZPPaymentAPI(GenericAPIView):
+    """
+    API for pay a pending order, accessible only to the user or admin or support.
+    """
     allowed_statuses = [ORDER_STATUS_PENDING]
     permission_classes = [IsAdminOrOwner, FullCredentialsUser]
     queryset = get_pending_orders()
@@ -43,7 +48,11 @@ class ZPPaymentAPI(GenericAPIView):
 
 
 class ZPVerifyAPI(GenericAPIView):
+    """
+    API for verifying a payment info, accessible only to the user or admin or support.
+    """
     allowed_statuses = [ORDER_STATUS_PENDING]
+    permission_classes = [IsAuthenticated, FullCredentialsUser]
 
     def get_object(self):
         order_id = self.request.query_params.get('order_id')
@@ -52,6 +61,16 @@ class ZPVerifyAPI(GenericAPIView):
             raise Http404('سفارش درحال پردازشی با این مشخصات پیدا نشد.')
         return order
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='order_id',
+                description='id of a pending order.',
+                required=True,
+                type=int
+            )
+        ]
+    )
     def get(self, request, *args, **kwargs):
         order: Order = self.get_object()
         amount = order.total_price
