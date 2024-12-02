@@ -25,9 +25,9 @@ SECRET_KEY = config('DJANGO_SECRET_KEY', default='!!!SET_DJANGO_SECRET_KEY!!!')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 # Application definition
 DJANGO_APPS = [
@@ -61,6 +61,7 @@ LOCAL_APPS = [
     "gse.cart.apps.CartConfig",
     "gse.orders.apps.OrdersConfig",
     "gse.website.apps.WebsiteConfig",
+    "gse.payment.apps.PaymentConfig"
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -190,13 +191,27 @@ REST_FRAMEWORK = {
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'gse.utils.paginators.NeatPagination',
-    'EXCEPTION_HANDLER': 'gse.website.exceptions.handle_404',
 }
 
 # Google OAuth2 settings
 GOOGLE_OAUTH2_CLIENT_ID = config('GOOGLE_OAUTH2_CLIENT_ID')
 GOOGLE_OAUTH2_CLIENT_SECRET = config('GOOGLE_OAUTH2_CLIENT_SECRET')
 BASE_FRONTEND_URL = config('BASE_FRONTEND_URL')
+
+# ZarinPal
+MERCHANT = config('ZP_MERCHANT', default='00000000-0000-0000-0000-000000000000')
+if DEBUG:
+    sandbox = 'sandbox'
+    api = 'sandbox'
+else:
+    sandbox = 'www'
+    api = 'api'
+
+ZP_API_REQUEST = f"https://{api}.zarinpal.com/pg/v4/payment/request.json"
+ZP_API_VERIFY = f"https://{api}.zarinpal.com/pg/v4/payment/verify.json"
+ZP_API_STARTPAY = f"https://{sandbox}.zarinpal.com/pg/StartPay/"
+DESCRIPTION = "آسانسور گستران شرق"
+CALLBACK_URL = config('ZP_CALLBACK')
 
 from core.configs.celery_configs import *
 from core.configs.drf_spectacular import *

@@ -72,11 +72,18 @@ def discard_coupon(order: Order, coupon: Coupon) -> Order | None:
     return order
 
 
+@transaction.atomic()
 def cancel_order(order: Order) -> Order:
     order.status = ORDER_STATUS_CANCELLED
     for item in order.items.all():
         item.product.quantity += item.quantity
         item.product.save()
     discard_coupon(order=order, coupon=order.coupon)
+    order.save()
+    return order
+
+
+def set_order_status(order: Order, status: str) -> Order:
+    order.status = status
     order.save()
     return order

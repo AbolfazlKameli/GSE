@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
+from gse.payment.serializer import PaymentSerializer
 from gse.products.serializers import ProductListSerializer
 from .choices import ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon
@@ -32,6 +33,7 @@ class CouponSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
+    payment = PaymentSerializer(read_only=True, many=True)
     total_price = serializers.SerializerMethodField(read_only=True)
     coupon = CouponSerializer(read_only=True)
 

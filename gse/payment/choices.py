@@ -1,0 +1,9 @@
+PAYMENT_STATUS_PENDING = 'pending'
+PAYMENT_STATUS_SUCCESS = 'success'
+PAYMENT_STATUS_FAILED = 'failed'
+
+PAYMENT_STATUS_CHOICES = (
+    (PAYMENT_STATUS_PENDING, 'پرداخت نشده'),
+    (PAYMENT_STATUS_SUCCESS, 'پرداخت شده'),
+    (PAYMENT_STATUS_FAILED, 'ناموفق')
+)

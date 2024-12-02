@@ -144,6 +144,13 @@ class CouponRetrieveAPI(RetrieveAPIView):
     queryset = get_all_coupons()
     permission_classes = [IsAdminUser]
 
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        return Response(
+            data={'data': response.data},
+            status=response.status_code
+        )
+
 
 class CouponCreateAPI(GenericAPIView):
     """

@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pytz import timezone
 
+from gse.users.models import User
+from .choices import ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon
 
 
@@ -13,8 +15,14 @@ def get_all_order_items() -> list[OrderItem]:
     return OrderItem.objects.select_related('product', 'order').all()
 
 
-def get_order_by_id(order_id: int) -> Order | None:
-    return Order.objects.filter(id=order_id).first()
+def get_pending_orders() -> list[Order]:
+    return Order.objects.filter(status=ORDER_STATUS_PENDING).all()
+
+
+def get_order_by_id(order_id: int, check_owner: bool, owner: User = None) -> Order | None:
+    if check_owner:
+        return Order.objects.filter(id=order_id, owner=owner).first()
+    return Order.objects.filter(id=id, ).first()
 
 
 def check_order_status(order: Order, statuses: list) -> bool:

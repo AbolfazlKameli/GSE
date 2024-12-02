@@ -36,3 +36,19 @@ class IsSupporterOrAdminOrReadOnly(BasePermission):
         return bool(
             request.user and request.user.is_authenticated and request.user.role in (USER_ROLE_ADMIN, USER_ROLE_SUPPORT)
         )
+
+
+class FullCredentialsUser(BasePermission):
+    message = 'اطلاعات کاربری خود مثل شماره تلفن، آدرس و... را کامل کنید.'
+
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        credentials = [
+            request.user.profile.phone_number,
+            request.user.address,
+            request.user.profile.first_name,
+            request.user.profile.last_name,
+        ]
+        return all(credentials)
