@@ -28,3 +28,10 @@ def create_payment(
         response_code=response_code
     )
     return payment
+
+
+@transaction.atomic()
+def set_payment_status(payment: Payment, status: str) -> Payment:
+    payment.status = status
+    payment.save()
+    return payment
