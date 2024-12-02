@@ -55,8 +55,8 @@ def payment_request(amount: int, phone: str, email: str):
                   "content-type": "application/json'"}
     try:
         req = requests.post(url=settings.ZP_API_REQUEST, data=json.dumps(req_data), headers=req_header)
-        authority = req.json()['data']['authority']
         if len(req.json()['errors']) == 0:
+            authority = req.json()['data']['authority']
             return {
                 'authority': authority,
                 'url': settings.ZP_API_STARTPAY + authority,
@@ -68,7 +68,7 @@ def payment_request(amount: int, phone: str, email: str):
             return {
                 'ErrorName': 'Unknown',
                 'Error': e_message,
-                'code': e_code
+                'code': 400
             }
     except requests.exceptions.ConnectionError:
         return {
