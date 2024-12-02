@@ -191,7 +191,6 @@ REST_FRAMEWORK = {
     },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'gse.utils.paginators.NeatPagination',
-    'EXCEPTION_HANDLER': 'gse.website.exceptions.handle_404',
 }
 
 # Google OAuth2 settings
