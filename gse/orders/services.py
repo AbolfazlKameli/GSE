@@ -78,7 +78,8 @@ def cancel_order(order: Order) -> Order:
     for item in order.items.all():
         item.product.quantity += item.quantity
         item.product.save()
-    discard_coupon(order=order, coupon=order.coupon)
+    if order.coupon is not None:
+        discard_coupon(order=order, coupon=order.coupon)
     order.save()
     return order
 
