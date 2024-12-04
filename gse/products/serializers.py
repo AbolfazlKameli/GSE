@@ -4,9 +4,15 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
-from .models import Product, ProductMedia, ProductCategory, ProductDetail
+from .models import Product, ProductMedia, ProductCategory, ProductDetail, ProductReview
 from .selectors import get_primary_image, get_parent_categories, get_sub_categories
 from .validators import VideoDurationValidator
+
+
+class ProductReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductReview
+        fields = '__all__'
 
 
 class ProductCategoryWriteSerializer(serializers.ModelSerializer):
