@@ -75,12 +75,19 @@ class CategoryUpdateAPI(GenericAPIView):
         )
 
 
+class CategoryDeleteAPI(DestroyAPIView):
+    """
+    API for deleting categories, accessible only to admin users.
+    """
+    queryset = get_all_categories()
+    permission_classes = [IsAdminUser]
+
+
 class CategoriesListAPI(ListAPIView):
     """
-    API for listing all categories, accessible only to admin users.
+    API for listing all categories.
     """
     queryset = get_parent_categories()
-    permission_classes = [IsAdminUser]
     serializer_class = ProductCategoryReadSerializer
     filterset_fields = ['is_sub']
     search_fields = ['title']
