@@ -10,7 +10,7 @@ from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from gse.utils.update_response import update_response
-from .models import Product, ProductDetail, ProductMedia
+from .models import Product, ProductDetail, ProductMedia, ProductCategory
 from .selectors import (
     get_all_products,
     get_all_details,
@@ -44,6 +44,30 @@ class CategoryCreateAPI(GenericAPIView):
             return Response(
                 data={'data': {'message': 'دسته بندی محصول ایجاد شد.'}},
                 status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class CategoryUpdateAPI(GenericAPIView):
+    """
+    API for updating categories, accessible only to admin users.
+    """
+    queryset = get_all_categories()
+    permission_classes = [IsAdminUser]
+    serializer_class = ProductCategoryWriteSerializer
+    http_method_names = ['patch', 'options', 'head']
+
+    def patch(self, request, *args, **kwargs):
+        category: ProductCategory = get_object_or_404(ProductCategory, id=kwargs.get('pk'))
+        serializer = self.serializer_class(instance=category, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'دسته بندی به روزرسانی شد.'}},
+                status=status.HTTP_200_OK
             )
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},

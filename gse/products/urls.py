@@ -8,6 +8,7 @@ urlpatterns = [
     # Categories
     path('categories/', views.CategoriesListAPI.as_view(), name='categories_list'),
     path('categories/<int:pk>/', views.CategoryRetrieveAPI.as_view(), name='category_retrieve'),
+    path('categories/<int:pk>/update/', views.CategoryUpdateAPI.as_view(), name='category_update'),
     path('categories/add/', views.CategoryCreateAPI.as_view(), name='category_create'),
 
     # Products
