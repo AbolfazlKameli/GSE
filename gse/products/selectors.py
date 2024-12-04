@@ -35,3 +35,11 @@ def get_all_media() -> list[ProductMedia]:
 
 def get_product_reviews(product: Product) -> list[ProductReview]:
     return ProductReview.objects.filter(product__exact=product)
+
+
+def get_all_reviews() -> list[ProductReview]:
+    return ProductReview.objects.all()
+
+
+def get_review_by_id(review_id: int) -> ProductReview:
+    return ProductReview.objects.filter(id=review_id).first()
