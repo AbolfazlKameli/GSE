@@ -1,5 +1,5 @@
 from .choices import MEDIA_TYPE_IMAGE
-from .models import Product, ProductMedia, ProductDetail, ProductCategory
+from .models import Product, ProductMedia, ProductDetail, ProductCategory, ProductReview
 
 
 def get_sub_categories(parent_id: int) -> list[ProductCategory]:
@@ -31,3 +31,7 @@ def get_all_details() -> list[ProductDetail]:
 
 def get_all_media() -> list[ProductMedia]:
     return ProductMedia.objects.select_related('product').all()
+
+
+def get_product_reviews(product: Product) -> list[ProductReview]:
+    return ProductReview.objects.filter(product__exact=product)
