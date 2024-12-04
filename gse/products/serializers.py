@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .models import Product, ProductMedia, ProductCategory, ProductDetail
-from .selectors import get_primary_image, get_parent_categories
+from .selectors import get_primary_image, get_parent_categories, get_sub_categories
 from .validators import VideoDurationValidator
 
 
@@ -13,6 +13,11 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         required=False,
         queryset=get_parent_categories(),
     )
+    sub_categories = serializers.SerializerMethodField(read_only=True)
+
+    def get_sub_categories(self, obj):
+        categories = get_sub_categories(obj.id)
+        return ProductCategorySerializer(categories, many=True).data
 
     class Meta:
         model = ProductCategory
