@@ -99,11 +99,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class ProductDetailsSerializer(serializers.ModelSerializer):
     media = ProductMediaSerializer(required=False, many=True, read_only=True)
     details = ProductDetailSerializer(required=False, many=True, read_only=True)
+    reviews = ProductReviewSerializer(required=False, many=True, read_only=True)
+    overall_rate = serializers.SerializerMethodField(read_only=True)
     category = serializers.SlugRelatedField(
         many=True,
         slug_field='title',
         read_only=True
     )
+
+    def get_overall_rate(self, obj) -> float:
+        return obj.overall_rate
 
     class Meta:
         model = Product
@@ -112,11 +117,15 @@ class ProductDetailsSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     media = serializers.SerializerMethodField(read_only=True)
+    overall_rate = serializers.SerializerMethodField(read_only=True)
     category = serializers.SlugRelatedField(
         many=True,
         slug_field='title',
         read_only=True
     )
+
+    def get_overall_rate(self, obj) -> float:
+        return obj.overall_rate
 
     def get_media(self, obj) -> ProductMediaSerializer:
         image = get_primary_image(obj)
