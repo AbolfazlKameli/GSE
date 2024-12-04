@@ -5,6 +5,9 @@ from . import views
 app_name = 'products'
 
 urlpatterns = [
+    # Categories
+    path('categories/add/', views.CategoryCreateAPI.as_view(), name='category_create'),
+
     # Products
     path('', views.ProductsListAPI.as_view(), name='products_list'),
     path('<int:pk>/', views.ProductRetrieveAPI.as_view(), name='product_retrieve'),

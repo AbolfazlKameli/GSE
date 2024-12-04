@@ -22,8 +22,29 @@ from .serializers import (
     ProductOperationsSerializer,
     ProductUpdateSerializer,
     ProductDetailSerializer,
-    ProductMediaSerializer
+    ProductMediaSerializer, ProductCategorySerializer
 )
+
+
+class CategoryCreateAPI(GenericAPIView):
+    """
+    API for creating categories, accessible only to admin users.
+    """
+    permission_classes = [IsAdminUser]
+    serializer_class = ProductCategorySerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'دسته بندی محصول ایجاد شد.'}},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class ProductsListAPI(ListAPIView):
