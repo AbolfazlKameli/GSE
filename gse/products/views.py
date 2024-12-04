@@ -24,7 +24,7 @@ from .serializers import (
     ProductUpdateSerializer,
     ProductDetailSerializer,
     ProductMediaSerializer,
-    ProductCategorySerializer
+    ProductCategorySerializer, ProductCategoryListSerializer
 )
 
 
@@ -55,7 +55,7 @@ class CategoriesListAPI(ListAPIView):
     """
     queryset = get_parent_categories()
     permission_classes = [IsAdminUser]
-    serializer_class = ProductCategorySerializer
+    serializer_class = ProductCategoryListSerializer
     filterset_fields = ['is_sub']
     search_fields = ['title']
 

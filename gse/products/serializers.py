@@ -1,5 +1,6 @@
 from django.core.files.images import get_image_dimensions
 from django.db import transaction
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
@@ -13,11 +14,6 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         required=False,
         queryset=get_parent_categories(),
     )
-    sub_categories = serializers.SerializerMethodField(read_only=True)
-
-    def get_sub_categories(self, obj):
-        categories = get_sub_categories(obj.id)
-        return ProductCategorySerializer(categories, many=True).data
 
     class Meta:
         model = ProductCategory
@@ -33,6 +29,19 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         if is_sub and not sub_category:
             raise serializers.ValidationError({'sub_category': 'این فیلد الزامی است.'})
         return super().validate(attrs)
+
+
+class ProductCategoryListSerializer(serializers.ModelSerializer):
+    sub_categories = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(ProductCategorySerializer(many=True))
+    def get_sub_categories(self, obj):
+        sub_categories = get_sub_categories(obj.id)
+        return ProductCategorySerializer(sub_categories, many=True).data
+
+    class Meta:
+        model = ProductCategory
+        fields = '__all__'
 
 
 class ProductMediaSerializer(serializers.ModelSerializer):
