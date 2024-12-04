@@ -4,14 +4,30 @@ from rest_framework import serializers
 
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .models import Product, ProductMedia, ProductCategory, ProductDetail
-from .selectors import get_primary_image
+from .selectors import get_primary_image, get_parent_categories
 from .validators import VideoDurationValidator
 
 
 class ProductCategorySerializer(serializers.ModelSerializer):
+    sub_category = serializers.PrimaryKeyRelatedField(
+        required=False,
+        queryset=get_parent_categories(),
+    )
+
     class Meta:
         model = ProductCategory
         fields = '__all__'
+        extra_kwargs = {
+            'slug': {'required': False},
+            'is_sub': {'required': True},
+        }
+
+    def validate(self, attrs):
+        is_sub: bool = attrs.get('is_sub')
+        sub_category = attrs.get('sub_category')
+        if is_sub and not sub_category:
+            raise serializers.ValidationError({'sub_category': 'این فیلد الزامی است.'})
+        return super().validate(attrs)
 
 
 class ProductMediaSerializer(serializers.ModelSerializer):
