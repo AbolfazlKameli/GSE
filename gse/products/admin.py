@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Product, ProductCategory, ProductDetail, ProductMedia
+from .models import Product, ProductCategory, ProductDetail, ProductMedia, ProductReview
 
 
 class ProductDetailInline(admin.TabularInline):
@@ -13,12 +13,17 @@ class ProductMediaInline(admin.TabularInline):
     fields = ('media_type', 'media_url', 'is_primary')
 
 
+class ProductReviewInline(admin.TabularInline):
+    model = ProductReview
+    fields = ('owner', 'body', 'rete')
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('title', 'id', 'unit_price', 'available', 'quantity')
     search_fields = ('title',)
     prepopulated_fields = {'slug': ('title',)}
-    inlines = (ProductDetailInline, ProductMediaInline)
+    inlines = (ProductDetailInline, ProductMediaInline, ProductReviewInline)
 
 
 @admin.register(ProductCategory)
@@ -36,3 +41,9 @@ class ProductDetailAdmin(admin.ModelAdmin):
 @admin.register(ProductMedia)
 class ProductMediaAdmin(admin.ModelAdmin):
     list_display = ('product', 'media_type', 'media_url')
+
+
+@admin.register(ProductReview)
+class ProductReviewAdmin(admin.ModelAdmin):
+    list_display = ('owner', 'rate', 'product')
+    list_filter = ('rate',)

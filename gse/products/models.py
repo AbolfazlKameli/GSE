@@ -9,6 +9,7 @@ from django.db import models
 from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .services import slugify_title
 from .validators import VideoDurationValidator
+from ..users.models import User
 
 
 class ProductCategory(models.Model):
@@ -110,3 +111,12 @@ class ProductMedia(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class ProductReview(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    body = models.CharField(max_length=255)
+    rate = models.PositiveSmallIntegerField(validators=[MaxValueValidator(5)])
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
