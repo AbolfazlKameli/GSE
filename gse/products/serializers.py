@@ -9,7 +9,7 @@ from .selectors import get_primary_image, get_parent_categories, get_sub_categor
 from .validators import VideoDurationValidator
 
 
-class ProductCategorySerializer(serializers.ModelSerializer):
+class ProductCategoryWriteSerializer(serializers.ModelSerializer):
     sub_category = serializers.PrimaryKeyRelatedField(
         required=False,
         queryset=get_parent_categories(),
@@ -31,13 +31,13 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         return super().validate(attrs)
 
 
-class ProductCategoryListSerializer(serializers.ModelSerializer):
+class ProductCategoryReadSerializer(serializers.ModelSerializer):
     sub_categories = serializers.SerializerMethodField(read_only=True)
 
-    @extend_schema_field(ProductCategorySerializer(many=True))
+    @extend_schema_field(ProductCategoryWriteSerializer(many=True))
     def get_sub_categories(self, obj):
         sub_categories = get_sub_categories(obj.id)
-        return ProductCategorySerializer(sub_categories, many=True).data
+        return ProductCategoryWriteSerializer(sub_categories, many=True).data
 
     class Meta:
         model = ProductCategory
