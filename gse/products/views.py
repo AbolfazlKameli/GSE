@@ -15,7 +15,8 @@ from .selectors import (
     get_all_products,
     get_all_details,
     get_all_media,
-    get_parent_categories
+    get_parent_categories,
+    get_all_categories
 )
 from .serializers import (
     ProductDetailsSerializer,
@@ -24,7 +25,8 @@ from .serializers import (
     ProductUpdateSerializer,
     ProductDetailSerializer,
     ProductMediaSerializer,
-    ProductCategorySerializer, ProductCategoryListSerializer
+    ProductCategoryWriteSerializer,
+    ProductCategoryReadSerializer
 )
 
 
@@ -33,7 +35,7 @@ class CategoryCreateAPI(GenericAPIView):
     API for creating categories, accessible only to admin users.
     """
     permission_classes = [IsAdminUser]
-    serializer_class = ProductCategorySerializer
+    serializer_class = ProductCategoryWriteSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -55,9 +57,17 @@ class CategoriesListAPI(ListAPIView):
     """
     queryset = get_parent_categories()
     permission_classes = [IsAdminUser]
-    serializer_class = ProductCategoryListSerializer
+    serializer_class = ProductCategoryReadSerializer
     filterset_fields = ['is_sub']
     search_fields = ['title']
+
+
+class CategoryRetrieveAPI(RetrieveAPIView):
+    """
+    API for retrieving a category details.
+    """
+    queryset = get_all_categories()
+    serializer_class = ProductCategoryReadSerializer
 
 
 class ProductsListAPI(ListAPIView):
