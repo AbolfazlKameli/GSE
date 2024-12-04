@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -7,16 +8,20 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
+from gse.permissions.permissions import IsAdminOrOwner
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from gse.utils.update_response import update_response
-from .models import Product, ProductDetail, ProductMedia, ProductCategory
+from .models import Product, ProductDetail, ProductMedia, ProductCategory, ProductReview
 from .selectors import (
     get_all_products,
     get_all_details,
     get_all_media,
     get_parent_categories,
-    get_all_categories, get_product_reviews
+    get_all_categories,
+    get_product_reviews,
+    get_review_by_id,
+    get_all_reviews
 )
 from .serializers import (
     ProductDetailsSerializer,
@@ -26,7 +31,8 @@ from .serializers import (
     ProductDetailSerializer,
     ProductMediaSerializer,
     ProductCategoryWriteSerializer,
-    ProductCategoryReadSerializer, ProductReviewSerializer
+    ProductCategoryReadSerializer,
+    ProductReviewSerializer
 )
 
 
@@ -326,3 +332,19 @@ class ProductReviewListAPI(ListAPIView):
     def get_queryset(self):
         product = get_object_or_404(Product, id=self.kwargs.get('pk'))
         return get_product_reviews(product=product)
+
+
+class ProductReviewDeleteAPI(DestroyAPIView):
+    """
+    API for deleting a review, accessible only to user or admin or supporter.
+    """
+    serializer_class = ProductReviewSerializer
+    permission_classes = [IsAdminOrOwner]
+    queryset = get_all_reviews()
+
+    def get_object(self):
+        if is_child_of(Product, ProductReview, self.kwargs.get('pk'), self.kwargs.get('review_id')):
+            review = get_review_by_id(review_id=self.kwargs.get('review_id'))
+            self.check_object_permissions(self.request, review)
+            return review
+        raise Http404('منیع مورد نظر پیدا نشد.')
