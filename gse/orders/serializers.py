@@ -100,7 +100,7 @@ class CouponApplySerializer(serializers.Serializer):
         order_id = attrs.get('order_id')
         allowed_statuses = [ORDER_STATUS_PENDING]
 
-        order: Order | None = get_order_by_id(order_id=order_id)
+        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
         if order is None or not check_order_status(order, allowed_statuses):
             raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
         if order.coupon is not None:
@@ -131,7 +131,7 @@ class CouponDiscardSerializer(serializers.Serializer):
         order_id = attrs.get('order_id')
         allowed_statuses = [ORDER_STATUS_PENDING]
 
-        order: Order | None = get_order_by_id(order_id=order_id)
+        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
         if order is None or not check_order_status(order, allowed_statuses):
             raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
         if order.coupon is None:

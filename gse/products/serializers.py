@@ -1,14 +1,46 @@
 from django.core.files.images import get_image_dimensions
 from django.db import transaction
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .models import Product, ProductMedia, ProductCategory, ProductDetail
-from .selectors import get_primary_image
+from .selectors import get_primary_image, get_parent_categories, get_sub_categories
 from .validators import VideoDurationValidator
 
 
-class ProductCategorySerializer(serializers.ModelSerializer):
+class ProductCategoryWriteSerializer(serializers.ModelSerializer):
+    sub_category = serializers.PrimaryKeyRelatedField(
+        required=False,
+        queryset=get_parent_categories(),
+    )
+
+    class Meta:
+        model = ProductCategory
+        fields = '__all__'
+        extra_kwargs = {
+            'slug': {'required': False},
+            'is_sub': {'required': True},
+        }
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError('هیچ اطلاعاتی ارسال نشده.')
+        is_sub: bool = attrs.get('is_sub')
+        sub_category = attrs.get('sub_category')
+        if is_sub and not sub_category:
+            raise serializers.ValidationError({'sub_category': 'این فیلد الزامی است.'})
+        return super().validate(attrs)
+
+
+class ProductCategoryReadSerializer(serializers.ModelSerializer):
+    sub_categories = serializers.SerializerMethodField(read_only=True)
+
+    @extend_schema_field(ProductCategoryWriteSerializer(many=True))
+    def get_sub_categories(self, obj):
+        sub_categories = get_sub_categories(obj.id)
+        return ProductCategoryWriteSerializer(sub_categories, many=True).data
+
     class Meta:
         model = ProductCategory
         fields = '__all__'
