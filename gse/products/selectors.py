@@ -10,6 +10,10 @@ def get_parent_categories() -> list[ProductCategory]:
     return ProductCategory.objects.filter(is_sub=False)
 
 
+def get_all_categories() -> list[ProductCategory]:
+    return ProductCategory.objects.all()
+
+
 def get_primary_image(product: Product) -> ProductMedia:
     media: ProductMedia | None = product.media.filter(is_primary=True, media_type=MEDIA_TYPE_IMAGE).first()
     if media is None:
