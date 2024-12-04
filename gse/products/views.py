@@ -334,6 +334,22 @@ class ProductReviewListAPI(ListAPIView):
         return get_product_reviews(product=product)
 
 
+class ProductReviewRetrieve(RetrieveAPIView):
+    """
+    API for retrieving reviews.
+    """
+    serializer_class = ProductReviewSerializer
+    queryset = get_all_reviews()
+    lookup_url_kwarg = 'review_id'
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        return Response(
+            data={'data': response.data},
+            status=response.status_code
+        )
+
+
 class ProductReviewDeleteAPI(DestroyAPIView):
     """
     API for deleting a review, accessible only to user or admin or supporter.
