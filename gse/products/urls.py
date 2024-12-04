@@ -6,6 +6,7 @@ app_name = 'products'
 
 urlpatterns = [
     # Categories
+    path('categories/', views.CategoriesListAPI.as_view(), name='categories_list'),
     path('categories/add/', views.CategoryCreateAPI.as_view(), name='category_create'),
 
     # Products

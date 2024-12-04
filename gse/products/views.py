@@ -14,7 +14,8 @@ from .models import Product, ProductDetail, ProductMedia
 from .selectors import (
     get_all_products,
     get_all_details,
-    get_all_media
+    get_all_media,
+    get_parent_categories
 )
 from .serializers import (
     ProductDetailsSerializer,
@@ -22,7 +23,8 @@ from .serializers import (
     ProductOperationsSerializer,
     ProductUpdateSerializer,
     ProductDetailSerializer,
-    ProductMediaSerializer, ProductCategorySerializer
+    ProductMediaSerializer,
+    ProductCategorySerializer
 )
 
 
@@ -45,6 +47,17 @@ class CategoryCreateAPI(GenericAPIView):
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class CategoriesListAPI(ListAPIView):
+    """
+    API for listing all categories, accessible only to admin users.
+    """
+    queryset = get_parent_categories()
+    permission_classes = [IsAdminUser]
+    serializer_class = ProductCategorySerializer
+    filterset_fields = ['is_sub']
+    search_fields = ['title']
 
 
 class ProductsListAPI(ListAPIView):
