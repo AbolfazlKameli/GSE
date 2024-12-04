@@ -16,7 +16,7 @@ from .selectors import (
     get_all_details,
     get_all_media,
     get_parent_categories,
-    get_all_categories
+    get_all_categories, get_product_reviews
 )
 from .serializers import (
     ProductDetailsSerializer,
@@ -26,7 +26,7 @@ from .serializers import (
     ProductDetailSerializer,
     ProductMediaSerializer,
     ProductCategoryWriteSerializer,
-    ProductCategoryReadSerializer
+    ProductCategoryReadSerializer, ProductReviewSerializer
 )
 
 
@@ -314,3 +314,15 @@ class ProductMediaDeleteAPI(DestroyAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         return super().destroy(request, *args, **kwargs)
+
+
+class ProductReviewListAPI(ListAPIView):
+    """
+    API for listing product reviews.
+    """
+    serializer_class = ProductReviewSerializer
+    filterset_fields = ('rate',)
+
+    def get_queryset(self):
+        product = get_object_or_404(Product, id=self.kwargs.get('pk'))
+        return get_product_reviews(product=product)
