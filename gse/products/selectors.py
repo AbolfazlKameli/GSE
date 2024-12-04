@@ -1,5 +1,9 @@
 from .choices import MEDIA_TYPE_IMAGE
-from .models import Product, ProductMedia, ProductDetail
+from .models import Product, ProductMedia, ProductDetail, ProductCategory
+
+
+def get_parent_categories() -> list[ProductCategory]:
+    return ProductCategory.objects.filter(is_sub=False)
 
 
 def get_primary_image(product: Product) -> ProductMedia:
