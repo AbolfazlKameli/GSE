@@ -24,6 +24,8 @@ class ProductCategoryWriteSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError('هیچ اطلاعاتی ارسال نشده.')
         is_sub: bool = attrs.get('is_sub')
         sub_category = attrs.get('sub_category')
         if is_sub and not sub_category:
