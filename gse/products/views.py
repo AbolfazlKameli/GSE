@@ -37,6 +37,7 @@ class CategoryCreateAPI(GenericAPIView):
     permission_classes = [IsAdminUser]
     serializer_class = ProductCategoryWriteSerializer
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -60,6 +61,7 @@ class CategoryUpdateAPI(GenericAPIView):
     serializer_class = ProductCategoryWriteSerializer
     http_method_names = ['patch', 'options', 'head']
 
+    @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
         category: ProductCategory = get_object_or_404(ProductCategory, id=kwargs.get('pk'))
         serializer = self.serializer_class(instance=category, data=request.data, partial=True)
@@ -81,6 +83,7 @@ class CategoryDeleteAPI(DestroyAPIView):
     """
     queryset = get_all_categories()
     permission_classes = [IsAdminUser]
+    serializer_class = ProductCategoryWriteSerializer
 
 
 class CategoriesListAPI(ListAPIView):
@@ -89,7 +92,6 @@ class CategoriesListAPI(ListAPIView):
     """
     queryset = get_parent_categories()
     serializer_class = ProductCategoryReadSerializer
-    filterset_fields = ['is_sub']
     search_fields = ['title']
 
 
