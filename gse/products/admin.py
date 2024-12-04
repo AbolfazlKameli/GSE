@@ -15,7 +15,7 @@ class ProductMediaInline(admin.TabularInline):
 
 class ProductReviewInline(admin.TabularInline):
     model = ProductReview
-    fields = ('owner', 'body', 'rete')
+    fields = ('owner', 'body', 'rate')
 
 
 @admin.register(Product)
