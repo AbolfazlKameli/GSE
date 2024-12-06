@@ -4,9 +4,19 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
-from .models import Product, ProductMedia, ProductCategory, ProductDetail
+from .models import Product, ProductMedia, ProductCategory, ProductDetail, ProductReview
 from .selectors import get_primary_image, get_parent_categories, get_sub_categories
 from .validators import VideoDurationValidator
+
+
+class ProductReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductReview
+        fields = '__all__'
+        extra_kwargs = {
+            'product': {'read_only': True},
+            'owner': {'read_only': True}
+        }
 
 
 class ProductCategoryWriteSerializer(serializers.ModelSerializer):
@@ -93,11 +103,16 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class ProductDetailsSerializer(serializers.ModelSerializer):
     media = ProductMediaSerializer(required=False, many=True, read_only=True)
     details = ProductDetailSerializer(required=False, many=True, read_only=True)
+    reviews = ProductReviewSerializer(required=False, many=True, read_only=True)
+    overall_rate = serializers.SerializerMethodField(read_only=True)
     category = serializers.SlugRelatedField(
         many=True,
         slug_field='title',
         read_only=True
     )
+
+    def get_overall_rate(self, obj) -> float:
+        return obj.overall_rate
 
     class Meta:
         model = Product
@@ -106,11 +121,15 @@ class ProductDetailsSerializer(serializers.ModelSerializer):
 
 class ProductListSerializer(serializers.ModelSerializer):
     media = serializers.SerializerMethodField(read_only=True)
+    overall_rate = serializers.SerializerMethodField(read_only=True)
     category = serializers.SlugRelatedField(
         many=True,
         slug_field='title',
         read_only=True
     )
+
+    def get_overall_rate(self, obj) -> float:
+        return obj.overall_rate
 
     def get_media(self, obj) -> ProductMediaSerializer:
         image = get_primary_image(obj)

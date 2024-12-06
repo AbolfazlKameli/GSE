@@ -28,4 +28,14 @@ urlpatterns = [
     path('<int:pk>/media/add/', views.ProductMediaCreateAPI.as_view(), name='media_create'),
     path('<int:pk>/media/<int:media_id>/update/', views.ProductMediaUpdateAPI.as_view(), name='media_update'),
     path('<int:pk>/media/<int:media_id>/delete/', views.ProductMediaDeleteAPI.as_view(), name='media_delete'),
+
+    # Reviews
+    path('<int:pk>/reviews/', views.ProductReviewListAPI.as_view(), name='product_review_list'),
+    path('<int:pk>/reviews/<int:review_id>/', views.ProductReviewRetrieve.as_view(), name='product_review_retrieve'),
+    path('<int:pk>/review/add/', views.ProductReviewCreateAPI.as_view(), name='product_review_create'),
+    path(
+        '<int:pk>/reviews/<int:review_id>/delete/',
+        views.ProductReviewDeleteAPI.as_view(),
+        name='product_review_delete'
+    ),
 ]

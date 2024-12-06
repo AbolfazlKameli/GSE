@@ -1,22 +1,28 @@
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
+from gse.orders.selectors import has_purchased
+from gse.permissions.permissions import IsAdminOrOwner
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from gse.utils.update_response import update_response
-from .models import Product, ProductDetail, ProductMedia, ProductCategory
+from .models import Product, ProductDetail, ProductMedia, ProductCategory, ProductReview
 from .selectors import (
     get_all_products,
     get_all_details,
     get_all_media,
     get_parent_categories,
-    get_all_categories
+    get_all_categories,
+    get_product_reviews,
+    get_review_by_id,
+    get_all_reviews
 )
 from .serializers import (
     ProductDetailsSerializer,
@@ -26,7 +32,8 @@ from .serializers import (
     ProductDetailSerializer,
     ProductMediaSerializer,
     ProductCategoryWriteSerializer,
-    ProductCategoryReadSerializer
+    ProductCategoryReadSerializer,
+    ProductReviewSerializer
 )
 
 
@@ -314,3 +321,77 @@ class ProductMediaDeleteAPI(DestroyAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         return super().destroy(request, *args, **kwargs)
+
+
+class ProductReviewListAPI(ListAPIView):
+    """
+    API for listing product reviews.
+    """
+    serializer_class = ProductReviewSerializer
+    filterset_fields = ('rate',)
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return ProductReview.objects.none()
+        product = get_object_or_404(Product, id=self.kwargs.get('pk'))
+        return get_product_reviews(product=product)
+
+
+class ProductReviewRetrieve(RetrieveAPIView):
+    """
+    API for retrieving reviews.
+    """
+    serializer_class = ProductReviewSerializer
+    queryset = get_all_reviews()
+    lookup_url_kwarg = 'review_id'
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        return Response(
+            data={'data': response.data},
+            status=response.status_code
+        )
+
+
+class ProductReviewCreateAPI(GenericAPIView):
+    """
+    API for creating reviews, accessible only to users bought the product.
+    """
+    serializer_class = ProductReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses={201: ResponseSerializer})
+    def post(self, request, *args, **kwargs):
+        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
+        if has_purchased(user=request.user, product=product):
+            serializer = self.serializer_class(data=request.data)
+            if serializer.is_valid():
+                serializer.save(product=product, owner=request.user)
+                return Response(
+                    data={'data': {'message': 'نظر با موفقیت ثبت شد.'}},
+                    status=status.HTTP_201_CREATED
+                )
+            return Response(
+                data={'data': {'errors': format_errors(serializer.errors)}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(
+            data={'data': {'errors': 'فقط افرادی که این محصول را خریده اند میتوانند نظر ثبت کنند.'}},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+
+class ProductReviewDeleteAPI(DestroyAPIView):
+    """
+    API for deleting a review, accessible only to user or admin or supporter.
+    """
+    serializer_class = ProductReviewSerializer
+    permission_classes = [IsAdminOrOwner]
+    queryset = get_all_reviews()
+
+    def get_object(self):
+        if is_child_of(Product, ProductReview, self.kwargs.get('pk'), self.kwargs.get('review_id')):
+            review = get_review_by_id(review_id=self.kwargs.get('review_id'))
+            self.check_object_permissions(self.request, review)
+            return review
+        raise Http404('منیع مورد نظر پیدا نشد.')

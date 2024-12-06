@@ -5,10 +5,12 @@ from django.core.files.images import get_image_dimensions
 from django.core.validators import FileExtensionValidator
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Avg
 
 from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .services import slugify_title
 from .validators import VideoDurationValidator
+from ..users.models import User
 
 
 class ProductCategory(models.Model):
@@ -51,6 +53,11 @@ class Product(models.Model):
         if self.quantity == 0:
             self.available = False
         super().save(*args, **kwargs)
+
+    @property
+    def overall_rate(self):
+        avg_rate = self.reviews.aggregate(avg=Avg('rate'))['avg']
+        return round(avg_rate, 1) if avg_rate is not None else 0
 
     def get_price(self):
         if self.discount_percent > 0:
@@ -110,3 +117,12 @@ class ProductMedia(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class ProductReview(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    body = models.CharField(max_length=255)
+    rate = models.PositiveSmallIntegerField(validators=[MaxValueValidator(5)])
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
