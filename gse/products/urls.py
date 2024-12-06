@@ -32,6 +32,7 @@ urlpatterns = [
     # Reviews
     path('<int:pk>/reviews/', views.ProductReviewListAPI.as_view(), name='product_review_list'),
     path('<int:pk>/reviews/<int:review_id>/', views.ProductReviewRetrieve.as_view(), name='product_review_retrieve'),
+    path('<int:pk>/review/add/', views.ProductReviewCreateAPI.as_view(), name='product_review_create'),
     path(
         '<int:pk>/reviews/<int:review_id>/delete/',
         views.ProductReviewDeleteAPI.as_view(),

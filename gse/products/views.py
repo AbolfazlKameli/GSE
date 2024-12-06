@@ -4,10 +4,11 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
+from gse.orders.selectors import has_purchased
 from gse.permissions.permissions import IsAdminOrOwner
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
@@ -347,6 +348,33 @@ class ProductReviewRetrieve(RetrieveAPIView):
         return Response(
             data={'data': response.data},
             status=response.status_code
+        )
+
+
+class ProductReviewCreateAPI(GenericAPIView):
+    """
+    API for creating reviews, accessible only to users bought the product.
+    """
+    serializer_class = ProductReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
+        if has_purchased(user=request.user, product=product):
+            serializer = self.serializer_class(data=request.data)
+            if serializer.is_valid():
+                serializer.save(product=product, owner=request.user)
+                return Response(
+                    data={'data': {'message': 'نظر با موفقیت ثبت شد.'}},
+                    status=status.HTTP_201_CREATED
+                )
+            return Response(
+                data={'data': {'errors': format_errors(serializer.errors)}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return Response(
+            data={'data': {'errors': 'فقط افرادی که این محصول را خریده اند میتوانند نظر ثبت کنند.'}},
+            status=status.HTTP_403_FORBIDDEN
         )
 
 
