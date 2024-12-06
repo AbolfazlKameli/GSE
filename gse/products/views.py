@@ -331,6 +331,8 @@ class ProductReviewListAPI(ListAPIView):
     filterset_fields = ('rate',)
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return ProductReview.objects.none()
         product = get_object_or_404(Product, id=self.kwargs.get('pk'))
         return get_product_reviews(product=product)
 
@@ -358,6 +360,7 @@ class ProductReviewCreateAPI(GenericAPIView):
     serializer_class = ProductReviewSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
         if has_purchased(user=request.user, product=product):
