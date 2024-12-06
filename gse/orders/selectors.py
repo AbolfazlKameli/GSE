@@ -2,9 +2,10 @@ from datetime import datetime
 
 from pytz import timezone
 
+from gse.products.models import Product
 from gse.users.models import User
 from gse.users.selectors import get_admins_and_supporters_ids
-from .choices import ORDER_STATUS_PENDING
+from .choices import ORDER_STATUS_SUCCESS, ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon
 
 
@@ -52,3 +53,7 @@ def get_usable_coupon_by_code(coupon_code: str) -> Coupon | None:
 def get_invalid_coupons() -> list[Coupon]:
     now = datetime.now(tz=timezone('Asia/Tehran'))
     return Coupon.objects.filter(expiration_date__lt=now)
+
+
+def has_purchased(user: User, product: Product):
+    return Order.objects.filter(owner=user, items__product=product, status=ORDER_STATUS_SUCCESS).exists()
