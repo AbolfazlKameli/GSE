@@ -50,16 +50,3 @@ class QuestionDeleteAPI(DestroyAPIView):
     serializer_class = QuestionSerializer
     permission_classes = [IsAdminOrOwner]
     queryset = get_all_questions()
-
-    def delete(self, request, *args, **kwargs):
-        if not is_child_of(Product, Question, kwargs.get('product_id'), kwargs.get('pk')):
-            return Response(
-                data={'data': {'errors': 'سوال با این مشخصات پیدا نشد.'}},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        question: Question = get_object_or_404(Question, id=kwargs.get('pk'))
-        self.check_object_permissions(request, question)
-        question.delete()
-        return Response(
-            status=status.HTTP_204_NO_CONTENT
-        )
