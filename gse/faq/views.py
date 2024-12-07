@@ -8,10 +8,11 @@ from rest_framework.response import Response
 from gse.permissions.permissions import IsAdminOrOwner
 from gse.products.models import Product
 from gse.utils.format_errors import format_errors
-from .models import Question
-from .selectors import get_all_questions
-from .selectors import get_question_by_id
+from gse.utils.db_utils import is_child_of
+from .models import Question, Answer
+from .selectors import get_all_questions, get_all_answers, get_question_by_id, get_answer_by_id
 from .serializers import QuestionSerializer, AnswerSerializer
+from .services import remove_answer
 
 
 class QuestionListAPI(ListAPIView):
@@ -93,4 +94,31 @@ class AnswerCreateAPI(GenericAPIView):
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class AnswerDeleteAPI(DestroyAPIView):
+    """
+    API for deleting answers, accessible only to admin users.
+    """
+    serializer_class = AnswerSerializer
+    queryset = get_all_answers()
+    permission_classes = [IsAdminUser]
+
+    def get_object(self):
+        if not is_child_of(
+                parent_type=Question,
+                child_type=Answer,
+                parent_id=self.kwargs.get('question_id'),
+                child_id=self.kwargs.get('answer_id')
+        ):
+            raise Http404('پاسخ مرتبط با این سوال پیدا نشد.')
+        answer: Answer = get_answer_by_id(self.kwargs.get('answer_id'))
+        return answer
+
+    def delete(self, request, *args, **kwargs):
+        question: Question = get_object_or_404(Question, id=kwargs.get('question_id'))
+        remove_answer(question, self.get_object())
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
         )

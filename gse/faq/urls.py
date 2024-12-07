@@ -12,4 +12,9 @@ urlpatterns = [
 
     # Answers
     path('questions/<int:question_id>/answers/add/', views.AnswerCreateAPI.as_view(), name='answer_create'),
+    path(
+        'questions/<int:question_id>/answers/<int:answer_id>/delete/',
+        views.AnswerDeleteAPI.as_view(),
+        name='answer_delete'
+    ),
 ]
