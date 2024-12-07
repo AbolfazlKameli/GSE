@@ -1,5 +1,6 @@
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, GenericAPIView, DestroyAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -7,12 +8,13 @@ from rest_framework.response import Response
 
 from gse.permissions.permissions import IsAdminOrOwner
 from gse.products.models import Product
-from gse.utils.format_errors import format_errors
 from gse.utils.db_utils import is_child_of
+from gse.utils.format_errors import format_errors
 from .models import Question, Answer
 from .selectors import get_all_questions, get_all_answers, get_question_by_id, get_answer_by_id
 from .serializers import QuestionSerializer, AnswerSerializer
 from .services import remove_answer
+from ..docs.serializers.doc_serializers import ResponseSerializer
 
 
 class QuestionListAPI(ListAPIView):
@@ -22,6 +24,7 @@ class QuestionListAPI(ListAPIView):
     serializer_class = QuestionSerializer
     permission_classes = [IsAdminUser]
     queryset = get_all_questions()
+    filterset_fields = ['status']
 
 
 class QuestionRetrieveAPI(RetrieveAPIView):
@@ -46,6 +49,7 @@ class QuestionCreateAPI(GenericAPIView):
     serializer_class = QuestionSerializer
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         product: Product = get_object_or_404(Product, id=self.kwargs.get('product_id'))
@@ -82,6 +86,7 @@ class AnswerCreateAPI(GenericAPIView):
             return question
         raise Http404('سوال بدون پاسخی با این مشخصات پیدا نشد.')
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
