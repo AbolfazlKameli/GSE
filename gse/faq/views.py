@@ -1,3 +1,4 @@
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import ListAPIView, GenericAPIView, DestroyAPIView, RetrieveAPIView
@@ -7,8 +8,10 @@ from rest_framework.response import Response
 from gse.permissions.permissions import IsAdminOrOwner
 from gse.products.models import Product
 from gse.utils.format_errors import format_errors
+from .models import Question
 from .selectors import get_all_questions
-from .serializers import QuestionSerializer
+from .selectors import get_question_by_id
+from .serializers import QuestionSerializer, AnswerSerializer
 
 
 class QuestionListAPI(ListAPIView):
@@ -63,3 +66,31 @@ class QuestionDeleteAPI(DestroyAPIView):
     serializer_class = QuestionSerializer
     permission_classes = [IsAdminOrOwner]
     queryset = get_all_questions()
+
+
+class AnswerCreateAPI(GenericAPIView):
+    """
+    API for creating answers, accessible only to admin users.
+    """
+    serializer_class = AnswerSerializer
+    permission_classes = [IsAdminUser]
+
+    def get_object(self):
+        question: Question | None = get_question_by_id(question_id=self.kwargs.get('question_id'))
+        if question:
+            return question
+        raise Http404('سوال بدون پاسخی با این مشخصات پیدا نشد.')
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            question: Question = self.get_object()
+            serializer.save(question=question)
+            return Response(
+                data={'data': {'message': 'پاسخ با موفقیت ثبت شد.'}},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
