@@ -1,0 +1,7 @@
+QUESTION_STATUS_PENDING = 'pending'
+QUESTION_STATUS_ANSWERED = 'answered'
+
+QUESTION_STATUS_CHOICES = (
+    (QUESTION_STATUS_PENDING, 'درحال پردازش'),
+    (QUESTION_STATUS_ANSWERED, 'پاسخ داده شده')
+)
