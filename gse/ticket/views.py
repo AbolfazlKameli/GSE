@@ -4,11 +4,11 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from gse.permissions.permissions import IsAdminOrOwner
+from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .models import Ticket, TicketAnswer
-from .selectors import get_all_tickets, get_answer_by_id
+from .selectors import get_all_tickets, get_answer_by_id, get_ticket_by_id
 from .serializers import TicketsListSerializer, TicketSerializer, TicketAnswerSerializer
 
 
@@ -89,4 +89,32 @@ class TicketAnswerRetrieveAPI(GenericAPIView):
         return Response(
             data={'data': serializer.data},
             status=status.HTTP_200_OK
+        )
+
+
+class TicketAnswerCreateAPI(GenericAPIView):
+    """
+    API for creating ticket answers, accessible only to admin or supporter.
+    """
+    serializer_class = TicketAnswerSerializer
+    permission_classes = [IsAdminOrSupporter]
+
+    def get_object(self):
+        ticket: Ticket = get_ticket_by_id(ticket_id=self.kwargs.get('ticket_id'))
+        if ticket:
+            return ticket
+        raise Http404('تیکت درحال پردازشی با این مشخصات پیدا نشد.')
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            ticket = self.get_object()
+            serializer.save(ticket=ticket)
+            return Response(
+                data={'data': {'message': 'پاسخ تیکت با موفقیت ثبت شد.'}},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
         )
