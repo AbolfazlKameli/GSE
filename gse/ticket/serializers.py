@@ -3,6 +3,15 @@ from rest_framework import serializers
 from .models import Ticket, TicketAnswer
 
 
+class TicketAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TicketAnswer
+        fields = '__all__'
+        extra_kwargs = {
+            'ticket': {'read_only': True}
+        }
+
+
 class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
