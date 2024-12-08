@@ -20,7 +20,7 @@ urlpatterns = [
     path('website/', include('gse.website.urls', namespace='website')),
     path('payment/', include('gse.payment.urls', namespace='payment')),
     path('faq/', include('gse.faq.urls', namespace='faq')),
-    path('ticket/', include('gse.ticket.urls', namespace='ticket')),
+    path('tickets/', include('gse.ticket.urls', namespace='ticket')),
     path('schema/', include(documents))
 ]
 
