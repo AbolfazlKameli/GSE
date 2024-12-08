@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView, DestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
@@ -21,7 +21,7 @@ class TicketsListAPI(ListAPIView):
 
 class TicketRetrieveAPI(RetrieveAPIView):
     """
-    API for retrieving a ticket object.
+    API for retrieving a ticket object, accessible only to owner or admin or supporter.
     """
     serializer_class = TicketSerializer
     queryset = get_all_tickets()
@@ -54,3 +54,12 @@ class TicketCreateAPI(GenericAPIView):
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class TicketDeleteAPI(DestroyAPIView):
+    """
+    API for deleting tickets, accessible only to owner or admin or supporter.
+    """
+    permission_classes = [IsAdminOrOwner]
+    serializer_class = TicketSerializer
+    queryset = get_all_tickets()
