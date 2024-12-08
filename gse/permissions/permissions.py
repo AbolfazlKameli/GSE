@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAdminUser
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from gse.users.choices import USER_ROLE_ADMIN, USER_ROLE_SUPPORT
 

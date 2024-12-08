@@ -3,11 +3,11 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, GenericAPIView, DestroyAPIView, RetrieveAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
-from gse.permissions.permissions import IsAdminOrOwner
+from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.products.models import Product
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
@@ -22,7 +22,7 @@ class QuestionListAPI(ListAPIView):
     API for listing questions, accessible only to admin users.
     """
     serializer_class = QuestionSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     queryset = get_all_questions()
     filterset_fields = ['status']
 
@@ -89,7 +89,7 @@ class AnswerCreateAPI(GenericAPIView):
     API for creating answers, accessible only to admin users.
     """
     serializer_class = AnswerSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     def get_object(self):
         question: Question | None = get_question_by_id(question_id=self.kwargs.get('question_id'))
@@ -119,7 +119,7 @@ class AnswerDeleteAPI(DestroyAPIView):
     """
     serializer_class = AnswerSerializer
     queryset = get_all_answers()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     def get_object(self):
         if not is_child_of(

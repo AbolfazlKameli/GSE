@@ -4,12 +4,12 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView, UpdateAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.orders.selectors import has_purchased
-from gse.permissions.permissions import IsAdminOrOwner
+from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from gse.utils.update_response import update_response
@@ -41,7 +41,7 @@ class CategoryCreateAPI(GenericAPIView):
     """
     API for creating categories, accessible only to admin users.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     serializer_class = ProductCategoryWriteSerializer
 
     @extend_schema(responses={201: ResponseSerializer})
@@ -64,7 +64,7 @@ class CategoryUpdateAPI(GenericAPIView):
     API for updating categories, accessible only to admin users.
     """
     queryset = get_all_categories()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     serializer_class = ProductCategoryWriteSerializer
     http_method_names = ['patch', 'options', 'head']
 
@@ -89,7 +89,7 @@ class CategoryDeleteAPI(DestroyAPIView):
     API for deleting categories, accessible only to admin users.
     """
     queryset = get_all_categories()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     serializer_class = ProductCategoryWriteSerializer
 
 
@@ -140,7 +140,7 @@ class ProductCreateAPI(GenericAPIView):
     API for creating a new product, accessible only to admin users.
     """
     serializer_class = ProductOperationsSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -162,7 +162,7 @@ class ProductUpdateAPI(GenericAPIView):
     API for updating an existing product, accessible only to admin users.
     """
     serializer_class = ProductUpdateSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
@@ -186,7 +186,7 @@ class ProductDestroyAPI(DestroyAPIView):
     """
     serializer_class = ProductOperationsSerializer
     queryset = get_all_products()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
 
 class ProductDetailCreateAPI(GenericAPIView):
@@ -194,7 +194,7 @@ class ProductDetailCreateAPI(GenericAPIView):
     API for creating product details, accessible only to admin users.
     """
     serializer_class = ProductDetailSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -219,7 +219,7 @@ class ProductDetailUpdateAPI(UpdateAPIView):
     serializer_class = ProductDetailSerializer
     queryset = get_all_details()
     http_method_names = ['patch', 'options', 'head']
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     lookup_field = 'id'
     lookup_url_kwarg = 'detail_id'
 
@@ -242,7 +242,7 @@ class ProductDetailDeleteAPI(DestroyAPIView):
     """
     serializer_class = ProductDetailSerializer
     queryset = get_all_details()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     http_method_names = ['delete', 'options', 'head']
     lookup_field = 'id'
     lookup_url_kwarg = 'detail_id'
@@ -261,7 +261,7 @@ class ProductMediaCreateAPI(GenericAPIView):
     API for creating product media, accessible only to admin users.
     """
     serializer_class = ProductMediaSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -285,7 +285,7 @@ class ProductMediaUpdateAPI(UpdateAPIView):
     """
     serializer_class = ProductMediaSerializer
     queryset = get_all_media()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     http_method_names = ['patch', 'options', 'head']
     lookup_field = 'id'
     lookup_url_kwarg = 'media_id'
@@ -309,7 +309,7 @@ class ProductMediaDeleteAPI(DestroyAPIView):
     """
     serializer_class = ProductMediaSerializer
     queryset = get_all_media()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     http_method_names = ['delete', 'options', 'head']
     lookup_field = 'id'
     lookup_url_kwarg = 'media_id'

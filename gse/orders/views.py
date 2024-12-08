@@ -2,11 +2,11 @@ from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView, GenericAPIView
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
-from gse.permissions.permissions import IsAdminOrOwner
+from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .choices import ORDER_STATUS_PENDING
@@ -142,7 +142,7 @@ class CouponRetrieveAPI(RetrieveAPIView):
     """
     serializer_class = CouponSerializer
     queryset = get_all_coupons()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -157,7 +157,7 @@ class CouponCreateAPI(GenericAPIView):
     API for creating a new coupon, accessible only to admin users.
     """
     serializer_class = CouponSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -179,7 +179,7 @@ class CouponUpdateAPI(GenericAPIView):
     API for updating a coupon, accessible only to admin users.
     """
     serializer_class = CouponSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
@@ -204,7 +204,7 @@ class CouponDeleteAPI(DestroyAPIView):
     API for deleting a coupon, accessible only to admin users.
     """
     serializer_class = CouponSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     queryset = get_all_coupons()
 
 

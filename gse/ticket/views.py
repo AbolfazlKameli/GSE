@@ -2,7 +2,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView, DestroyAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
@@ -18,7 +18,7 @@ class TicketsListAPI(ListAPIView):
     """
     API for listing tickets, accessible only to admins.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     serializer_class = TicketsListSerializer
     queryset = get_all_tickets()
     filterset_fields = ('status',)
