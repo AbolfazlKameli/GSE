@@ -1,0 +1,7 @@
+TICKET_STATUS_PENDING = 'pending'
+TICKET_STATUS_ANSWERED = 'answered'
+
+TICKET_STATUS_CHOICES = (
+    (TICKET_STATUS_PENDING, 'درحال پردازش'),
+    (TICKET_STATUS_ANSWERED, 'پاسخ داده شده')
+)
