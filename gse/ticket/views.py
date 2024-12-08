@@ -3,9 +3,10 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
+from gse.permissions.permissions import IsAdminOrOwner
+from gse.utils.format_errors import format_errors
 from .selectors import get_all_tickets
 from .serializers import TicketsListSerializer, TicketSerializer
-from ..utils.format_errors import format_errors
 
 
 class TicketsListAPI(ListAPIView):
@@ -24,6 +25,7 @@ class TicketRetrieveAPI(RetrieveAPIView):
     """
     serializer_class = TicketSerializer
     queryset = get_all_tickets()
+    permission_classes = [IsAdminOrOwner]
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
