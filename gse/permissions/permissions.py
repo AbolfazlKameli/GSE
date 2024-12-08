@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAdminUser
 
 from gse.users.choices import USER_ROLE_ADMIN, USER_ROLE_SUPPORT
 
@@ -8,6 +8,13 @@ class NotAuthenticated(BasePermission):
 
     def has_permission(self, request, view):
         return bool(request.user and not request.user.is_authenticated)
+
+
+class IsAdminOrSupporter(BasePermission):
+    message = 'شما دسترسی لازم برای انجام این عملیات را ندارید.'
+
+    def has_permission(self, request, view):
+        return bool(request.user.is_authenticated and (request.user.role in (USER_ROLE_ADMIN, USER_ROLE_SUPPORT)))
 
 
 class IsAdminOrOwner(BasePermission):
