@@ -62,7 +62,8 @@ LOCAL_APPS = [
     "gse.orders.apps.OrdersConfig",
     "gse.website.apps.WebsiteConfig",
     "gse.payment.apps.PaymentConfig",
-    "gse.faq.apps.FaqConfig"
+    "gse.faq.apps.FaqConfig",
+    "gse.ticket.apps.TicketConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
