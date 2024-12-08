@@ -6,15 +6,15 @@ from rest_framework.generics import ListAPIView, GenericAPIView, DestroyAPIView,
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
+from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrOwner
 from gse.products.models import Product
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .models import Question, Answer
-from .selectors import get_all_questions, get_all_answers, get_question_by_id, get_answer_by_id
+from .selectors import get_all_questions, get_all_answers, get_question_by_id, get_answer_by_id, get_product_questions
 from .serializers import QuestionSerializer, AnswerSerializer
 from .services import remove_answer
-from ..docs.serializers.doc_serializers import ResponseSerializer
 
 
 class QuestionListAPI(ListAPIView):
@@ -25,6 +25,17 @@ class QuestionListAPI(ListAPIView):
     permission_classes = [IsAdminUser]
     queryset = get_all_questions()
     filterset_fields = ['status']
+
+
+class ProductQuestionListAPI(ListAPIView):
+    """
+    API for listing question by product id.
+    """
+    serializer_class = QuestionSerializer
+    filterset_fields = ['status']
+
+    def get_queryset(self):
+        return get_product_questions(self.kwargs.get('product_id'))
 
 
 class QuestionRetrieveAPI(RetrieveAPIView):
