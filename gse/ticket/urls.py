@@ -17,4 +17,9 @@ urlpatterns = [
         name='ticket_answer_retrieve'
     ),
     path('<int:ticket_id>/answers/add/', views.TicketAnswerCreateAPI.as_view(), name='ticket_answer_create'),
+    path(
+        '<int:ticket_id>/answers/<int:answer_id>/delete/',
+        views.TicketAnswerDeleteAPI.as_view(),
+        name='ticket_answer_delete'
+    ),
 ]

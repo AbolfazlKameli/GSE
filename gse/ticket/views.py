@@ -1,4 +1,5 @@
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView, DestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
@@ -8,8 +9,9 @@ from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .models import Ticket, TicketAnswer
-from .selectors import get_all_tickets, get_answer_by_id, get_ticket_by_id
+from .selectors import get_all_tickets, get_answer_by_id, get_ticket_by_id, get_all_ticket_answers
 from .serializers import TicketsListSerializer, TicketSerializer, TicketAnswerSerializer
+from .services import remove_answer
 
 
 class TicketsListAPI(ListAPIView):
@@ -117,4 +119,27 @@ class TicketAnswerCreateAPI(GenericAPIView):
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class TicketAnswerDeleteAPI(DestroyAPIView):
+    """
+    API for deleting ticket answer, accessible only to admins and supporters.
+    """
+    serializer_class = TicketAnswerSerializer
+    permission_classes = [IsAdminOrSupporter]
+    queryset = get_all_ticket_answers()
+
+    def get_object(self):
+        if not is_child_of(Ticket, TicketAnswer, self.kwargs.get('ticket_id'), self.kwargs.get('answer_id')):
+            raise Http404('پاسخ مرتبط با این تیکت با این مشخصات پیدا نشد.')
+
+        answer: TicketAnswer = get_answer_by_id(self.kwargs.get('answer_id'))
+        return answer
+
+    def delete(self, request, *args, **kwargs):
+        ticket: Ticket = get_object_or_404(Ticket, id=kwargs.get('ticket_id'))
+        remove_answer(ticket, self.get_object())
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
         )
