@@ -1,12 +1,15 @@
+from django.http import Http404
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView, DestroyAPIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from gse.permissions.permissions import IsAdminOrOwner
+from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
-from .selectors import get_all_tickets
-from .serializers import TicketsListSerializer, TicketSerializer
+from .models import Ticket, TicketAnswer
+from .selectors import get_all_tickets, get_answer_by_id
+from .serializers import TicketsListSerializer, TicketSerializer, TicketAnswerSerializer
 
 
 class TicketsListAPI(ListAPIView):
@@ -63,3 +66,27 @@ class TicketDeleteAPI(DestroyAPIView):
     permission_classes = [IsAdminOrOwner]
     serializer_class = TicketSerializer
     queryset = get_all_tickets()
+
+
+class TicketAnswerRetrieveAPI(GenericAPIView):
+    """
+    API for retrieving ticket answers, accessible to ticket owner or admin or supporter.
+    """
+    serializer_class = TicketAnswerSerializer
+    permission_classes = [IsAdminOrOwner]
+
+    def get_object(self):
+        if not is_child_of(Ticket, TicketAnswer, self.kwargs.get('ticket_id'), self.kwargs.get('answer_id')):
+            raise Http404('پاسخ مرتبط با تیکت با این مشخصات پیدا نشد.')
+        answer: TicketAnswer = get_answer_by_id(answer_id=self.kwargs.get('answer_id'))
+        if answer:
+            self.check_object_permissions(self.request, answer.ticket)
+            return answer
+        raise Http404('پاسخ مورد نظر پیدا نشد.')
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.serializer_class(instance=self.get_object())
+        return Response(
+            data={'data': serializer.data},
+            status=status.HTTP_200_OK
+        )
