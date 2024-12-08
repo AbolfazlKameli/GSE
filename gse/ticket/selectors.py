@@ -12,3 +12,7 @@ def get_ticket_by_id(ticket_id: int, status: str = TICKET_STATUS_PENDING) -> Tic
 
 def get_answer_by_id(answer_id: int) -> TicketAnswer | None:
     return TicketAnswer.objects.filter(id=answer_id).first()
+
+
+def get_all_ticket_answers() -> list[TicketAnswer]:
+    return TicketAnswer.objects.all()
