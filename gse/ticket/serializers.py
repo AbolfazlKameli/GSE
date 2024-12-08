@@ -13,6 +13,8 @@ class TicketAnswerSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
+    answers = TicketAnswerSerializer(read_only=True)
+
     class Meta:
         model = Ticket
         fields = '__all__'
