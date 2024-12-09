@@ -1,6 +1,6 @@
 from celery import shared_task
 
-from gse.utils import send_email
+from gse.utils import senders
 from .services import generate_otp_code
 
 
