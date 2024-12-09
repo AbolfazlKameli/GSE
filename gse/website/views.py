@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
-from rest_framework.generics import GenericAPIView, ListAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView, DestroyAPIView
 from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
@@ -63,3 +63,13 @@ class WebsiteAttributeUpdateAPI(GenericAPIView):
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class WebsiteAttributeDeleteAPI(DestroyAPIView):
+    """
+    API for deleting attributes, accessible only to admins or supporters.
+    """
+    serializer_class = WebsiteSerializer
+    permission_classes = [IsAdminOrSupporter]
+    queryset = get_all_attributes()
+    lookup_url_kwarg = 'attr_id'

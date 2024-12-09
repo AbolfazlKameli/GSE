@@ -6,5 +6,6 @@ app_name = 'website'
 urlpatterns = [
     path('attributes/add/', views.WebsiteAttributeCreateAPI.as_view(), name='website_attr_create'),
     path('attributes/<int:attr_id>/update/', views.WebsiteAttributeUpdateAPI.as_view(), name='website_attr_update'),
+    path('attributes/<int:attr_id>/delete/', views.WebsiteAttributeDeleteAPI.as_view(), name='website_attr_delete'),
     path('attributes/', views.WebSiteAttributeListAPI.as_view(), name='website_attr_list'),
 ]
