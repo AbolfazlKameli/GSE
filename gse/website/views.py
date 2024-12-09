@@ -1,15 +1,16 @@
 from rest_framework import status
-from rest_framework.generics import GenericAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.response import Response
 
 from gse.permissions.permissions import IsAdminOrSupporter
 from gse.utils.format_errors import format_errors
-from gse.website.serializers import WebsiteSerializer
+from .selectors import get_all_attributes
+from .serializers import WebsiteSerializer
 
 
 class WebsiteAttributeCreateAPI(GenericAPIView):
     """
-    API for creating website attribute.
+    API for creating website attribute, accessible only to admins or supporters.
     """
     serializer_class = WebsiteSerializer
     permission_classes = [IsAdminOrSupporter]
@@ -26,3 +27,11 @@ class WebsiteAttributeCreateAPI(GenericAPIView):
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class WebSiteAttributeListAPI(ListAPIView):
+    """
+    API for listing website attributes.
+    """
+    serializer_class = WebsiteSerializer
+    queryset = get_all_attributes()
