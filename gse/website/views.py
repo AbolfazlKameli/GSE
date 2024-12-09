@@ -1,9 +1,13 @@
+from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListAPIView
 from rest_framework.response import Response
 
+from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrSupporter
 from gse.utils.format_errors import format_errors
+from .models import Website
 from .selectors import get_all_attributes
 from .serializers import WebsiteSerializer
 
@@ -15,6 +19,7 @@ class WebsiteAttributeCreateAPI(GenericAPIView):
     serializer_class = WebsiteSerializer
     permission_classes = [IsAdminOrSupporter]
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -35,3 +40,26 @@ class WebSiteAttributeListAPI(ListAPIView):
     """
     serializer_class = WebsiteSerializer
     queryset = get_all_attributes()
+
+
+class WebsiteAttributeUpdateAPI(GenericAPIView):
+    """
+    API for updating an attribute, accessible only to admins and supporters.
+    """
+    serializer_class = WebsiteSerializer
+    permission_classes = [IsAdminOrSupporter]
+
+    @extend_schema(responses={200: ResponseSerializer})
+    def patch(self, request, *args, **kwargs):
+        attribute = get_object_or_404(Website, id=kwargs.get('attr_id'))
+        serializer = self.serializer_class(instance=attribute, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                data={'data': {'message': 'ویژگی به روز رسانی شد.'}},
+                status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
