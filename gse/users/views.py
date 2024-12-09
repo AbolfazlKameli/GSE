@@ -13,7 +13,7 @@ from rest_framework.generics import (
     DestroyAPIView,
     GenericAPIView
 )
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -74,7 +74,7 @@ class UsersListAPI(ListAPIView):
     """
     API for listing all users, accessible only to admin users.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [permissions.IsAdminOrSupporter]
     queryset = User.objects.all().select_related('profile', 'address')
     serializer_class = serializers.UserSerializer
     filterset_fields = ['is_active', 'is_superuser', 'role']
