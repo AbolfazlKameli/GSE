@@ -7,15 +7,16 @@ from .validators import validate_iranian_phone_number, validate_postal_code
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True, max_length=50)
+    email = models.EmailField(unique=True, max_length=50, db_index=True)
     role = models.CharField(
         max_length=20,
         choices=choices.USER_ROLE_CHOICES,
         default=choices.USER_ROLE_CUSTOMER,
-        verbose_name='نقش'
+        verbose_name='نقش',
+        db_index=True
     )
 
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False, db_index=True)
     created_date = models.DateTimeField(auto_now_add=True, verbose_name='created date')
     updated_date = models.DateTimeField(auto_now=True, verbose_name='updated date')
 

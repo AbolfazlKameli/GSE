@@ -10,15 +10,23 @@ from .choices import ORDER_STATUS_CHOICES, ORDER_STATUS_PENDING
 
 
 class Order(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', db_index=True)
     status = models.CharField(
         choices=ORDER_STATUS_CHOICES,
         verbose_name='وضعیت سفارش',
         default=ORDER_STATUS_PENDING,
-        max_length=10
+        max_length=10,
+        db_index=True
     )
-    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
-    coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, related_name='order', blank=True, null=True)
+    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0, db_index=True)
+    coupon = models.ForeignKey(
+        'Coupon',
+        on_delete=models.SET_NULL,
+        related_name='order',
+        blank=True,
+        null=True,
+        db_index=True
+    )
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -42,9 +50,9 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items')
-    quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', db_index=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items', db_index=True)
+    quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], db_index=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -65,9 +73,9 @@ class OrderItem(models.Model):
 
 
 class Coupon(models.Model):
-    code = models.CharField(max_length=50, unique=True)
-    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
-    max_usage_limit = models.PositiveIntegerField(default=100)
-    expiration_date = models.DateTimeField()
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0, db_index=True)
+    max_usage_limit = models.PositiveIntegerField(default=100, db_index=True)
+    expiration_date = models.DateTimeField(db_index=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
