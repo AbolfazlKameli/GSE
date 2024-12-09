@@ -1,10 +1,12 @@
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
@@ -47,6 +49,7 @@ class TicketCreateAPI(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TicketSerializer
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -107,6 +110,7 @@ class TicketAnswerCreateAPI(GenericAPIView):
             return ticket
         raise Http404('تیکت درحال پردازشی با این مشخصات پیدا نشد.')
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
