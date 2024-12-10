@@ -9,9 +9,9 @@ Gostaran Sharq elevator <br>
 - **JWT Authentication**: Secure API access with JSON Web Tokens.
 - **DRF Spectacular**: Automatic OpenAPI/Swagger documentation generation.
 - **PostgreSQL Database**: Robust relational database management system.
-  
+
 - **Redis for Caching**: High-performance cache layer for optimized API responses.
-  
+
 - **Redis as Celery Message Broker**: Redis is used as the message broker to efficiently handle task queues in Celery.
 - **Arvan Cloud Storage Integration**: Efficient and scalable storage solution.
 - **Celery**: Asynchronous task management for handling background processes.
@@ -23,10 +23,16 @@ Gostaran Sharq elevator <br>
 
 - [Abolfazl Kameli](https://github.com/AbolfazlKameli) (Back-end Developer)
 
+## Run with Docker
+
+```shell
+docker compose up
+```
+
 ## Run Locally
 
 - Install required packages
-visit Redis [installation guide](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/).
+  visit Redis [installation guide](https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/).
 
 - Clone the project
 
@@ -63,10 +69,13 @@ $ pip install -r requirements.txt
 ```shell
 $ cp .env.example .env
 ```
+
 - Create your own migration files
+
 ```shell
 $ python manage.py makemigrations users
 ```
+
 - Apply Migrations to the Database
 
 ```shell
@@ -84,6 +93,7 @@ $ python manage.py runserver
 ### Setting Up Your Users
 
 To create a **superuser account**, use this command:
+
 ```shell
 $ python manage.py createsuperuser
 ```

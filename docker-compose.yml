@@ -1,0 +1,66 @@
+services:
+  redis:
+    container_name: redis1
+    image: docker.arvancloud.ir/redis:7.4.1
+    restart: always
+    networks:
+      - main_network
+
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
+    restart: always
+    networks:
+      - main_network
+    depends_on:
+      - redis
+
+  celery:
+    container_name: celery_worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A core worker -l INFO
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - app
+    restart: always
+    networks:
+      - main_network
+    environment:
+      - C_FORCE_ROOT="true"
+
+  celery_beat:
+    container_name: celery_beat
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A core beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - app
+      - celery
+    restart: always
+    networks:
+      - main_network
+
+networks:
+  main_network:
+    driver: bridge
