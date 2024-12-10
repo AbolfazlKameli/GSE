@@ -34,17 +34,6 @@ class IsAdminOrOwner(BasePermission):
         )
 
 
-class IsSupporterOrAdminOrReadOnly(BasePermission):
-    message = 'برای دسترسی به این صفحه باید ادمین یا پشتیبان باشید.'
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        return bool(
-            request.user and request.user.is_authenticated and request.user.role in (USER_ROLE_ADMIN, USER_ROLE_SUPPORT)
-        )
-
-
 class FullCredentialsUser(BasePermission):
     message = 'اطلاعات کاربری خود مثل شماره تلفن، آدرس و... را کامل کنید.'
 
