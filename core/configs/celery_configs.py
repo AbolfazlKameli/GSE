@@ -5,8 +5,8 @@ from decouple import config
 broker_connection_retry_on_startup = True
 
 
-broker_url = "redis://localhost:6379/1"
-result_backend = "redis://localhost:6379/1"
+broker_url = "redis://redis1:6379/1"
+result_backend = "redis://redis1:6379/1"
 
 worker_prefetch_multiplier = 3
 
