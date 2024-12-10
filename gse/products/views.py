@@ -67,10 +67,11 @@ class CategoryUpdateAPI(GenericAPIView):
     permission_classes = [IsAdminOrSupporter]
     serializer_class = ProductCategoryWriteSerializer
     http_method_names = ['patch', 'options', 'head']
+    lookup_url_kwarg = 'category_id'
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
-        category: ProductCategory = get_object_or_404(ProductCategory, id=kwargs.get('pk'))
+        category: ProductCategory = get_object_or_404(ProductCategory, id=kwargs.get('category_id'))
         serializer = self.serializer_class(instance=category, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -91,6 +92,7 @@ class CategoryDeleteAPI(DestroyAPIView):
     queryset = get_all_categories()
     permission_classes = [IsAdminOrSupporter]
     serializer_class = ProductCategoryWriteSerializer
+    lookup_url_kwarg = 'category_id'
 
 
 class CategoriesListAPI(ListAPIView):
@@ -108,6 +110,7 @@ class CategoryRetrieveAPI(RetrieveAPIView):
     """
     queryset = get_all_categories()
     serializer_class = ProductCategoryReadSerializer
+    lookup_url_kwarg = 'category_id'
 
 
 class ProductsListAPI(ListAPIView):
@@ -126,6 +129,7 @@ class ProductRetrieveAPI(RetrieveAPIView):
     """
     queryset = get_all_products()
     serializer_class = ProductDetailsSerializer
+    lookup_url_kwarg = 'product_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -163,10 +167,11 @@ class ProductUpdateAPI(GenericAPIView):
     """
     serializer_class = ProductUpdateSerializer
     permission_classes = [IsAdminOrSupporter]
+    lookup_url_kwarg = 'product_id'
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
-        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
+        product: Product = get_object_or_404(Product, id=kwargs.get('product_id'))
         serializer = self.serializer_class(data=request.data, instance=product, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -187,6 +192,7 @@ class ProductDestroyAPI(DestroyAPIView):
     serializer_class = ProductOperationsSerializer
     queryset = get_all_products()
     permission_classes = [IsAdminOrSupporter]
+    lookup_url_kwarg = 'product_id'
 
 
 class ProductDetailCreateAPI(GenericAPIView):
@@ -199,7 +205,7 @@ class ProductDetailCreateAPI(GenericAPIView):
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
-        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
+        product: Product = get_object_or_404(Product, id=kwargs.get('product_id'))
         if serializer.is_valid():
             serializer.save(product=product)
             return Response(
@@ -225,7 +231,7 @@ class ProductDetailUpdateAPI(UpdateAPIView):
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
-        if not is_child_of(Product, ProductDetail, kwargs.get('pk'), kwargs.get('detail_id')):
+        if not is_child_of(Product, ProductDetail, kwargs.get('product_id'), kwargs.get('detail_id')):
             return Response(
                 data={'data': {'errors': 'محصول مرتبط یافت نشد.'}},
                 status=status.HTTP_404_NOT_FOUND
@@ -248,7 +254,7 @@ class ProductDetailDeleteAPI(DestroyAPIView):
     lookup_url_kwarg = 'detail_id'
 
     def destroy(self, request, *args, **kwargs):
-        if not is_child_of(Product, ProductDetail, kwargs.get('pk'), kwargs.get('detail_id')):
+        if not is_child_of(Product, ProductDetail, kwargs.get('product_id'), kwargs.get('detail_id')):
             return Response(
                 data={'data': {'errors': 'محصول مرتبط یافت نشد.'}},
                 status=status.HTTP_404_NOT_FOUND
@@ -266,7 +272,7 @@ class ProductMediaCreateAPI(GenericAPIView):
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
-        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
+        product: Product = get_object_or_404(Product, id=kwargs.get('product_id'))
         if serializer.is_valid():
             serializer.save(product=product)
             return Response(
@@ -292,7 +298,7 @@ class ProductMediaUpdateAPI(UpdateAPIView):
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
-        if not is_child_of(Product, ProductMedia, kwargs.get('pk'), kwargs.get('media_id')):
+        if not is_child_of(Product, ProductMedia, kwargs.get('product_id'), kwargs.get('media_id')):
             return Response(
                 data={'data': {'errors': 'محصول مرتبط یافت نشد.'}},
                 status=status.HTTP_404_NOT_FOUND
@@ -315,7 +321,7 @@ class ProductMediaDeleteAPI(DestroyAPIView):
     lookup_url_kwarg = 'media_id'
 
     def destroy(self, request, *args, **kwargs):
-        if not is_child_of(Product, ProductMedia, kwargs.get('pk'), kwargs.get('media_id')):
+        if not is_child_of(Product, ProductMedia, kwargs.get('product_id'), kwargs.get('media_id')):
             return Response(
                 data={'data': {'errors': 'محصول مرتبط یافت نشد.'}},
                 status=status.HTTP_404_NOT_FOUND
@@ -328,12 +334,12 @@ class ProductReviewListAPI(ListAPIView):
     API for listing product reviews.
     """
     serializer_class = ProductReviewSerializer
-    filterset_fields = ('rate',)
+    filterset_fields = ['rate']
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return ProductReview.objects.none()
-        product = get_object_or_404(Product, id=self.kwargs.get('pk'))
+        product = get_object_or_404(Product, id=self.kwargs.get('product_id'))
         return get_product_reviews(product=product)
 
 
@@ -362,7 +368,7 @@ class ProductReviewCreateAPI(GenericAPIView):
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
-        product: Product = get_object_or_404(Product, id=kwargs.get('pk'))
+        product: Product = get_object_or_404(Product, id=kwargs.get('product_id'))
         if has_purchased(user=request.user, product=product):
             serializer = self.serializer_class(data=request.data)
             if serializer.is_valid():
@@ -390,7 +396,7 @@ class ProductReviewDeleteAPI(DestroyAPIView):
     queryset = get_all_reviews()
 
     def get_object(self):
-        if is_child_of(Product, ProductReview, self.kwargs.get('pk'), self.kwargs.get('review_id')):
+        if is_child_of(Product, ProductReview, self.kwargs.get('product_id'), self.kwargs.get('review_id')):
             review = get_review_by_id(review_id=self.kwargs.get('review_id'))
             self.check_object_permissions(self.request, review)
             return review

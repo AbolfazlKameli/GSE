@@ -33,6 +33,7 @@ class TicketRetrieveAPI(RetrieveAPIView):
     serializer_class = TicketSerializer
     queryset = get_all_tickets()
     permission_classes = [IsAdminOrOwner]
+    lookup_url_kwarg = 'ticket_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -71,6 +72,7 @@ class TicketDeleteAPI(DestroyAPIView):
     permission_classes = [IsAdminOrOwner]
     serializer_class = TicketSerializer
     queryset = get_all_tickets()
+    lookup_url_kwarg = 'ticket_id'
 
 
 class TicketAnswerRetrieveAPI(GenericAPIView):

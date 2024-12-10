@@ -36,6 +36,7 @@ class OrderRetrieveAPI(RetrieveAPIView):
     serializer_class = OrderSerializer
     queryset = get_all_orders()
     permission_classes = [IsAdminOrOwner]
+    lookup_url_kwarg = 'order_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -88,6 +89,7 @@ class OrderCancelAPI(GenericAPIView):
     """
     permission_classes = [IsAdminOrOwner]
     allowed_statuses = [ORDER_STATUS_PENDING]
+    lookup_url_kwarg = 'order_id'
 
     @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -118,7 +120,7 @@ class OrderItemDeleteAPI(DestroyAPIView):
         if order is None or not check_order_status(order, self.allowed_statuses):
             raise Http404({'data': {'errors': 'سفارش درحال پردازشی با این مشخصات پیدا نشد.'}})
 
-        item: OrderItem | None = order.items.filter(id=self.kwargs.get('pk')).first()
+        item: OrderItem | None = order.items.filter(id=self.kwargs.get('item_id')).first()
         if item is None or not is_child_of(Order, OrderItem, order.id, item.id):
             raise Http404({'data': {'errors': 'آیتم مربوط به این سفارش با این مشخصات پیدا نشد.'}})
 
@@ -142,6 +144,7 @@ class CouponRetrieveAPI(RetrieveAPIView):
     serializer_class = CouponSerializer
     queryset = get_all_coupons()
     permission_classes = [IsAdminOrSupporter]
+    lookup_url_kwarg = 'coupon_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -182,7 +185,7 @@ class CouponUpdateAPI(GenericAPIView):
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
-        coupon_object: Coupon | None = get_coupon_by_id(coupon_id=kwargs.get('pk'))
+        coupon_object: Coupon | None = get_coupon_by_id(coupon_id=kwargs.get('coupon_id'))
         if coupon_object is None:
             raise Http404('کد تخفیف با این مشخصات یافت نشد.')
         serializer = self.serializer_class(data=request.data, instance=coupon_object, partial=True)
@@ -205,6 +208,7 @@ class CouponDeleteAPI(DestroyAPIView):
     serializer_class = CouponSerializer
     permission_classes = [IsAdminOrSupporter]
     queryset = get_all_coupons()
+    lookup_url_kwarg = 'coupon_id'
 
 
 class CouponApplyAPI(GenericAPIView):

@@ -44,6 +44,7 @@ class QuestionRetrieveAPI(RetrieveAPIView):
     """
     serializer_class = QuestionSerializer
     queryset = get_all_questions()
+    lookup_url_kwarg = 'question_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -82,6 +83,7 @@ class QuestionDeleteAPI(DestroyAPIView):
     serializer_class = QuestionSerializer
     permission_classes = [IsAdminOrOwner]
     queryset = get_all_questions()
+    lookup_url_kwarg = 'question_id'
 
 
 class AnswerCreateAPI(GenericAPIView):
@@ -95,7 +97,7 @@ class AnswerCreateAPI(GenericAPIView):
         question: Question | None = get_question_by_id(question_id=self.kwargs.get('question_id'))
         if question:
             return question
-        raise Http404('سوال بدون پاسخی با این مشخصات پیدا نشد.')
+        raise Http404('سوال بدون پاسخی با این شناسه نشد.')
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):

@@ -67,14 +67,14 @@ class CartItemDeleteAPI(DestroyAPIView):
     queryset = get_all_cart_items()
 
     def get_object(self):
-        item_id = self.kwargs.get('pk')
+        item_id = self.kwargs.get('item_id')
         cart = get_cart_by_item_id(item_id=item_id)
         return cart
 
     def delete(self, request, *args, **kwargs):
-        cart_item = get_cart_item_by_id(item_id=kwargs.get('pk'))
+        cart_item = get_cart_item_by_id(item_id=kwargs.get('item_id'))
         if cart_item is None:
-            raise Http404('آیتم با این مشخصات یافت نشد.')
+            raise Http404('آیتم مورد نظر پیدا نشد.')
         cart_item.delete()
         return Response(
             status=status.HTTP_204_NO_CONTENT
