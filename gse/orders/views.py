@@ -2,11 +2,10 @@ from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView, GenericAPIView
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
-from gse.permissions.permissions import IsAdminOrOwner
+from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter, FullCredentialsUser
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .choices import ORDER_STATUS_PENDING
@@ -37,6 +36,7 @@ class OrderRetrieveAPI(RetrieveAPIView):
     serializer_class = OrderSerializer
     queryset = get_all_orders()
     permission_classes = [IsAdminOrOwner]
+    lookup_url_kwarg = 'order_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -65,7 +65,7 @@ class OrderCreateAPI(GenericAPIView):
     API for creating a new order, accessible only to authenticated users.
     """
     serializer_class = OrderCreateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [FullCredentialsUser]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -89,6 +89,7 @@ class OrderCancelAPI(GenericAPIView):
     """
     permission_classes = [IsAdminOrOwner]
     allowed_statuses = [ORDER_STATUS_PENDING]
+    lookup_url_kwarg = 'order_id'
 
     @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -119,7 +120,7 @@ class OrderItemDeleteAPI(DestroyAPIView):
         if order is None or not check_order_status(order, self.allowed_statuses):
             raise Http404({'data': {'errors': 'سفارش درحال پردازشی با این مشخصات پیدا نشد.'}})
 
-        item: OrderItem | None = order.items.filter(id=self.kwargs.get('pk')).first()
+        item: OrderItem | None = order.items.filter(id=self.kwargs.get('item_id')).first()
         if item is None or not is_child_of(Order, OrderItem, order.id, item.id):
             raise Http404({'data': {'errors': 'آیتم مربوط به این سفارش با این مشخصات پیدا نشد.'}})
 
@@ -142,7 +143,8 @@ class CouponRetrieveAPI(RetrieveAPIView):
     """
     serializer_class = CouponSerializer
     queryset = get_all_coupons()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
+    lookup_url_kwarg = 'coupon_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -157,7 +159,7 @@ class CouponCreateAPI(GenericAPIView):
     API for creating a new coupon, accessible only to admin users.
     """
     serializer_class = CouponSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -179,11 +181,11 @@ class CouponUpdateAPI(GenericAPIView):
     API for updating a coupon, accessible only to admin users.
     """
     serializer_class = CouponSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     @extend_schema(responses={200: ResponseSerializer})
     def patch(self, request, *args, **kwargs):
-        coupon_object: Coupon | None = get_coupon_by_id(coupon_id=kwargs.get('pk'))
+        coupon_object: Coupon | None = get_coupon_by_id(coupon_id=kwargs.get('coupon_id'))
         if coupon_object is None:
             raise Http404('کد تخفیف با این مشخصات یافت نشد.')
         serializer = self.serializer_class(data=request.data, instance=coupon_object, partial=True)
@@ -204,8 +206,9 @@ class CouponDeleteAPI(DestroyAPIView):
     API for deleting a coupon, accessible only to admin users.
     """
     serializer_class = CouponSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     queryset = get_all_coupons()
+    lookup_url_kwarg = 'coupon_id'
 
 
 class CouponApplyAPI(GenericAPIView):
@@ -214,9 +217,19 @@ class CouponApplyAPI(GenericAPIView):
     """
     serializer_class = CouponApplySerializer
     permission_classes = [IsAdminOrOwner]
+    allowed_statuses = [ORDER_STATUS_PENDING]
+
+    def get_object(self):
+        order_id = self.request.data.get('order_id')
+        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
+        if order is None or not check_order_status(order, self.allowed_statuses):
+            raise Http404('سفارش درحال پردازشی با این مشخصات وجود ندارد.')
+        self.check_object_permissions(self.request, order)
+        return order
 
     @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
+        self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -236,9 +249,19 @@ class CouponDiscardAPI(GenericAPIView):
     """
     serializer_class = CouponDiscardSerializer
     permission_classes = [IsAdminOrOwner]
+    allowed_statuses = [ORDER_STATUS_PENDING]
+
+    def get_object(self):
+        order_id = self.request.data.get('order_id')
+        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
+        if order is None or not check_order_status(order, self.allowed_statuses):
+            raise Http404('سفارش درحال پردازشی با این مشخصات وجود ندارد.')
+        self.check_object_permissions(self.request, order)
+        return order
 
     @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
+        self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()

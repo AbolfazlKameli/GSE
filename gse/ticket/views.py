@@ -1,10 +1,12 @@
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView, DestroyAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
@@ -18,7 +20,7 @@ class TicketsListAPI(ListAPIView):
     """
     API for listing tickets, accessible only to admins.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     serializer_class = TicketsListSerializer
     queryset = get_all_tickets()
     filterset_fields = ('status',)
@@ -31,6 +33,7 @@ class TicketRetrieveAPI(RetrieveAPIView):
     serializer_class = TicketSerializer
     queryset = get_all_tickets()
     permission_classes = [IsAdminOrOwner]
+    lookup_url_kwarg = 'ticket_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -47,6 +50,7 @@ class TicketCreateAPI(GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TicketSerializer
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -68,6 +72,7 @@ class TicketDeleteAPI(DestroyAPIView):
     permission_classes = [IsAdminOrOwner]
     serializer_class = TicketSerializer
     queryset = get_all_tickets()
+    lookup_url_kwarg = 'ticket_id'
 
 
 class TicketAnswerRetrieveAPI(GenericAPIView):
@@ -107,6 +112,7 @@ class TicketAnswerCreateAPI(GenericAPIView):
             return ticket
         raise Http404('تیکت درحال پردازشی با این مشخصات پیدا نشد.')
 
+    @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():

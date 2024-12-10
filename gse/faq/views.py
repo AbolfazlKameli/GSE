@@ -3,18 +3,18 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import ListAPIView, GenericAPIView, DestroyAPIView, RetrieveAPIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from gse.permissions.permissions import IsAdminOrOwner
+from gse.docs.serializers.doc_serializers import ResponseSerializer
+from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.products.models import Product
 from gse.utils.db_utils import is_child_of
 from gse.utils.format_errors import format_errors
 from .models import Question, Answer
-from .selectors import get_all_questions, get_all_answers, get_question_by_id, get_answer_by_id
+from .selectors import get_all_questions, get_all_answers, get_question_by_id, get_answer_by_id, get_product_questions
 from .serializers import QuestionSerializer, AnswerSerializer
 from .services import remove_answer
-from ..docs.serializers.doc_serializers import ResponseSerializer
 
 
 class QuestionListAPI(ListAPIView):
@@ -22,9 +22,20 @@ class QuestionListAPI(ListAPIView):
     API for listing questions, accessible only to admin users.
     """
     serializer_class = QuestionSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
     queryset = get_all_questions()
     filterset_fields = ['status']
+
+
+class ProductQuestionListAPI(ListAPIView):
+    """
+    API for listing question by product id.
+    """
+    serializer_class = QuestionSerializer
+    filterset_fields = ['status']
+
+    def get_queryset(self):
+        return get_product_questions(self.kwargs.get('product_id'))
 
 
 class QuestionRetrieveAPI(RetrieveAPIView):
@@ -33,6 +44,7 @@ class QuestionRetrieveAPI(RetrieveAPIView):
     """
     serializer_class = QuestionSerializer
     queryset = get_all_questions()
+    lookup_url_kwarg = 'question_id'
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
@@ -71,6 +83,7 @@ class QuestionDeleteAPI(DestroyAPIView):
     serializer_class = QuestionSerializer
     permission_classes = [IsAdminOrOwner]
     queryset = get_all_questions()
+    lookup_url_kwarg = 'question_id'
 
 
 class AnswerCreateAPI(GenericAPIView):
@@ -78,13 +91,13 @@ class AnswerCreateAPI(GenericAPIView):
     API for creating answers, accessible only to admin users.
     """
     serializer_class = AnswerSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     def get_object(self):
         question: Question | None = get_question_by_id(question_id=self.kwargs.get('question_id'))
         if question:
             return question
-        raise Http404('سوال بدون پاسخی با این مشخصات پیدا نشد.')
+        raise Http404('سوال بدون پاسخی با این شناسه نشد.')
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -108,7 +121,7 @@ class AnswerDeleteAPI(DestroyAPIView):
     """
     serializer_class = AnswerSerializer
     queryset = get_all_answers()
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminOrSupporter]
 
     def get_object(self):
         if not is_child_of(

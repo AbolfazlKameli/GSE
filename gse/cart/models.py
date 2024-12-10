@@ -24,9 +24,13 @@ class Cart(models.Model):
 
 
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='cart_items')
-    quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items', db_index=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='cart_items', db_index=True)
+    quantity = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        default=0,
+        db_index=True
+    )
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 

@@ -13,7 +13,7 @@ from rest_framework.generics import (
     DestroyAPIView,
     GenericAPIView
 )
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -38,7 +38,7 @@ from .services import (
     generate_tokens_for_user,
     update_last_login
 )
-from .tasks import send_verification_email
+from .tasks import send_verification_email, send_verification_sms
 from .throttle import FiveRequestPerHourThrottle
 
 
@@ -74,7 +74,7 @@ class UsersListAPI(ListAPIView):
     """
     API for listing all users, accessible only to admin users.
     """
-    permission_classes = [IsAdminUser]
+    permission_classes = [permissions.IsAdminOrSupporter]
     queryset = User.objects.all().select_related('profile', 'address')
     serializer_class = serializers.UserSerializer
     filterset_fields = ['is_active', 'is_superuser', 'role']
@@ -139,6 +139,8 @@ class UserRegisterVerifyAPI(GenericAPIView):
                     status=status.HTTP_409_CONFLICT
                 )
             user.is_active = True
+            if user.profile.phone_number is not None:
+                user.profile.phone_number = None
             user.save()
             return Response(
                 data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
@@ -218,7 +220,6 @@ class GoogleLoginApi(ApiErrorsMixin, GenericAPIView):
 
         if error or not code:
             errors = urlencode({'errors': error})
-            print(error, code)
             return Response({'data': {'errors': format_errors.format_errors(errors)}})
 
         stored_state = cache.get(f'state_{state}', None)
@@ -415,16 +416,24 @@ class UserProfileUpdateAPI(UpdateAPIView):
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
             email_changed = 'email' in serializer.validated_data
+            phone_changed = 'phone_number' in serializer.validated_data.get('profile')
             message = 'اطلاعات شما با موفقیت به روز رسانی شد.'
-            if email_changed:
+            if email_changed or phone_changed:
                 user.is_active = False
                 user.save()
-                send_verification_email.delay_on_commit(
-                    email_address=serializer.validated_data['email'],
-                    content='کد تایید حساب کاربری',
-                    subject='آسانسور گستران شرق'
-                )
-                message += 'و لینک فعالسازی برای آدرس ایمیل جدید شما ارسال شد.'
+                if email_changed:
+                    send_verification_email.delay_on_commit(
+                        email_address=serializer.validated_data['email'],
+                        content='کد تایید حساب کاربری',
+                        subject='آسانسور گستران شرق'
+                    )
+                    message += 'و کد فعالسازی برای آدرس ایمیل جدید شما ارسال شد.'
+
+                if phone_changed:
+                    send_verification_sms.delay_on_commit(
+                        phone_number=serializer.validated_data.get('profile').get('phone_number')
+                    )
+                    message += 'و کد فعالسازی برای شماره تلفن جدید شما ارسال شد.'
 
             serializer.save()
 

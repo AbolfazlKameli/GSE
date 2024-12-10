@@ -16,8 +16,15 @@ from ..users.models import User
 class ProductCategory(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=250, allow_unicode=True)
-    is_sub = models.BooleanField(default=False)
-    sub_category = models.ForeignKey('self', on_delete=models.CASCADE, related_name='s_category', blank=True, null=True)
+    is_sub = models.BooleanField(default=False, db_index=True)
+    sub_category = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        related_name='s_category',
+        blank=True,
+        null=True,
+        db_index=True
+    )
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -30,19 +37,25 @@ class ProductCategory(models.Model):
 
 
 class Product(models.Model):
-    category = models.ManyToManyField(ProductCategory, related_name='products', blank=True)
+    category = models.ManyToManyField(ProductCategory, related_name='products', blank=True, db_index=True)
     title = models.CharField(max_length=200)
     slug = models.SlugField(max_length=250, allow_unicode=True)
-    quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(1000)])
+    quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(1000)], db_index=True)
     description = models.TextField()
-    available = models.BooleanField(default=True)
-    unit_price = models.DecimalField(validators=[MinValueValidator(Decimal(0))], max_digits=15, decimal_places=0)
-    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
+    available = models.BooleanField(default=True, db_index=True)
+    unit_price = models.DecimalField(
+        validators=[MinValueValidator(Decimal(0))],
+        max_digits=15,
+        decimal_places=0,
+        db_index=True
+    )
+    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0, db_index=True)
     final_price = models.DecimalField(
         validators=[MinValueValidator(Decimal(0))],
         max_digits=15,
         decimal_places=0,
-        default=0
+        default=0,
+        db_index=True
     )
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
@@ -72,20 +85,21 @@ class Product(models.Model):
 
 
 class ProductDetail(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='details')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='details', db_index=True)
     attribute = models.CharField(max_length=250)
     value = models.CharField(max_length=250)
 
 
 class ProductMedia(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='media')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='media', db_index=True)
     media_type = models.CharField(
         choices=MEDIA_TYPE_CHOICES,
         verbose_name='نوع رسانه',
-        max_length=10
+        max_length=10,
+        db_index=True
     )
     media_url = models.FileField(validators=[FileExtensionValidator(['png', 'jpg', 'jpeg', 'mp4', 'gif'])])
-    is_primary = models.BooleanField(default=False)
+    is_primary = models.BooleanField(default=False, db_index=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -120,9 +134,9 @@ class ProductMedia(models.Model):
 
 
 class ProductReview(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews', db_index=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews', db_index=True)
     body = models.CharField(max_length=255)
-    rate = models.PositiveSmallIntegerField(validators=[MaxValueValidator(5)])
+    rate = models.PositiveSmallIntegerField(validators=[MaxValueValidator(5)], db_index=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
