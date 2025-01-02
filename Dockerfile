@@ -11,4 +11,6 @@ COPY requirements.txt /app/
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . /app/
-CMD ["sh", "-c", "python manage.py migrate"]
+
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
