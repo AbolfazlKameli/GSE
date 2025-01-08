@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
-from gse.payment.serializer import PaymentSerializer
+from gse.payment.serializers import PaymentSerializer
 from gse.products.serializers import ProductListSerializer
 from .choices import ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon

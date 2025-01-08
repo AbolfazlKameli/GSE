@@ -13,10 +13,7 @@ class ProductReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductReview
         fields = '__all__'
-        extra_kwargs = {
-            'product': {'read_only': True},
-            'owner': {'read_only': True}
-        }
+        read_only_fields = ('product', 'owner')
 
 
 class ProductCategoryWriteSerializer(serializers.ModelSerializer):
@@ -181,9 +178,11 @@ class ProductOperationsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         exclude = ('slug',)
+        read_only_fields = ('final_price',)
 
 
 class ProductUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+        read_only_fields = ('final_price',)
