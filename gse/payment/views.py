@@ -11,7 +11,7 @@ from gse.orders.selectors import get_order_by_id, check_order_status, get_pendin
 from gse.permissions.permissions import IsAdminOrOwner, FullCredentialsUser
 from .models import Payment
 from .selectors import get_payment_by_id
-from .serializer import PaymentSerializer
+from .serializers import PaymentSerializer
 from .services import payment_request, verify
 
 

@@ -8,9 +8,7 @@ class TicketAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = TicketAnswer
         fields = '__all__'
-        extra_kwargs = {
-            'ticket': {'read_only': True}
-        }
+        read_only_fields = ('ticket',)
 
     def save(self, **kwargs):
         submit_answer(
@@ -26,10 +24,7 @@ class TicketSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = '__all__'
-        extra_kwargs = {
-            'owner': {'read_only': True},
-            'status': {'read_only': True}
-        }
+        read_only_fields = ('owner', 'status')
 
 
 class TicketsListSerializer(serializers.ModelSerializer):
