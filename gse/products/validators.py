@@ -1,6 +1,20 @@
 import subprocess
 import tempfile
+
+import magic
 from django.core.exceptions import ValidationError
+
+
+def validate_file_type(file, expected_types: dict) -> str | None:
+    buffered = file.read(2048)
+    mime_type = magic.from_buffer(buffered, mime=True)
+    file.seek(0)
+    if mime_type in expected_types.get('images'):
+        return 'image'
+    elif mime_type in expected_types.get('videos'):
+        return 'video'
+    else:
+        return None
 
 
 def get_video_duration(file_path):
