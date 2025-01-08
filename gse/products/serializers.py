@@ -6,7 +6,7 @@ from rest_framework import serializers
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .models import Product, ProductMedia, ProductCategory, ProductDetail, ProductReview
 from .selectors import get_primary_image, get_parent_categories, get_sub_categories
-from .validators import VideoDurationValidator
+from .validators import VideoDurationValidator, validate_file_type
 
 
 class ProductReviewSerializer(serializers.ModelSerializer):
@@ -60,17 +60,25 @@ class ProductMediaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductMedia
         exclude = ('product',)
+        read_only_fields = ('media_type',)
 
     def validate(self, attrs):
-        media_type = attrs.get('media_type')
+        allowed_types = {
+            'images': ['image/jpeg', 'image/png', 'image/jpg'],
+            'videos': ['video/mp4']
+        }
         is_primary = attrs.get('is_primary')
         media_url = attrs.get('media_url')
         max_media_size = 500 * 1024 * 1024
+        media_type = validate_file_type(media_url, allowed_types)
+
+        if media_type is None:
+            raise serializers.ValidationError({'media_url': 'نوع رسانه مجاز نمیباشد.'})
 
         if media_type == MEDIA_TYPE_IMAGE and not media_url.name.lower().endswith(('png', 'jpg', 'jpeg')):
             raise serializers.ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
 
-        if media_type == MEDIA_TYPE_VIDEO and not media_url.name.lower().endswith(('.mp4', '.mov', '.avi')):
+        if media_type == MEDIA_TYPE_VIDEO and not media_url.name.lower().endswith(('.mp4',)):
             raise serializers.ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
 
         if media_type == MEDIA_TYPE_IMAGE:
@@ -91,6 +99,7 @@ class ProductMediaSerializer(serializers.ModelSerializer):
             validator = VideoDurationValidator(max_duration=600)
             validator(media_url)
 
+        attrs['media_type'] = media_type
         return attrs
 
 
