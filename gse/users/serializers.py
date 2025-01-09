@@ -59,9 +59,13 @@ class UserSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='profile.first_name', required=False)
     last_name = serializers.CharField(source='profile.last_name', required=False)
-    phone_number = serializers.CharField(source='profile.phone_number', required=False)
+    phone_number = serializers.CharField(
+        source='profile.phone_number',
+        required=False,
+        validators=[validate_iranian_phone_number]
+    )
     address = serializers.CharField(source='address.address', required=False)
-    postal_code = serializers.CharField(source='address.postal_code', required=False)
+    postal_code = serializers.CharField(source='address.postal_code', required=False, validators=[validate_postal_code])
 
     class Meta:
         model = User
@@ -81,15 +85,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('هیچ اطلاعاتی ارسال نشده.')
         return attrs
 
-    # Address model validators
-    def validate_postal_code(self, value):
-        if value:
-            try:
-                validate_postal_code(value)
-            except ValidationError as e:
-                raise serializers.ValidationError(e.message)
-        return value
-
     # Profile validators
     def validate_first_name(self, value):
         if value and len(value) > 50:
@@ -99,14 +94,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     def validate_last_name(self, value):
         if value and len(value) > 50:
             raise serializers.ValidationError('نام خانوادگی نمیتواند بیشتر از ۵۰ نویسه باشد.')
-        return value
-
-    def validate_phone_number(self, value):
-        if value:
-            try:
-                validate_iranian_phone_number(value)
-            except ValidationError as e:
-                raise serializers.ValidationError(e.message)
         return value
 
     @transaction.atomic
