@@ -7,14 +7,14 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg
 
+from gse.users.models import User
 from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .services import slugify_title
 from .validators import VideoDurationValidator
-from ..users.models import User
 
 
 class ProductCategory(models.Model):
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, unique=True, db_index=True)
     slug = models.SlugField(max_length=250, allow_unicode=True)
     is_sub = models.BooleanField(default=False, db_index=True)
     sub_category = models.ForeignKey(
