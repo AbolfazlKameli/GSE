@@ -112,7 +112,7 @@ class UserRegisterAPI(CreateAPIView):
         )
 
 
-class UserRegisterVerifyAPI(GenericAPIView):
+class UserVerificationAPI(GenericAPIView):
     """
     API for verifying user registration, accessible only to non-authenticated users,
     with a limit of five requests per hour for each IP.
