@@ -4,9 +4,8 @@ from decouple import config
 
 broker_connection_retry_on_startup = True
 
-
-broker_url = "redis://redis1:6379/1"
-result_backend = "redis://redis1:6379/1"
+broker_url = config('CELERY_REDIS_LOCATION')
+result_backend = config('CELERY_REDIS_LOCATION')
 
 worker_prefetch_multiplier = 3
 
