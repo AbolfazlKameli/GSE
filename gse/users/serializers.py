@@ -76,6 +76,11 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             'is_active'
         )
 
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError('هیچ اطلاعاتی ارسال نشده.')
+        return attrs
+
     # Address model validators
     def validate_postal_code(self, value):
         if value:
@@ -144,12 +149,21 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
 
 class UserRegisterVerifySerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=50)
+    email = serializers.EmailField(max_length=50, required=False)
+    phone_number = serializers.CharField(max_length=11, validators=[validate_iranian_phone_number], required=False)
     code = serializers.CharField(max_length=5)
 
     def validate(self, attrs):
-        if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
-            raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
+        phone_number = attrs.get('phone_number')
+        email = attrs.get('email')
+        if phone_number:
+            if not check_otp_code(phone_number=phone_number, otp_code=attrs.get('code')):
+                raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
+        elif email:
+            if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
+                raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
+        else:
+            raise serializers.ValidationError('وارد کردن ایمیل یا شماره تلفن الزامیست.')
         return attrs
 
 

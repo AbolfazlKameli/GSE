@@ -15,7 +15,7 @@ def send_verification_email(email_address: str, content: str, subject: str):
 
 @shared_task
 def send_verification_sms(phone_number: str):
-    otp_code = generate_otp_code(email=phone_number)
+    otp_code = generate_otp_code(phone_number=phone_number)
     content = f'کد تایید شما:\n {otp_code}'
     result = senders.send_sms(phone_number=phone_number, content=content)
     return result
