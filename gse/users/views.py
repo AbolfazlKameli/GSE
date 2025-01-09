@@ -28,7 +28,7 @@ from gse.utils import format_errors
 from . import serializers
 from .mixins import ApiErrorsMixin
 from .models import User
-from .selectors import get_user_by_email
+from .selectors import get_user_by_email, get_user_by_phone_number
 from .services import (
     register,
     google_get_access_token,
@@ -126,7 +126,13 @@ class UserVerificationAPI(GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            user: User | None = get_user_by_email(serializer.validated_data.get('email'))
+            phone_number = serializer.validated_data.get('phone_number')
+            email = serializer.validated_data.get('email')
+            user = None
+            if phone_number:
+                user: User | None = get_user_by_phone_number(phone_number=phone_number)
+            elif email:
+                user: User | None = get_user_by_email(email=email)
             if user is None:
                 return Response(
                     data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
@@ -139,8 +145,8 @@ class UserVerificationAPI(GenericAPIView):
                     status=status.HTTP_409_CONFLICT
                 )
             user.is_active = True
-            if user.profile.phone_number is not None:
-                user.profile.phone_number = None
+            # if user.profile.phone_number is not None:
+            #     user.profile.phone_number = None
             user.save()
             return Response(
                 data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
@@ -415,8 +421,9 @@ class UserProfileUpdateAPI(UpdateAPIView):
         user: User = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
+            profile = serializer.validated_data.get('profile')
             email_changed = 'email' in serializer.validated_data
-            phone_changed = 'phone_number' in serializer.validated_data.get('profile')
+            phone_changed = 'phone_number' in profile if profile else False
             message = 'اطلاعات شما با موفقیت به روز رسانی شد.'
             if email_changed or phone_changed:
                 user.is_active = False

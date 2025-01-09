@@ -1,6 +1,6 @@
 from datetime import datetime
 from random import randint, SystemRandom
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 from urllib.parse import urlencode
 
 import requests
@@ -54,18 +54,27 @@ def update_profile(*, user_id: int, profile_data: dict = None) -> UserProfile:
     return profile
 
 
-def generate_otp_code(*, email: str) -> str:
+def generate_otp_code(*, email: str = None, phone_number: str = None) -> str:
     while True:
         otp_code: str = str(randint(10000, 99999))
-
         if not cache.get(f'otp_code_{otp_code}'):
-            cache.set(f'otp_code_{email}', otp_code, timeout=300)
-            cache.set(f'otp_code_{otp_code}', email, timeout=300)
+            if phone_number:
+                cache.set(f'otp_code_{phone_number}', otp_code, timeout=300)
+                cache.set(f'otp_code_{otp_code}', phone_number, timeout=300)
+            elif email:
+                cache.set(f'otp_code_{email}', otp_code, timeout=300)
+                cache.set(f'otp_code_{otp_code}', email, timeout=300)
             return otp_code
 
 
-def check_otp_code(*, email: str, otp_code: str) -> bool:
-    stored_code: str = cache.get(f'otp_code_{email}')
+def check_otp_code(*, otp_code: str, phone_number: str = None, email: str = None) -> bool:
+    stored_code = ''
+    if phone_number:
+        stored_code: str = cache.get(f'otp_code_{phone_number}')
+        cache.delete(f'otp_code_{phone_number}')
+    elif email:
+        stored_code: str = cache.get(f'otp_code_{email}')
+        cache.delete(f'otp_code_{email}')
     return stored_code == otp_code
 
 
@@ -93,15 +102,10 @@ def google_get_access_token(*, code: str, redirect_uri: str) -> str:
         'redirect_uri': redirect_uri,
         'grant_type': 'authorization_code'
     }
-
     response = requests.post(GOOGLE_ACCESS_TOKEN_OBTAIN_URL, data=data)
-    print(response.text)
-
     if not response.ok:
         raise ValidationError('Failed to obtain access token from Google.')
-    print('=' * 90)
     access_token = response.json()['access_token']
-
     return access_token
 
 
@@ -113,9 +117,6 @@ def google_get_user_info(*, access_token: str) -> Dict[str, Any]:
 
     if not response.ok:
         raise ValidationError('Failed to obtain user info from Google.')
-
-    print(response.text)
-
     return response.json()
 
 
