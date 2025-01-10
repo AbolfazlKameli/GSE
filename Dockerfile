@@ -8,6 +8,7 @@ WORKDIR /app
 
 COPY requirements.txt /app/
 
+RUN apt-get update && apt-get install libmagic-dev libmagic1 && apt-get clean
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . /app/
