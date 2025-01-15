@@ -11,7 +11,7 @@ worker_prefetch_multiplier = 3
 
 timezone = config('TIME_ZONE')
 
-task_serializer = 'json'
+task_serializer = 'pickle'
 result_serializer = 'json'
-accept_content = ['json', 'json']
+accept_content = ['json', 'json', 'pickle']
 result_expire = timedelta(minutes=1)
