@@ -35,7 +35,6 @@ from .serializers import (
     ProductCategoryReadSerializer,
     ProductReviewSerializer
 )
-from .tasks import upload_product_media
 
 
 class CategoryCreateAPI(GenericAPIView):
@@ -272,10 +271,10 @@ class ProductMediaCreateAPI(GenericAPIView):
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
         product: Product = get_object_or_404(Product, id=kwargs.get('product_id'))
+        serializer = self.serializer_class(data=request.data, context={'product': product})
         if serializer.is_valid():
-            upload_product_media.delay(product=product, serialzer=serializer)
+            serializer.save()
             return Response(
                 data={'data': {'message': 'رسانه محصول با موفقیت ثبت شد.'}},
                 status=status.HTTP_201_CREATED

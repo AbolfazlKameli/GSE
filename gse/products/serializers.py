@@ -1,4 +1,5 @@
 from django.core.files.images import get_image_dimensions
+from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -6,6 +7,7 @@ from rest_framework import serializers
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .models import Product, ProductMedia, ProductCategory, ProductDetail, ProductReview
 from .selectors import get_primary_image, get_parent_categories, get_sub_categories
+from .tasks import upload
 from .validators import VideoDurationValidator, validate_file_type
 
 
@@ -99,6 +101,16 @@ class ProductMediaSerializer(serializers.ModelSerializer):
         attrs['media_type'] = media_type
         return attrs
 
+    def create(self, validated_data):
+        product = self.context['product']
+        media = validated_data.get('media_url')
+        storage = FileSystemStorage()
+        storage.save(media.name, media)
+        result = upload.delay(product=product, path=storage.path(media.name), file_name=media.name)
+        if not result:
+            raise serializers.ValidationError('خطای آپلود')
+        return result['instance']
+
 
 class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -148,7 +160,6 @@ class ProductListSerializer(serializers.ModelSerializer):
 
 class ProductOperationsSerializer(serializers.ModelSerializer):
     details = ProductDetailSerializer(many=True, write_only=True, required=True)
-    media = ProductMediaSerializer(many=True, write_only=True, required=True)
     category = serializers.SlugRelatedField(
         many=True,
         queryset=ProductCategory.objects.all(),
@@ -159,7 +170,6 @@ class ProductOperationsSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         detail_data = validated_data.pop('details')
-        media_data = validated_data.pop('media')
         category_data = validated_data.pop('category')
 
         product: Product = Product.objects.create(**validated_data)
@@ -169,9 +179,6 @@ class ProductOperationsSerializer(serializers.ModelSerializer):
 
         details = [ProductDetail(product=product, **detail) for detail in detail_data]
         ProductDetail.objects.bulk_create(details)
-
-        media = [ProductMedia(product=product, **media) for media in media_data]
-        ProductMedia.objects.bulk_create(media)
 
         return product
 
