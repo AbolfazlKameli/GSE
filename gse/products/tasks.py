@@ -21,7 +21,7 @@ def upload(product, path, file_name):
         media_type = validate_file_type(file=media, expected_types=allowed_types)
         if media_type is None:
             return False
-        instance = ProductMedia(product=product, media_url=media, media_type=media_type)
+        instance = ProductMedia(product=product, media=media, media_type=media_type)
         instance.save()
 
     storage.delete(file_name)

@@ -98,24 +98,24 @@ class ProductMedia(models.Model):
         max_length=10,
         db_index=True
     )
-    media_url = models.FileField(validators=[FileExtensionValidator(['png', 'jpg', 'jpeg', 'mp4', 'gif'])])
+    media = models.FileField(validators=[FileExtensionValidator(['png', 'jpg', 'jpeg', 'mp4', 'gif'])])
     is_primary = models.BooleanField(default=False, db_index=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        if self.media_type == MEDIA_TYPE_IMAGE and not self.media_url.name.lower().endswith(
+        if self.media_type == MEDIA_TYPE_IMAGE and not self.media.name.lower().endswith(
                 ('png', 'jpg', 'jpeg')):
             raise ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
 
-        if self.media_type == MEDIA_TYPE_VIDEO and not self.media_url.name.lower().endswith(('.mp4', '.mov', '.avi')):
+        if self.media_type == MEDIA_TYPE_VIDEO and not self.media.name.lower().endswith(('.mp4', '.mov', '.avi')):
             raise ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
 
         if self.media_type == MEDIA_TYPE_VIDEO and self.is_primary:
             raise ValidationError("ویدیو نمیتواند به عنوان رسانه اصلی استفاده شود.")
 
         if self.media_type == MEDIA_TYPE_IMAGE:
-            h, w = get_image_dimensions(self.media_url)
+            h, w = get_image_dimensions(self.media)
             if not 900 <= w <= 1000:
                 raise ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 
@@ -124,7 +124,7 @@ class ProductMedia(models.Model):
 
         if self.media_type == MEDIA_TYPE_VIDEO:
             validator = VideoDurationValidator(max_duration=600)
-            validator(self.media_url)
+            validator(self.media)
 
         super().clean()
 

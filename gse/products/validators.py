@@ -50,5 +50,5 @@ class VideoDurationValidator:
             if duration > self.max_duration:
                 raise ValidationError(
                     {
-                        'media_url': f"Video duration exceeds the limit. Maximum allowed is {self.max_duration} seconds, but got {duration:.2f} seconds."}
+                        'media': f"Video duration exceeds the limit. Maximum allowed is {self.max_duration} seconds, but got {duration:.2f} seconds."}
                 )

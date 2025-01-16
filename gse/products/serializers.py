@@ -67,28 +67,28 @@ class ProductMediaSerializer(serializers.ModelSerializer):
             'videos': ['video/mp4']
         }
         is_primary = attrs.get('is_primary')
-        media_url = attrs.get('media_url')
+        media = attrs.get('media')
         max_media_size = 500 * 1024 * 1024
-        media_type = validate_file_type(media_url, allowed_types)
+        media_type = validate_file_type(media, allowed_types)
 
         if media_type is None:
-            raise serializers.ValidationError({'media_url': 'نوع رسانه مجاز نمیباشد.'})
+            raise serializers.ValidationError({'media': 'نوع رسانه مجاز نمیباشد.'})
 
-        if media_type == MEDIA_TYPE_IMAGE and not media_url.name.lower().endswith(('png', 'jpg', 'jpeg')):
+        if media_type == MEDIA_TYPE_IMAGE and not media.name.lower().endswith(('png', 'jpg', 'jpeg')):
             raise serializers.ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
 
-        if media_type == MEDIA_TYPE_VIDEO and not media_url.name.lower().endswith(('.mp4',)):
+        if media_type == MEDIA_TYPE_VIDEO and not media.name.lower().endswith(('.mp4',)):
             raise serializers.ValidationError("اگر نوع رسانه ویدیو انتخاب شده، فایل آپلود شده باید ویدیو باشد.")
 
         if media_type == MEDIA_TYPE_IMAGE:
-            h, w = get_image_dimensions(media_url)
+            h, w = get_image_dimensions(media)
             if not 900 <= w <= 1000:
                 raise serializers.ValidationError('عرض عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 
             if not 900 <= h <= 1000:
                 raise serializers.ValidationError('طول عکس باید بین ۹۰۰ تا ۱۰۰۰ پیکسل باشد.')
 
-        if media_url.size > max_media_size:
+        if media.size > max_media_size:
             raise serializers.ValidationError('حجم فایل باید کمتر از ۵۰۰ مگابایت باشد.')
 
         if media_type == MEDIA_TYPE_VIDEO and is_primary:
@@ -96,14 +96,14 @@ class ProductMediaSerializer(serializers.ModelSerializer):
 
         if media_type == MEDIA_TYPE_VIDEO:
             validator = VideoDurationValidator(max_duration=600)
-            validator(media_url)
+            validator(media)
 
         attrs['media_type'] = media_type
         return attrs
 
     def create(self, validated_data):
         product = self.context['product']
-        media = validated_data.get('media_url')
+        media = validated_data.get('media')
         storage = FileSystemStorage()
         storage.save(media.name, media)
         result = upload.delay(product=product, path=storage.path(media.name), file_name=media.name)

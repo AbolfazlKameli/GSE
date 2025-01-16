@@ -10,7 +10,7 @@ class ProductDetailInline(admin.TabularInline):
 
 class ProductMediaInline(admin.TabularInline):
     model = ProductMedia
-    fields = ('media_type', 'media_url', 'is_primary')
+    fields = ('media_type', 'media', 'is_primary')
 
 
 class ProductReviewInline(admin.TabularInline):
@@ -40,7 +40,7 @@ class ProductDetailAdmin(admin.ModelAdmin):
 
 @admin.register(ProductMedia)
 class ProductMediaAdmin(admin.ModelAdmin):
-    list_display = ('product', 'media_type', 'media_url')
+    list_display = ('product', 'media_type', 'media')
 
 
 @admin.register(ProductReview)
