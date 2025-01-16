@@ -8,10 +8,10 @@ WORKDIR /app
 
 COPY requirements.txt /app/
 
-RUN apt-get update && apt-get install libmagic-dev libmagic1 && apt-get clean
+RUN apt-get update && apt-get install libmagic-dev libmagic1 -y && apt-get clean
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
 RUN chmod +x /app/entrypoint.sh
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["bash", "-c", "/app/entrypoint.sh"]
