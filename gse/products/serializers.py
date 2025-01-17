@@ -109,7 +109,7 @@ class ProductMediaSerializer(serializers.ModelSerializer):
         result = upload.delay(product=product, path=storage.path(media.name), file_name=media.name)
         if not result:
             raise serializers.ValidationError('خطای آپلود')
-        return result['instance']
+        return product
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
