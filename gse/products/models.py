@@ -34,6 +34,7 @@ class ProductCategory(models.Model):
 
     class Meta:
         verbose_name_plural = 'categories'
+        ordering = ('-created_date',)
 
 
 class Product(models.Model):
@@ -89,6 +90,9 @@ class ProductDetail(models.Model):
     attribute = models.CharField(max_length=250)
     value = models.CharField(max_length=250)
 
+    class Meta:
+        ordering = ('-product',)
+
 
 class ProductMedia(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='media', db_index=True)
@@ -132,6 +136,9 @@ class ProductMedia(models.Model):
         self.clean()
         super().save(*args, **kwargs)
 
+    class Meta:
+        ordering = ('-created_date',)
+
 
 class ProductReview(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews', db_index=True)
@@ -140,3 +147,6 @@ class ProductReview(models.Model):
     rate = models.PositiveSmallIntegerField(validators=[MaxValueValidator(5)], db_index=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created_date',)

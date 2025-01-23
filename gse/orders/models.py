@@ -71,6 +71,9 @@ class OrderItem(models.Model):
         else:
             super().save(*args, **kwargs)
 
+    class Meta:
+        ordering = ('-created_date',)
+
 
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True, db_index=True)
@@ -79,3 +82,6 @@ class Coupon(models.Model):
     expiration_date = models.DateTimeField(db_index=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created_date',)

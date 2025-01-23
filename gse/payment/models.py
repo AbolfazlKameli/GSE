@@ -21,3 +21,6 @@ class Payment(models.Model):
 
     def __str__(self):
         return f'{self.order.id} - {self.ref_id} - {self.status}'
+
+    class Meta:
+        ordering = ('-created_date',)
