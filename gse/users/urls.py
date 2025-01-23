@@ -6,7 +6,6 @@ from . import views
 app_name = 'users'
 
 token = [
-    path('login/', views.CustomTokenObtainPairView.as_view(), name='token-obtain-pair'),
     path('refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     path('block-token/', views.BlockTokenAPI.as_view(), name='token-block'),
 ]
@@ -30,6 +29,7 @@ urlpatterns = [
     path('register/google/auth/redirect/', views.GoogleLoginRedirectAPI.as_view(), name='google_login_redirect'),
     path('register/google/auth/callback/', views.GoogleLoginApi.as_view(), name='google_login'),
     path('resend-email/', views.ResendVerificationEmailAPI.as_view(), name='user-register-resend-email'),
+    path('login/', views.CustomTokenObtainPairView.as_view(), name='user-login'),
     path('profile/', include(profile)),
     path('token/', include(token)),
     path('password/', include(password)),
