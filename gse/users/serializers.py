@@ -1,5 +1,4 @@
 from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
