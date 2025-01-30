@@ -1,5 +1,3 @@
-import io
-
 import boto3
 from django.conf import settings
 
@@ -7,10 +5,10 @@ from django.conf import settings
 class SingletonBucket(type):
     _instance = None
 
-    def __call__(self, *args, **kwargs):
-        if self._instance is None:
-            self._instance = super().__call__(*args, **kwargs)
-        return self._instance
+    def __call__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__call__(*args, **kwargs)
+        return cls._instance
 
 
 class Bucket(metaclass=SingletonBucket):
@@ -24,18 +22,6 @@ class Bucket(metaclass=SingletonBucket):
         )
         self.bucket_name = settings.AWS_STORAGE_BUCKET_NAME
 
-    def delete_object(self, key):
+    def delete_file_object(self, key):
         self.connection.delete_object(Bucket=self.bucket_name, Key=key)
         return True
-
-    def upload_file(self, file_path: str, file_content: bytes, content_type: str = None) -> str:
-        try:
-            self.connection.upload_fileobj(
-                io.BytesIO(file_content),
-                self.bucket_name,
-                file_path,
-                ExtraArgs={"ContentType": content_type}
-            )
-            return file_path
-        except Exception as e:
-            raise Exception(f"Failed to upload file to S3: {e}") from e
