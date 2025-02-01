@@ -4,7 +4,8 @@ from rest_framework.test import APITestCase
 
 from gse.cart.views import (
     CartRetrieveAPI,
-    CartItemAddAPI
+    CartItemAddAPI,
+    CartItemDeleteAPI
 )
 
 
@@ -34,9 +35,26 @@ class CartItemAddAPITest(APITestCase):
         resolver = resolve(self.url)
         self.assertEqual(resolver.func.view_class, CartItemAddAPI)
 
-    def test_addapiresponse(self):
+    def test_addapi_response(self):
         response = self.client.post(self.url)
         self.assertIn(
             response.status_code,
             [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST, status.HTTP_401_UNAUTHORIZED]
+        )
+
+
+class CartItemDeleteAPITest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.url = reverse('cart:cart_delete', args=[20])
+
+    def test_url_resolves_to_deleteapi(self):
+        resolver = resolve(self.url)
+        self.assertEqual(resolver.func.view_class, CartItemDeleteAPI)
+
+    def test_deleteapi_response(self):
+        response = self.client.delete(self.url)
+        self.assertIn(
+            response.status_code,
+            [status.HTTP_401_UNAUTHORIZED, status.HTTP_204_NO_CONTENT, status.HTTP_404_NOT_FOUND]
         )
