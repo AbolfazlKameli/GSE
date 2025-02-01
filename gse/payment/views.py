@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from gse.orders.choices import ORDER_STATUS_PENDING
 from gse.orders.models import Order
 from gse.orders.selectors import get_order_by_id, check_order_status, get_pending_orders
-from gse.permissions.permissions import IsAdminOrOwner, FullCredentialsUser
+from gse.utils.permissions import IsAdminOrOwner, FullCredentialsUser
 from .models import Payment
 from .selectors import get_payment_by_id
 from .serializers import PaymentSerializer

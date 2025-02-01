@@ -2,7 +2,7 @@ import boto3
 from django.conf import settings
 from django.utils.text import slugify
 
-from gse.utils.utils import Singleton
+from gse.utils import Singleton
 
 
 def slugify_title(title: str) -> str:

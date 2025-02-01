@@ -18,13 +18,12 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from gse.docs.serializers.doc_serializers import (
+from gse.utils import permissions, format_errors
+from gse.utils.doc_serializers import (
     ResponseSerializer,
     TokenResponseSerializer,
     GoogleAuthCallbackSerializer
 )
-from gse.permissions import permissions
-from gse.utils.utils import format_errors
 from . import serializers
 from .mixins import ApiErrorsMixin
 from .models import User

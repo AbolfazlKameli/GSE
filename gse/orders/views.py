@@ -4,9 +4,9 @@ from rest_framework import status
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView, GenericAPIView
 from rest_framework.response import Response
 
-from gse.docs.serializers.doc_serializers import ResponseSerializer
-from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter, FullCredentialsUser
-from gse.utils.utils import is_child_of, format_errors
+from gse.utils import is_child_of, format_errors
+from gse.utils.doc_serializers import ResponseSerializer
+from gse.utils.permissions import IsAdminOrOwner, IsAdminOrSupporter, FullCredentialsUser
 from .choices import ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon
 from .selectors import (

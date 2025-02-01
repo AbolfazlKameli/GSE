@@ -7,10 +7,10 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView, DestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.orders.selectors import has_purchased
-from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
-from gse.utils.utils import is_child_of, format_errors, update_response
+from gse.utils import is_child_of, format_errors, update_response
+from gse.utils.doc_serializers import ResponseSerializer
+from gse.utils.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from .models import Product, ProductDetail, ProductMedia, ProductCategory, ProductReview
 from .selectors import (
     get_all_products,
