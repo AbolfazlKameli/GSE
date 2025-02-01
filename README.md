@@ -25,6 +25,14 @@ Gostaran Sharq elevator <br>
 
 ## Run with Docker
 
+- Create Your `.env` file
+
+```shell
+$ cp example.env .env
+```
+
+- Build and run the project using docker compose
+
 ```shell
 docker compose up
 ```
@@ -67,7 +75,7 @@ $ pip install -r requirements.txt
 - Create Your `.env` file
 
 ```shell
-$ cp .env.example .env
+$ cp example.env .env
 ```
 
 - Create your own migration files
