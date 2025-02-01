@@ -3,11 +3,13 @@ from random import randint, SystemRandom
 from typing import Dict, Any
 from urllib.parse import urlencode
 
-import requests
+from decouple import config
 from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.db import transaction
+from kavenegar import *
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from pytz import timezone
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -33,6 +35,28 @@ def update_last_login(email) -> User | None:
     user.last_login = datetime.now(tz=timezone('Asia/Tehran'))
     user.save(update_fields=['last_login'])
     return user
+
+
+def send_link(*, email: str, content: str, subject: str):
+    send_mail(
+        subject=subject,
+        message=content,
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[email],
+    )
+
+
+def send_sms(*, phone_number: str, content: str):
+    api = KavenegarAPI(config('KAVENEGAR_API_KEY'))
+    sender = config('KAVENEGAR_PHONE_NUMBER', default='2000500666')
+    params = {'sender': sender, 'receptor': phone_number, 'message': content}
+    try:
+        response = api.sms_send(params)
+    except APIException:
+        return False
+    except HTTPException:
+        return False
+    return response
 
 
 @transaction.atomic

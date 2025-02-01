@@ -4,9 +4,9 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListAPIView, DestroyAPIView
 from rest_framework.response import Response
 
-from gse.docs.serializers.doc_serializers import ResponseSerializer
-from gse.permissions.permissions import IsAdminOrSupporter
-from gse.utils.format_errors import format_errors
+from gse.utils import format_errors
+from gse.utils.doc_serializers import ResponseSerializer
+from gse.utils.permissions import IsAdminOrSupporter
 from .models import Website
 from .selectors import get_all_attributes
 from .serializers import WebsiteSerializer

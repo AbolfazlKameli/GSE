@@ -5,9 +5,9 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView
 from rest_framework.response import Response
 
-from gse.docs.serializers.doc_serializers import ResponseSerializer
-from gse.permissions.permissions import IsAdminOrOwner
-from gse.utils.format_errors import format_errors
+from gse.utils import format_errors
+from gse.utils.doc_serializers import ResponseSerializer
+from gse.utils.permissions import IsAdminOrOwner
 from .selectors import get_all_carts, get_all_cart_items, get_cart_by_item_id, get_cart_item_by_id
 from .serializers import (
     CartSerializer,
