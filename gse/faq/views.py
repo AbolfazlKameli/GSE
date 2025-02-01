@@ -9,8 +9,7 @@ from rest_framework.response import Response
 from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from gse.products.models import Product
-from gse.utils.db_utils import is_child_of
-from gse.utils.format_errors import format_errors
+from gse.utils.utils import is_child_of, format_errors
 from .models import Question, Answer
 from .selectors import get_all_questions, get_all_answers, get_question_by_id, get_answer_by_id, get_product_questions
 from .serializers import QuestionSerializer, AnswerSerializer

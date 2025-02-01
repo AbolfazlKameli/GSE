@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrSupporter
-from gse.utils.format_errors import format_errors
+from gse.utils.utils import format_errors
 from .models import Website
 from .selectors import get_all_attributes
 from .serializers import WebsiteSerializer

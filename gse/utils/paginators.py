@@ -1,6 +1,7 @@
+from urllib.parse import urlencode
+
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from urllib.parse import urlencode
 
 
 class NeatPagination(PageNumberPagination):

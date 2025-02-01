@@ -24,7 +24,7 @@ from gse.docs.serializers.doc_serializers import (
     GoogleAuthCallbackSerializer
 )
 from gse.permissions import permissions
-from gse.utils import format_errors
+from gse.utils.utils import format_errors
 from . import serializers
 from .mixins import ApiErrorsMixin
 from .models import User
@@ -65,7 +65,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 status=status.HTTP_200_OK
             )
         return Response(
-            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -107,7 +107,7 @@ class UserRegisterAPI(CreateAPIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(
-            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -153,7 +153,7 @@ class UserVerificationAPI(GenericAPIView):
                 status=status.HTTP_200_OK
             )
         return Response(
-            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -182,7 +182,7 @@ class ResendVerificationEmailAPI(GenericAPIView):
                 status=status.HTTP_202_ACCEPTED,
             )
         return Response(
-            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -226,7 +226,7 @@ class GoogleLoginApi(ApiErrorsMixin, GenericAPIView):
 
         if error or not code:
             errors = urlencode({'errors': error})
-            return Response({'data': {'errors': format_errors.format_errors(errors)}})
+            return Response({'data': {'errors': format_errors(errors)}})
 
         stored_state = cache.get(f'state_{state}', None)
         if stored_state is None:
@@ -281,7 +281,7 @@ class ChangePasswordAPI(GenericAPIView):
                 status=status.HTTP_200_OK
             )
         return Response(
-            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -317,7 +317,7 @@ class SetPasswordAPI(GenericAPIView):
                 status=status.HTTP_200_OK
             )
         return Response(
-            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -354,7 +354,7 @@ class ResetPasswordAPI(GenericAPIView):
                 status=status.HTTP_202_ACCEPTED
             )
         return Response(
-            data={'errors': format_errors.format_errors(serializer.errors)},
+            data={'errors': format_errors(serializer.errors)},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -383,7 +383,7 @@ class BlockTokenAPI(GenericAPIView):
                 status=status.HTTP_200_OK
             )
         return Response(
-            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -449,7 +449,7 @@ class UserProfileUpdateAPI(UpdateAPIView):
                 status=status.HTTP_200_OK
             )
         return Response(
-            data={'data': {'errors': format_errors.format_errors(serializer.errors)}},
+            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 

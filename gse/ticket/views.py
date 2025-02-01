@@ -8,8 +8,7 @@ from rest_framework.response import Response
 
 from gse.docs.serializers.doc_serializers import ResponseSerializer
 from gse.permissions.permissions import IsAdminOrOwner, IsAdminOrSupporter
-from gse.utils.db_utils import is_child_of
-from gse.utils.format_errors import format_errors
+from gse.utils.utils import is_child_of, format_errors
 from .models import Ticket, TicketAnswer
 from .selectors import get_all_tickets, get_answer_by_id, get_ticket_by_id, get_all_ticket_answers
 from .serializers import TicketsListSerializer, TicketSerializer, TicketAnswerSerializer
