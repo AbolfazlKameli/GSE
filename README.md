@@ -77,7 +77,7 @@ $ cp example.env .env
 - Create your own migration files
 
 ```shell
-$ python manage.py makemigrations users
+$ python manage.py makemigrations
 ```
 
 - Apply Migrations to the Database
