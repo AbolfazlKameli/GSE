@@ -2,16 +2,12 @@
 
 Gostaran Sharq elevator <br>
 
-> license: [MIT]()
-
 ## Features
 
 - **JWT Authentication**: Secure API access with JSON Web Tokens.
 - **DRF Spectacular**: Automatic OpenAPI/Swagger documentation generation.
 - **PostgreSQL Database**: Robust relational database management system.
-
 - **Redis for Caching**: High-performance cache layer for optimized API responses.
-
 - **Redis as Celery Message Broker**: Redis is used as the message broker to efficiently handle task queues in Celery.
 - **Arvan Cloud Storage Integration**: Efficient and scalable storage solution.
 - **Celery**: Asynchronous task management for handling background processes.
@@ -34,7 +30,7 @@ $ cp example.env .env
 - Build and run the project using docker compose
 
 ```shell
-docker compose up
+docker compose up --build
 ```
 
 ## Run Locally
