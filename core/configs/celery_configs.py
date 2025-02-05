@@ -14,4 +14,4 @@ timezone = config('TIME_ZONE')
 task_serializer = 'pickle'
 result_serializer = 'json'
 accept_content = ['json', 'json', 'pickle']
-result_expire = timedelta(minutes=1)
+result_expire = timedelta(minutes=5)
