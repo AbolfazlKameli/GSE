@@ -95,11 +95,16 @@ def check_otp_code(*, otp_code: str, phone_number: str = None, email: str = None
     stored_code = ''
     if phone_number:
         stored_code: str = cache.get(f'otp_code_{phone_number}')
-        cache.delete(f'otp_code_{phone_number}')
     elif email:
         stored_code: str = cache.get(f'otp_code_{email}')
+
+    if stored_code == otp_code:
         cache.delete(f'otp_code_{email}')
-    return stored_code == otp_code
+        cache.delete(f'otp_code_{phone_number}')
+        cache.delete(f'otp_code_{otp_code}')
+        return stored_code == otp_code
+    else:
+        return False
 
 
 def generate_tokens_for_user(user: User) -> tuple[Any, Token]:
