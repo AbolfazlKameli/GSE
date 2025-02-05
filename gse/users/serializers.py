@@ -146,7 +146,7 @@ class UserRegisterVerifySerializer(serializers.Serializer):
             if not check_otp_code(phone_number=phone_number, otp_code=attrs.get('code')):
                 raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
         elif email:
-            if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
+            if not check_otp_code(email=email, otp_code=attrs.get('code')):
                 raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
         else:
             raise serializers.ValidationError('وارد کردن ایمیل یا شماره تلفن الزامیست.')
