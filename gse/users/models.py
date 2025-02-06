@@ -50,7 +50,7 @@ class UserProfile(models.Model):
     first_name = models.CharField(max_length=50, default='', verbose_name='first name')
     last_name = models.CharField(max_length=50, default='', verbose_name='last name')
     phone_number = models.CharField(
-        max_length=12,
+        max_length=11,
         validators=[validate_iranian_phone_number],
         unique=True,
         null=True,

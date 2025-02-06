@@ -8,6 +8,7 @@ from gse.products.serializers import ProductReviewSerializer
 from .models import User
 from .services import check_otp_code
 from .validators import validate_iranian_phone_number, validate_postal_code
+from .selectors import get_user_by_email
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -158,14 +159,14 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         email = attrs.get('email')
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+        user = get_user_by_email(email)
+        if user is None:
             raise serializers.ValidationError('کاربر با این مشخصات وجود ندارد.')
         if user.is_active:
             raise serializers.ValidationError('این حساب کاربری قبلاً فعال شده است.')
         attrs['user'] = user
         return attrs
+
 
 
 class GoogleLoginSerializer(serializers.Serializer):
