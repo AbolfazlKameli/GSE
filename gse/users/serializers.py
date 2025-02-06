@@ -6,9 +6,9 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from gse.orders.serializers import OrderListSerializer
 from gse.products.serializers import ProductReviewSerializer
 from .models import User
+from .selectors import get_user_by_email
 from .services import check_otp_code
 from .validators import validate_iranian_phone_number, validate_postal_code
-from .selectors import get_user_by_email
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -168,7 +168,6 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
         return attrs
 
 
-
 class GoogleLoginSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)
     error = serializers.CharField(required=False)
@@ -204,22 +203,36 @@ class SetPasswordSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
-        if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
-            raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
+        email: str = attrs.get('email')
+        user = get_user_by_email(email)
+        if user is None:
+            raise serializers.ValidationError({'email': 'حساب کاربری با این مشخصات یافت نشد.'})
 
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_password')
-        if new_password != confirm_password:
+        if (new_password and confirm_password) and (new_password != confirm_password):
             raise serializers.ValidationError({'new_password': 'رمز های عبور باید یکسان باشند.'})
         try:
             validate_password(new_password)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({'new_password': e.messages})
+
+        if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
+            raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
+
+        attrs['user'] = user
         return attrs
 
 
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
+
+    def validate(self, attrs):
+        email: str = attrs.get('email')
+        user = get_user_by_email(email)
+        if user is None:
+            raise serializers.ValidationError({'email': 'حساب کاربری با این مشخصات یافت نشد.'})
+        return attrs
 
 
 class TokenSerializer(serializers.Serializer):
