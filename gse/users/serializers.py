@@ -6,6 +6,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from gse.orders.serializers import OrderListSerializer
 from gse.products.serializers import ProductReviewSerializer
 from .models import User
+from .selectors import get_user_by_email
 from .services import check_otp_code
 from .validators import validate_iranian_phone_number, validate_postal_code
 
@@ -82,6 +83,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if not attrs:
             raise serializers.ValidationError('هیچ اطلاعاتی ارسال نشده.')
+        if attrs.get('email') and attrs.get('phone_number'):
+            raise serializers.ValidationError('شما نمیتوانید همزمان ایمیل و شماره تلفن را تغییر دهید.')
         return attrs
 
     # Profile validators
@@ -158,9 +161,8 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         email = attrs.get('email')
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
+        user = get_user_by_email(email)
+        if user is None:
             raise serializers.ValidationError('کاربر با این مشخصات وجود ندارد.')
         if user.is_active:
             raise serializers.ValidationError('این حساب کاربری قبلاً فعال شده است.')
@@ -203,22 +205,36 @@ class SetPasswordSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
-        if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
-            raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
+        email: str = attrs.get('email')
+        user = get_user_by_email(email)
+        if user is None:
+            raise serializers.ValidationError({'email': 'حساب کاربری با این مشخصات یافت نشد.'})
 
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_password')
-        if new_password != confirm_password:
+        if (new_password and confirm_password) and (new_password != confirm_password):
             raise serializers.ValidationError({'new_password': 'رمز های عبور باید یکسان باشند.'})
         try:
             validate_password(new_password)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({'new_password': e.messages})
+
+        if not check_otp_code(email=attrs.get('email'), otp_code=attrs.get('code')):
+            raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
+
+        attrs['user'] = user
         return attrs
 
 
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
+
+    def validate(self, attrs):
+        email: str = attrs.get('email')
+        user = get_user_by_email(email)
+        if user is None:
+            raise serializers.ValidationError({'email': 'حساب کاربری با این مشخصات یافت نشد.'})
+        return attrs
 
 
 class TokenSerializer(serializers.Serializer):

@@ -177,7 +177,7 @@ class ResendVerificationEmailAPI(GenericAPIView):
                 subject='آسانسور گستران شرق'
             )
             return Response(
-                data={'data': {"message": "لینک فعالسازی به ایمیل شما ارسال شد."}},
+                data={'data': {"message": "کد فعالسازی به ایمیل شما ارسال شد."}},
                 status=status.HTTP_202_ACCEPTED,
             )
         return Response(
