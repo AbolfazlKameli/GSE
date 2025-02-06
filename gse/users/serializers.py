@@ -83,6 +83,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if not attrs:
             raise serializers.ValidationError('هیچ اطلاعاتی ارسال نشده.')
+        if attrs.get('email') and attrs.get('phone_number'):
+            raise serializers.ValidationError('شما نمیتوانید همزمان ایمیل و شماره تلفن را تغییر دهید.')
         return attrs
 
     # Profile validators
