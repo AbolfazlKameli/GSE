@@ -19,19 +19,28 @@ Gostaran Sharq elevator <br>
 
 - [Abolfazl Kameli](https://github.com/AbolfazlKameli) (Back-end Developer)
 
-## Run with Docker
+---
 
-- Create Your `.env` file
+## 🐳 Run with Docker
 
-```shell
-$ cp example.env .env
-```
+1. Create your `.env` file:
+   ```sh
+   cp example.env .env
+   ```
 
-- Build and run the project using docker compose
+2. Build and run the project based on the environment:
 
-```shell
-docker compose up --build
-```
+   **For development:**
+   ```sh
+   docker compose -f docker-compose.dev.yml up --build
+   ```
+
+   **For production:**
+   ```sh
+   docker compose -f docker-compose.yml up --build
+   ```
+
+---
 
 ## Run Locally
 

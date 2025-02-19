@@ -6,7 +6,7 @@ ENV PYTHONBUFFERED=1
 
 WORKDIR /app
 
-COPY requirements.txt /app/
+COPY ../requirements.txt /app/
 
 RUN apt-get update &&\
     apt-get install python3 python3-pip libmagic-dev libmagic1 -y &&\
@@ -14,7 +14,7 @@ RUN apt-get update &&\
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-COPY . /app/
+COPY .. /app/
 
-RUN chmod +x /app/entrypoint.sh
-ENTRYPOINT ["bash", "-c", "/app/entrypoint.sh"]
+RUN chmod +x /app/docker/dev-entrypoint.sh
+ENTRYPOINT ["bash", "-c", "/app/docker/dev-entrypoint.sh"]
