@@ -8,11 +8,22 @@ services:
     networks:
       - main_network
 
+  db:
+    container_name: GSEDB
+    image: docker.arvancloud.ir/postgres:16
+    restart: always
+    env_file:
+      - .env
+    networks:
+      - main_network
+    volumes:
+      - postgres_data:/var/lib/postgres/data
+
   app:
     container_name: app
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     image: app:latest
     volumes:
       - app_data:/app
@@ -62,6 +73,7 @@ services:
 volumes:
   app_data:
   redis_data:
+  postgres_data:
 
 networks:
   main_network:
