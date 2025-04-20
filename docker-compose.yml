@@ -18,6 +18,11 @@ services:
       - main_network
     volumes:
       - postgres_data:/var/lib/postgres/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     container_name: app
@@ -35,8 +40,11 @@ services:
     networks:
       - main_network
     depends_on:
-      - redis
-      - db
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+
 
   celery:
     container_name: celery_worker
