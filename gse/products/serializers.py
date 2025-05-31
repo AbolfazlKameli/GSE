@@ -1,13 +1,10 @@
 from django.core.files.images import get_image_dimensions
-from django.core.files.storage import FileSystemStorage
-from django.db import transaction
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .choices import MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
 from .models import Product, ProductMedia, ProductCategory, ProductDetail, ProductReview
 from .selectors import get_primary_image, get_parent_categories, get_sub_categories
-from .tasks import upload
 from .validators import VideoDurationValidator, validate_file_type
 
 
@@ -63,7 +60,7 @@ class ProductMediaSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         allowed_types = {
-            'images': ['image/jpeg', 'image/png', 'image/jpg'],
+            'images': ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'],
             'videos': ['video/mp4']
         }
         is_primary = attrs.get('is_primary')
@@ -74,7 +71,7 @@ class ProductMediaSerializer(serializers.ModelSerializer):
         if media_type is None:
             raise serializers.ValidationError({'media': 'نوع رسانه مجاز نمیباشد.'})
 
-        if media_type == MEDIA_TYPE_IMAGE and not media.name.lower().endswith(('png', 'jpg', 'jpeg')):
+        if media_type == MEDIA_TYPE_IMAGE and not media.name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
             raise serializers.ValidationError('اگر نوع رسانه عکس انتخاب شده، فایل آپلود شده باید عکس باشد.')
 
         if media_type == MEDIA_TYPE_VIDEO and not media.name.lower().endswith(('.mp4',)):
@@ -100,16 +97,6 @@ class ProductMediaSerializer(serializers.ModelSerializer):
 
         attrs['media_type'] = media_type
         return attrs
-
-    def create(self, validated_data):
-        product = self.context['product']
-        media = validated_data.get('media')
-        storage = FileSystemStorage()
-        storage.save(media.name, media)
-        result = upload.delay(product=product, path=storage.path(media.name), file_name=media.name)
-        if not result:
-            raise serializers.ValidationError('خطای آپلود')
-        return product
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -160,31 +147,16 @@ class ProductListSerializer(serializers.ModelSerializer):
 
 class ProductOperationsSerializer(serializers.ModelSerializer):
     details = ProductDetailSerializer(many=True, write_only=True, required=True)
-    category = serializers.SlugRelatedField(
+    categories = serializers.SlugRelatedField(
         many=True,
         queryset=ProductCategory.objects.all(),
         slug_field='title',
         required=True
     )
 
-    @transaction.atomic
-    def create(self, validated_data):
-        detail_data = validated_data.pop('details')
-        category_data = validated_data.pop('category')
-
-        product: Product = Product.objects.create(**validated_data)
-
-        for category in category_data:
-            product.category.add(category)
-
-        details = [ProductDetail(product=product, **detail) for detail in detail_data]
-        ProductDetail.objects.bulk_create(details)
-
-        return product
-
     class Meta:
         model = Product
-        exclude = ('slug',)
+        fields = ('title', 'quantity', 'description', 'available', 'unit_price', 'discount_percent', 'categories', 'details')
         read_only_fields = ('final_price',)
 
 

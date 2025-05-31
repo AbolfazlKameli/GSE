@@ -22,7 +22,7 @@ def get_primary_image(product: Product) -> ProductMedia:
 
 
 def get_all_products() -> list[Product]:
-    return Product.objects.prefetch_related('media', 'details').all()
+    return Product.objects.prefetch_related('media', 'details', 'category').all()
 
 
 def get_all_details() -> list[ProductDetail]:

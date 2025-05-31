@@ -1,13 +1,8 @@
 from celery import shared_task
 
-from .services import Bucket, upload_media
+from .services import Bucket
 
 bucket = Bucket()
-
-
-@shared_task
-def upload(product, path, file_name):
-    return upload_media(product, path, file_name)
 
 
 @shared_task
