@@ -118,7 +118,7 @@ class ProductsListAPI(ListAPIView):
     queryset = get_all_products()
     serializer_class = ProductListSerializer
     filterset_fields = ['available']
-    search_fields = ['title', 'description', 'slug', 'category']
+    search_fields = ['title', 'description', 'slug', 'category__title']
 
 
 class ProductRetrieveAPI(RetrieveAPIView):

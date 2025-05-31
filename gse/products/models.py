@@ -6,10 +6,10 @@ from django.core.validators import FileExtensionValidator
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Avg
+from django.utils.text import slugify
 
 from gse.users.models import User
 from .choices import MEDIA_TYPE_CHOICES, MEDIA_TYPE_IMAGE, MEDIA_TYPE_VIDEO
-from .services import slugify_title
 from .validators import VideoDurationValidator
 
 
@@ -29,7 +29,7 @@ class ProductCategory(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        self.slug = slugify_title(self.title)
+        self.slug = slugify(self.title, allow_unicode=True)
         super().save(*args, **kwargs)
 
     class Meta:
@@ -62,7 +62,7 @@ class Product(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        self.slug = slugify_title(self.title)
+        self.slug = slugify(self.title, allow_unicode=True)
         self.final_price = self.get_price()
         if self.quantity == 0:
             self.available = False

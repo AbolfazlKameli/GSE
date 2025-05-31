@@ -5,14 +5,9 @@ from django.apps import apps
 from django.conf import settings
 from django.core.files import File
 from django.core.files.storage import FileSystemStorage
-from django.utils.text import slugify
 
 from gse.utils import Singleton
 from .validators import validate_file_type
-
-
-def slugify_title(title: str) -> str:
-    return slugify(title, allow_unicode=True)
 
 
 class Bucket(metaclass=Singleton):
