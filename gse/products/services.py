@@ -1,13 +1,9 @@
-from pathlib import Path
-
 import boto3
-from django.apps import apps
 from django.conf import settings
-from django.core.files import File
-from django.core.files.storage import FileSystemStorage
+from django.db import transaction
 
 from gse.utils import Singleton
-from .validators import validate_file_type
+from .models import Product, ProductCategory, ProductDetail
 
 
 class Bucket(metaclass=Singleton):
@@ -26,21 +22,28 @@ class Bucket(metaclass=Singleton):
         return True
 
 
-def upload_media(product, path, file_name):
-    product_media = apps.get_model('products', 'ProductMedia')
-    allowed_types = {
-        'images': ['image/jpeg', 'image/png', 'image/jpg'],
-        'videos': ['video/mp4']
-    }
-    storage = FileSystemStorage()
-    path_object = Path(path)
-    with path_object.open(mode='rb') as file:
-        media = File(file, name=path_object.name)
-        media_type = validate_file_type(file=media, expected_types=allowed_types)
-        if media_type is None:
-            return False
-        instance = product_media(product=product, media=media, media_type=media_type)
-        instance.save()
+@transaction.atomic
+def create_product(
+        title: str,
+        quantity: int,
+        description: str,
+        unit_price: int,
+        details: dict,
+        categories: list[ProductCategory],
+        available: bool = False,
+        discount_percent: int = 0,
+):
+    product: Product = Product.objects.create(
+        title=title,
+        quantity=quantity,
+        description=description,
+        unit_price=unit_price,
+        discount_percent=discount_percent,
+        available=available,
+    )
 
-    storage.delete(file_name)
-    return True
+    for category in categories:
+        product.category.add(category)
+
+    product_details = [ProductDetail(**detail, product=product) for detail in details]
+    ProductDetail.objects.bulk_create(product_details)

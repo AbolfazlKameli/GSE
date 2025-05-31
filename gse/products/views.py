@@ -33,6 +33,7 @@ from .serializers import (
     ProductCategoryReadSerializer,
     ProductReviewSerializer
 )
+from .services import create_product
 
 
 class CategoryCreateAPI(GenericAPIView):
@@ -148,7 +149,9 @@ class ProductCreateAPI(GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            details = serializer.validated_data.pop('details')
+            categories = serializer.validated_data.pop('categories')
+            create_product(**serializer.validated_data, details=details, categories=categories)
             return Response(
                 data={'data': {'message': 'محصول با موفقیت ثبت شد.'}},
                 status=status.HTTP_201_CREATED
@@ -272,7 +275,7 @@ class ProductMediaCreateAPI(GenericAPIView):
         product: Product = get_object_or_404(Product, id=kwargs.get('product_id'))
         serializer = self.serializer_class(data=request.data, context={'product': product})
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(product=product)
             return Response(
                 data={'data': {'message': 'رسانه محصول با موفقیت ثبت شد.'}},
                 status=status.HTTP_201_CREATED
