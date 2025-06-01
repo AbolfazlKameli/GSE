@@ -137,6 +137,7 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "statics"
 DOMAIN = config('DOMAIN', default="127.0.0.1:8000")
 
 # Default primary key field type
