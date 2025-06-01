@@ -9,7 +9,7 @@ WORKDIR /app
 COPY ../requirements.txt /app/
 
 RUN apt-get update &&\
-    apt-get install python3 python3-pip libmagic-dev libmagic1 -y &&\
+    apt-get install python3 python3-pip libmagic-dev libmagic1 ffmpeg -y &&\
     apt-get clean
 
 RUN pip3 install --no-cache-dir -r requirements.txt
