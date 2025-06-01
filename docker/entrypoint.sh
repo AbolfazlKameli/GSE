@@ -1,11 +1,28 @@
-#! /bin/bash
+#!/bin/bash
 
-# Author: Abolfazl Kameli
+# Author: Abolfazl
 # Version: v1.0.0
-# Date: 2025-02-19
-# Description: entrypoint for GSE API
+# Date: 5/16/25
+# Description: entrypoint for PetShop API.
 # Usage: ./entrypoint.sh
 
-python3 manage.py makemigrations --settings=core.settings.production
-python3 manage.py migrate --settings=core.settings.production
-python3 manage.py runserver --settings=core.settings.production 0.0.0.0:8000
+set e
+
+export DJANGO_SETTINGS_MODULE=core.settings.production
+echo "Using Django settings: $DJANGO_SETTINGS_MODULE"
+
+echo "Applying database migrations..."
+python3 manage.py migrate
+
+echo "Collecting static files..."
+python3 manage.py collectstatic --noinput
+
+echo "Starting Gunicorn server..."
+echo "Redis URL: $REDIS_LOCATION"
+exec gunicorn core.wsgi:application \
+  --bind 0.0.0.0:8000 \
+  --workers 4 \
+  --timeout 120 \
+  --log-level info \
+  --access-logfile - \
+  --error-logfile -
