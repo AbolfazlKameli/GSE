@@ -12,9 +12,10 @@ from gse.utils.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from .models import Ticket, TicketAnswer
 from .selectors import get_all_tickets, get_answer_by_id, get_ticket_by_id, get_all_ticket_answers
 from .serializers import TicketsListSerializer, TicketSerializer, TicketAnswerSerializer
-from .services import remove_answer
+from .services import remove_answer, submit_answer
 
 
+@extend_schema(tags=['Tickets'])
 class TicketsListAPI(ListAPIView):
     """
     API for listing tickets, accessible only to admins.
@@ -25,6 +26,7 @@ class TicketsListAPI(ListAPIView):
     filterset_fields = ('status',)
 
 
+@extend_schema(tags=['Tickets'])
 class TicketRetrieveAPI(RetrieveAPIView):
     """
     API for retrieving a ticket object, accessible only to owner or admin or supporter.
@@ -42,6 +44,7 @@ class TicketRetrieveAPI(RetrieveAPIView):
         )
 
 
+@extend_schema(tags=['Tickets'])
 class TicketCreateAPI(GenericAPIView):
     """
     API for creating tickets, accessible only to authenticated users.
@@ -64,6 +67,7 @@ class TicketCreateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Tickets'])
 class TicketDeleteAPI(DestroyAPIView):
     """
     API for deleting tickets, accessible only to owner or admin or supporter.
@@ -74,6 +78,7 @@ class TicketDeleteAPI(DestroyAPIView):
     lookup_url_kwarg = 'ticket_id'
 
 
+@extend_schema(tags=['TicketAnswers'])
 class TicketAnswerRetrieveAPI(GenericAPIView):
     """
     API for retrieving ticket answers, accessible to ticket owner or admin or supporter.
@@ -98,6 +103,7 @@ class TicketAnswerRetrieveAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['TicketAnswers'])
 class TicketAnswerCreateAPI(GenericAPIView):
     """
     API for creating ticket answers, accessible only to admin or supporter.
@@ -113,10 +119,11 @@ class TicketAnswerCreateAPI(GenericAPIView):
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
+        ticket = self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            ticket = self.get_object()
-            serializer.save(ticket=ticket)
+            vd = serializer.validated_data
+            submit_answer(ticket, vd.get('title'), vd.get('body'))
             return Response(
                 data={'data': {'message': 'پاسخ تیکت با موفقیت ثبت شد.'}},
                 status=status.HTTP_201_CREATED
@@ -127,6 +134,7 @@ class TicketAnswerCreateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['TicketAnswers'])
 class TicketAnswerDeleteAPI(DestroyAPIView):
     """
     API for deleting ticket answer, accessible only to admins and supporters.
