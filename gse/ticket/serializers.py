@@ -19,7 +19,7 @@ class TicketAnswerSerializer(serializers.ModelSerializer):
 
 
 class TicketSerializer(serializers.ModelSerializer):
-    answers = TicketAnswerSerializer(read_only=True)
+    answer = TicketAnswerSerializer(read_only=True)
 
     class Meta:
         model = Ticket

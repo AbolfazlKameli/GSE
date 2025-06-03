@@ -3,7 +3,7 @@ from .models import Ticket, TicketAnswer
 
 
 def get_all_tickets() -> list[Ticket]:
-    return Ticket.objects.select_related('answers').all()
+    return Ticket.objects.select_related('answer').all()
 
 
 def get_ticket_by_id(ticket_id: int, status: str = TICKET_STATUS_PENDING) -> Ticket | None:

@@ -16,7 +16,7 @@ class Ticket(models.Model):
 
 
 class TicketAnswer(models.Model):
-    ticket = models.OneToOneField(Ticket, on_delete=models.CASCADE, related_name='answers')
+    ticket = models.OneToOneField(Ticket, on_delete=models.CASCADE, related_name='answer')
     title = models.CharField(max_length=255)
     body = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
