@@ -15,6 +15,7 @@ from .serializers import PaymentSerializer
 from .services import payment_request, verify
 
 
+@extend_schema(tags=['Payments'])
 class ZPPaymentAPI(GenericAPIView):
     """
     API for pay a pending order, accessible only to the user or admin or support.
@@ -50,6 +51,7 @@ class ZPPaymentAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Payments'])
 class ZPVerifyAPI(GenericAPIView):
     """
     API for verifying a payment info, accessible only to the user or admin or support.
@@ -89,6 +91,7 @@ class ZPVerifyAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Payments'])
 class PaymentReceiptAPI(RetrieveAPIView):
     permission_classes = [IsAdminOrOwner, FullCredentialsUser]
     serializer_class = PaymentSerializer
