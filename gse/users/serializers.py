@@ -12,13 +12,6 @@ from .validators import validate_iranian_phone_number, validate_postal_code
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user, lifetime=None):
-        token = super().get_token(user)
-        if lifetime:
-            token.set_exp(claim='exp', lifetime=lifetime)
-        return token
-
     def validate(self, attrs):
         data = super().validate(attrs)
         refresh = self.get_token(self.user)
@@ -97,23 +90,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         if value and len(value) > 50:
             raise serializers.ValidationError('نام خانوادگی نمیتواند بیشتر از ۵۰ نویسه باشد.')
         return value
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        profile_data = validated_data.pop('profile', None)
-        address_data = validated_data.pop('address', None)
-
-        if profile_data:
-            for attr, value in profile_data.items():
-                setattr(instance.profile, attr, value)
-            instance.profile.save()
-
-        if address_data:
-            for attr, value in address_data.items():
-                setattr(instance.address, attr, value)
-            instance.address.save()
-
-        return super().update(instance, validated_data)
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):

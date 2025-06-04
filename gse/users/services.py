@@ -69,12 +69,31 @@ def register(*, email: str, password: str = None, is_active: bool = False) -> Us
 
 
 @transaction.atomic
-def update_profile(*, user_id: int, profile_data: dict = None) -> UserProfile:
-    profile = UserProfile.objects.get(owner_id__exact=user_id)
-    if profile_data:
+def update_profile(
+        *,
+        user: User,
+        user_data: dict = None,
+        profile_data: dict = None,
+        address_data: dict = None
+) -> UserProfile:
+    profile = user.profile
+    address = user.address
+
+    if user_data is not None:
+        for attr, value in user_data.items():
+            setattr(user, attr, value)
+        user.save()
+
+    if profile_data is not None:
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
         profile.save()
+
+    if address_data is not None:
+        for attr, value in address_data.items():
+            setattr(address, attr, value)
+        address.save()
+
     return profile
 
 

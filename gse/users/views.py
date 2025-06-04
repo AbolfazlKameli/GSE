@@ -219,7 +219,7 @@ class GoogleLoginApi(ApiErrorsMixin, GenericAPIView):
                 'first_name': user_data['given_name'],
                 'last_name': user_data['family_name']
             }
-            update_profile(user_id=user.id, profile_data=profile_data)
+            update_profile(user=user, profile_data=profile_data)
 
         access_token, refresh_token = generate_tokens_for_user(user)
         response_data = {
@@ -361,7 +361,9 @@ class UserProfileUpdateAPI(UpdateAPIView):
         user: User = self.get_object()
         serializer = self.get_serializer(instance=user, data=request.data, partial=True)
         if serializer.is_valid():
-            profile = serializer.validated_data.get('profile')
+            profile = serializer.validated_data.pop('profile', None)
+            address = serializer.validated_data.pop('address', None)
+            user_data = serializer.validated_data
             email_changed = 'email' in serializer.validated_data
             phone_changed = 'phone_number' in profile if profile else False
             message = 'اطلاعات شما با موفقیت به روز رسانی شد.'
@@ -382,7 +384,7 @@ class UserProfileUpdateAPI(UpdateAPIView):
                     )
                     message += 'و کد فعالسازی برای شماره تلفن جدید شما ارسال شد.'
 
-            serializer.save()
+            update_profile(user=user, user_data=user_data, profile_data=profile, address_data=address)
 
             return Response(
                 data={'data': {'message': message}},
