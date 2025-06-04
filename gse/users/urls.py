@@ -1,35 +1,30 @@
 from django.urls import path, include
-from rest_framework_simplejwt.views import TokenRefreshView
 
-from . import views
+from .apis import auth, user, profile
 
 app_name = 'users'
 
-token = [
-    path('refresh/', TokenRefreshView.as_view(), name='token-refresh'),
+password_patterns = [
+    path('change/', user.ChangePasswordAPI.as_view(), name='change-password'),
+    path('set/', user.SetPasswordAPI.as_view(), name='set-password'),
+    path('reset/', user.ResetPasswordAPI.as_view(), name='reset-password'),
 ]
 
-password = [
-    path('change/', views.ChangePasswordAPI.as_view(), name='change-password'),
-    path('set/', views.SetPasswordAPI.as_view(), name='set-password'),
-    path('reset/', views.ResetPasswordAPI.as_view(), name='reset-password'),
-]
-
-profile = [
-    path('', views.UserProfileAPI.as_view(), name='user-profile'),
-    path('update/', views.UserProfileUpdateAPI.as_view(), name='update-user-profile'),
-    path('delete/', views.DeleteUserAccountAPI.as_view(), name='delete-user-profile'),
+profile_patterns = [
+    path('', profile.UserProfileAPI.as_view(), name='user-profile'),
+    path('update/', profile.UserProfileUpdateAPI.as_view(), name='update-user-profile'),
+    path('delete/', profile.DeleteUserAccountAPI.as_view(), name='delete-user-profile'),
 ]
 
 urlpatterns = [
-    path('', views.UsersListAPI.as_view(), name='users-list'),
-    path('register/', views.UserRegisterAPI.as_view(), name='user-register'),
-    path('register/verify/', views.UserVerificationAPI.as_view(), name='user-register-verify'),
-    path('register/google/auth/redirect/', views.GoogleLoginRedirectAPI.as_view(), name='google_login_redirect'),
-    path('register/google/auth/callback/', views.GoogleLoginApi.as_view(), name='google_login'),
-    path('resend-email/', views.ResendVerificationEmailAPI.as_view(), name='user-register-resend-email'),
-    path('login/', views.CustomTokenObtainPairView.as_view(), name='user-login'),
-    path('profile/', include(profile)),
-    path('token/', include(token)),
-    path('password/', include(password)),
+    path('', user.UsersListAPI.as_view(), name='users-list'),
+    path('register/', auth.UserRegisterAPI.as_view(), name='user-register'),
+    path('register/verify/', auth.UserVerificationAPI.as_view(), name='user-register-verify'),
+    path('register/google/auth/redirect/', auth.GoogleLoginRedirectAPI.as_view(), name='google_login_redirect'),
+    path('register/google/auth/callback/', auth.GoogleLoginApi.as_view(), name='google_login'),
+    path('resend-email/', auth.ResendVerificationEmailAPI.as_view(), name='user-register-resend-email'),
+    path('login/', auth.CustomTokenObtainPairView.as_view(), name='user-login'),
+    path('refresh/', auth.CustomTokenRefreshAPI.as_view(), name='token-refresh'),
+    path('profile/', include(profile_patterns)),
+    path('password/', include(password_patterns)),
 ]
