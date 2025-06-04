@@ -7,7 +7,6 @@ app_name = 'users'
 
 token = [
     path('refresh/', TokenRefreshView.as_view(), name='token-refresh'),
-    path('block-token/', views.BlockTokenAPI.as_view(), name='token-block'),
 ]
 
 password = [

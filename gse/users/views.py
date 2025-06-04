@@ -15,7 +15,6 @@ from rest_framework.generics import (
 )
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from gse.utils import permissions, format_errors
@@ -34,39 +33,19 @@ from .services import (
     google_get_user_info,
     update_profile,
     get_authorization_url,
-    generate_tokens_for_user,
-    update_last_login
+    generate_tokens_for_user
 )
 from .tasks import send_verification_email, send_verification_sms
 from .throttle import FiveRequestPerHourThrottle
 
 
+@extend_schema(responses={200: TokenResponseSerializer})
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
-    Custom API for obtaining JWT tokens, with a limit of five requests per hour for each IP.
+    Custom API for obtaining JWT tokens.
     """
     serializer_class = serializers.MyTokenObtainPairSerializer
     throttle_classes = [FiveRequestPerHourThrottle]
-
-    @extend_schema(responses={200: TokenResponseSerializer})
-    def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            email = request.data.get("email")
-            user = update_last_login(email)
-            if user is None:
-                return Response(
-                    data={'data': {'errors': {'email': 'کاربر با این مشخصات یافت نشد'}}},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            return Response(
-                data={'data': serializer.validated_data},
-                status=status.HTTP_200_OK
-            )
-        return Response(
-            data={'data': {'errors': format_errors(serializer.errors)}},
-            status=status.HTTP_400_BAD_REQUEST
-        )
 
 
 class UsersListAPI(ListAPIView):
@@ -144,8 +123,6 @@ class UserVerificationAPI(GenericAPIView):
                     status=status.HTTP_409_CONFLICT
                 )
             user.is_active = True
-            # if user.profile.phone_number is not None:
-            #     user.profile.phone_number = None
             user.save()
             return Response(
                 data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
@@ -354,35 +331,6 @@ class ResetPasswordAPI(GenericAPIView):
             )
         return Response(
             data={'errors': format_errors(serializer.errors)},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-
-class BlockTokenAPI(GenericAPIView):
-    """
-    API for blacklisting a specified refresh token, making it invalid for future use. Accessible to all users.
-    """
-    serializer_class = serializers.TokenSerializer
-    permission_classes = [AllowAny]
-
-    @extend_schema(responses={200: ResponseSerializer})
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            try:
-                token = RefreshToken(request.data['refresh'])
-            except TokenError:
-                return Response(
-                    data={'data': {'errors': {'refresh': 'توکن ارسالی نامعتبر یا منقضی شده است.'}}},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            token.blacklist()
-            return Response(
-                data={'data': {'message': 'توکن با موفقیت بلاک شد.'}},
-                status=status.HTTP_200_OK
-            )
-        return Response(
-            data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
         )
 
