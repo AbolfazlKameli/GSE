@@ -36,7 +36,6 @@ from .services import (
     generate_tokens_for_user
 )
 from .tasks import send_verification_email, send_verification_sms
-from .throttle import FiveRequestPerHourThrottle
 
 
 @extend_schema(responses={200: TokenResponseSerializer})
@@ -45,7 +44,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     Custom API for obtaining JWT tokens.
     """
     serializer_class = serializers.MyTokenObtainPairSerializer
-    throttle_classes = [FiveRequestPerHourThrottle]
 
 
 class UsersListAPI(ListAPIView):
@@ -67,7 +65,6 @@ class UserRegisterAPI(CreateAPIView):
     model = User
     serializer_class = serializers.UserRegisterSerializer
     permission_classes = [permissions.NotAuthenticated]
-    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
@@ -98,7 +95,6 @@ class UserVerificationAPI(GenericAPIView):
     permission_classes = [permissions.NotAuthenticated]
     http_method_names = ['post', 'head', 'options']
     serializer_class = serializers.UserRegisterVerifySerializer
-    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={200: ResponseSerializer})
     def post(self, request):
@@ -141,7 +137,6 @@ class ResendVerificationEmailAPI(GenericAPIView):
     """
     permission_classes = [permissions.NotAuthenticated]
     serializer_class = serializers.ResendVerificationEmailSerializer
-    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={202: ResponseSerializer})
     def post(self, request):
@@ -268,7 +263,6 @@ class SetPasswordAPI(GenericAPIView):
     """
     permission_classes = [AllowAny]
     serializer_class = serializers.SetPasswordSerializer
-    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={
         200: ResponseSerializer
@@ -304,7 +298,6 @@ class ResetPasswordAPI(GenericAPIView):
     """
     permission_classes = [AllowAny]
     serializer_class = serializers.ResetPasswordSerializer
-    throttle_classes = [FiveRequestPerHourThrottle]
 
     @extend_schema(responses={
         202: ResponseSerializer
