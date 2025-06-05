@@ -6,7 +6,7 @@ from gse.products.models import Product
 
 
 def get_all_questions() -> list[Question]:
-    return Question.objects.all()
+    return Question.objects.select_related('answer').all()
 
 
 def get_product_questions(product_id: int) -> list[Question]:
