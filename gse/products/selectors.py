@@ -25,6 +25,10 @@ def get_all_products() -> list[Product]:
     return Product.objects.prefetch_related('media', 'details', 'category').all()
 
 
+def get_product_by_id(product_id: int) -> list[Product]:
+    return Product.objects.prefetch_related('questions').filter(id=product_id).first()
+
+
 def get_all_details() -> list[ProductDetail]:
     return ProductDetail.objects.select_related('product').all()
 

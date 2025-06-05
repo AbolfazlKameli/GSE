@@ -100,9 +100,9 @@ class AnswerCreateAPI(GenericAPIView):
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
+        question: Question = self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            question: Question = self.get_object()
             serializer.save(question=question)
             return Response(
                 data={'data': {'message': 'پاسخ با موفقیت ثبت شد.'}},
