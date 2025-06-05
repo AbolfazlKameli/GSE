@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from .models import Question, Answer
-from .services import submit_answer
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -12,12 +11,9 @@ class AnswerSerializer(serializers.ModelSerializer):
             'question': {'read_only': True}
         }
 
-    def save(self, **kwargs):
-        submit_answer(question=kwargs.get('question'), body=self.validated_data.get('body'))
-
 
 class QuestionSerializer(serializers.ModelSerializer):
-    answers = AnswerSerializer(read_only=True)
+    answer = AnswerSerializer(read_only=True)
 
     class Meta:
         model = Question

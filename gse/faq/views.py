@@ -13,7 +13,7 @@ from gse.utils.permissions import IsAdminOrOwner, IsAdminOrSupporter
 from .models import Question, Answer
 from .selectors import get_all_questions, get_all_answers, get_question_by_id, get_answer_by_id, get_product_questions
 from .serializers import QuestionSerializer, AnswerSerializer
-from .services import remove_answer
+from .services import remove_answer, submit_answer
 
 
 class QuestionListAPI(ListAPIView):
@@ -100,10 +100,10 @@ class AnswerCreateAPI(GenericAPIView):
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
+        question: Question = self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            question: Question = self.get_object()
-            serializer.save(question=question)
+            submit_answer(question=question, body=serializer.validated_data.get('body'))
             return Response(
                 data={'data': {'message': 'پاسخ با موفقیت ثبت شد.'}},
                 status=status.HTTP_201_CREATED
