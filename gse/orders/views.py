@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -14,7 +15,10 @@ from .selectors import (
     get_order_by_id,
     check_order_status,
     get_all_coupons,
-    get_coupon_by_id
+    get_coupon_by_id,
+    check_order_owner,
+    get_usable_coupon_by_code,
+    get_coupon_by_code
 )
 from .serializers import (
     OrderSerializer,
@@ -25,7 +29,7 @@ from .serializers import (
     CouponApplySerializer,
     CouponDiscardSerializer
 )
-from .services import cancel_order
+from .services import cancel_order, create_order, apply_coupon, discard_coupon
 
 
 class OrderRetrieveAPI(RetrieveAPIView):
@@ -70,7 +74,7 @@ class OrderCreateAPI(GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(owner=request.user)
+            create_order(owner=request.user, items=serializer.validated_data.get('items'))
             return Response(
                 data={'data': {'message': 'سفارش با موفقیت ایجاد شد.'}},
                 status=status.HTTP_201_CREATED
@@ -92,8 +96,8 @@ class OrderCancelAPI(GenericAPIView):
 
     @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
-        order: Order | None = get_order_by_id(kwargs.get('pk'), check_owner=True, owner=request.user)
-        if order is None or not check_order_status(order, self.allowed_statuses):
+        order: Order | None = get_order_by_id(kwargs.get('pk'))
+        if order is None or not check_order_status(order, self.allowed_statuses) or not check_order_owner(order):
             return Response(
                 data={'data': {'errors': 'هیچ سفارش درحال پردازشی یافت نشد.'}},
                 status=status.HTTP_404_NOT_FOUND
@@ -115,8 +119,8 @@ class OrderItemDeleteAPI(DestroyAPIView):
     allowed_statuses = [ORDER_STATUS_PENDING]
 
     def get_object(self):
-        order: Order | None = get_order_by_id(self.kwargs.get('order_id'), check_owner=True, owner=self.request.user)
-        if order is None or not check_order_status(order, self.allowed_statuses):
+        order: Order | None = get_order_by_id(self.kwargs.get('order_id'))
+        if order is None or not check_order_status(order, self.allowed_statuses) or not check_order_owner(order):
             raise Http404({'data': {'errors': 'سفارش درحال پردازشی با این مشخصات پیدا نشد.'}})
 
         item: OrderItem | None = order.items.filter(id=self.kwargs.get('item_id')).first()
@@ -127,8 +131,8 @@ class OrderItemDeleteAPI(DestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         super().destroy(request, *args, **kwargs)
-        order: Order | None = get_order_by_id(kwargs.get('order_id'), check_owner=True, owner=request.user)
-        if order is None or not check_order_status(order, self.allowed_statuses):
+        order: Order | None = get_order_by_id(kwargs.get('order_id'))
+        if order is None or not check_order_status(order, self.allowed_statuses) or not check_order_owner(order):
             raise Http404({'data': {'errors': 'سفارش درحال پردازشی با این مشخصات پیدا نشد.'}})
         order.remove_if_no_item()
         return Response(
@@ -220,8 +224,8 @@ class CouponApplyAPI(GenericAPIView):
 
     def get_object(self):
         order_id = self.request.data.get('order_id')
-        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
-        if order is None or not check_order_status(order, self.allowed_statuses):
+        order: Order | None = get_order_by_id(order_id=order_id)
+        if order is None or not check_order_status(order, self.allowed_statuses) or not check_order_owner(order):
             raise Http404('سفارش درحال پردازشی با این مشخصات وجود ندارد.')
         self.check_object_permissions(self.request, order)
         return order
@@ -231,7 +235,15 @@ class CouponApplyAPI(GenericAPIView):
         self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            coupon = get_usable_coupon_by_code(coupon_code=serializer.validated_data.get('code'))
+            order = serializer.validated_data.get('order')
+            try:
+                apply_coupon(order, coupon)
+            except ValidationError as e:
+                return Response(
+                    data={'data': {'errors': e.messages}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             return Response(
                 data={'data': {'message': 'کد تخفیف با موفقیت روی سفارش اعمال شد.'}},
                 status=status.HTTP_200_OK
@@ -252,8 +264,8 @@ class CouponDiscardAPI(GenericAPIView):
 
     def get_object(self):
         order_id = self.request.data.get('order_id')
-        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
-        if order is None or not check_order_status(order, self.allowed_statuses):
+        order: Order | None = get_order_by_id(order_id=order_id)
+        if order is None or not check_order_status(order, self.allowed_statuses) or not check_order_owner(order):
             raise Http404('سفارش درحال پردازشی با این مشخصات وجود ندارد.')
         self.check_object_permissions(self.request, order)
         return order
@@ -263,7 +275,15 @@ class CouponDiscardAPI(GenericAPIView):
         self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            coupon = get_coupon_by_code(code=serializer.validated_data.get('code'))
+            order = serializer.validated_data.get('order')
+            try:
+                discard_coupon(order, coupon)
+            except ValidationError as e:
+                return Response(
+                    data={'data': {'errors': e.messages}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             return Response(
                 data={'data': {'message': 'کد تخفیف غیرفعال شد.'}},
                 status=status.HTTP_200_OK

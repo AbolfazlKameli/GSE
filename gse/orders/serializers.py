@@ -1,12 +1,16 @@
-from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
 from gse.payment.serializers import PaymentSerializer
 from gse.products.serializers import ProductListSerializer
 from .choices import ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon
-from .selectors import get_usable_coupon_by_code, get_order_by_id, get_coupon_by_code, check_order_status
-from .services import apply_coupon, discard_coupon, create_order
+from .selectors import (
+    get_usable_coupon_by_code,
+    get_order_by_id,
+    get_coupon_by_code,
+    check_order_status,
+    check_order_owner
+)
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -85,11 +89,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 )
         return attrs
 
-    def create(self, validated_data):
-        owner = validated_data.pop('owner')
-        order = create_order(owner, validated_data.get('items'))
-        return order
-
 
 class CouponApplySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=50, required=True, write_only=True)
@@ -100,8 +99,8 @@ class CouponApplySerializer(serializers.Serializer):
         order_id = attrs.get('order_id')
         allowed_statuses = [ORDER_STATUS_PENDING]
 
-        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
-        if order is None or not check_order_status(order, allowed_statuses):
+        order: Order | None = get_order_by_id(order_id=order_id)
+        if order is None or not check_order_status(order, allowed_statuses) or not check_order_owner(order):
             raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
         if order.coupon is not None:
             raise serializers.ValidationError({'order': 'نمیتوان دو کد تخفیف برای یک سفارش اعمال کرد.'})
@@ -113,14 +112,6 @@ class CouponApplySerializer(serializers.Serializer):
         attrs['order'] = order
         return attrs
 
-    def save(self, **kwargs):
-        coupon: Coupon | None = get_usable_coupon_by_code(coupon_code=self.validated_data.get('code'))
-        order: Order = self.validated_data.get('order')
-        try:
-            apply_coupon(order, coupon)
-        except ValidationError:
-            raise serializers.ValidationError({'data': {'errors': {'order': 'درصد تخفیف نمیتواند بیشتر از ۱۰۰ باشد.'}}})
-
 
 class CouponDiscardSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=50, required=True, write_only=True)
@@ -131,8 +122,8 @@ class CouponDiscardSerializer(serializers.Serializer):
         order_id = attrs.get('order_id')
         allowed_statuses = [ORDER_STATUS_PENDING]
 
-        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
-        if order is None or not check_order_status(order, allowed_statuses):
+        order: Order | None = get_order_by_id(order_id=order_id)
+        if order is None or not check_order_status(order, allowed_statuses) or not check_order_owner(order):
             raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
         if order.coupon is None:
             raise serializers.ValidationError({'order': 'کد تخفیفی روی این سفارش اعمال نشده.'})
@@ -143,12 +134,3 @@ class CouponDiscardSerializer(serializers.Serializer):
 
         attrs['order'] = order
         return attrs
-
-    def save(self, *args, **kwargs):
-        coupon: Coupon | None = get_coupon_by_code(code=self.validated_data.get('code'))
-        order: Order = self.validated_data.get('order')
-
-        try:
-            discard_coupon(order, coupon)
-        except Exception:
-            raise serializers.ValidationError({'data': {'errors': {'order': 'عملیات با شکست مواجه شد.'}}})

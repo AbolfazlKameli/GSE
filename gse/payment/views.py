@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from gse.orders.choices import ORDER_STATUS_PENDING
 from gse.orders.models import Order
-from gse.orders.selectors import get_order_by_id, check_order_status, get_pending_orders
+from gse.orders.selectors import get_order_by_id, check_order_status, get_pending_orders, check_order_owner
 from gse.utils.permissions import IsAdminOrOwner, FullCredentialsUser
 from .models import Payment
 from .selectors import get_payment_by_id
@@ -61,8 +61,8 @@ class ZPVerifyAPI(GenericAPIView):
 
     def get_object(self):
         order_id = self.request.query_params.get('order_id')
-        order: Order | None = get_order_by_id(order_id, check_owner=True, owner=self.request.user)
-        if order is None or not check_order_status(order, self.allowed_statuses):
+        order: Order | None = get_order_by_id(order_id)
+        if order is None or not check_order_status(order, self.allowed_statuses) or not check_order_owner(order):
             raise Http404('سفارش درحال پردازشی با این مشخصات پیدا نشد.')
         return order
 
