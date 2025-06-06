@@ -69,16 +69,3 @@ class CartItemAddSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'quantity': 'شما نمیتوانید تعدادی بیشتر از ۱۰۰ انتخاب کنید.'})
 
         return attrs
-
-    def create(self, validated_data):
-        quantity = validated_data.get('quantity')
-        product = validated_data.get('product')
-        request = self.context.get('request')
-
-        item_obj = get_cart_item_by_product_id(product_id=product.id, owner_id=request.user.id)
-        if item_obj and (product.id == item_obj.product.id):
-            item_obj.quantity += quantity
-            item_obj.save()
-            return item_obj
-
-        return super().create(validated_data)
