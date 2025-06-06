@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -15,7 +16,9 @@ from .selectors import (
     check_order_status,
     get_all_coupons,
     get_coupon_by_id,
-    check_order_owner
+    check_order_owner,
+    get_usable_coupon_by_code,
+    get_coupon_by_code
 )
 from .serializers import (
     OrderSerializer,
@@ -26,7 +29,7 @@ from .serializers import (
     CouponApplySerializer,
     CouponDiscardSerializer
 )
-from .services import cancel_order
+from .services import cancel_order, create_order, apply_coupon, discard_coupon
 
 
 class OrderRetrieveAPI(RetrieveAPIView):
@@ -71,7 +74,7 @@ class OrderCreateAPI(GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(owner=request.user)
+            create_order(owner=request.user, items=serializer.validated_data.get('items'))
             return Response(
                 data={'data': {'message': 'سفارش با موفقیت ایجاد شد.'}},
                 status=status.HTTP_201_CREATED
@@ -232,7 +235,15 @@ class CouponApplyAPI(GenericAPIView):
         self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            coupon = get_usable_coupon_by_code(coupon_code=serializer.validated_data.get('code'))
+            order = serializer.validated_data.get('order')
+            try:
+                apply_coupon(order, coupon)
+            except ValidationError as e:
+                return Response(
+                    data={'data': {'errors': e.messages}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             return Response(
                 data={'data': {'message': 'کد تخفیف با موفقیت روی سفارش اعمال شد.'}},
                 status=status.HTTP_200_OK
@@ -264,7 +275,15 @@ class CouponDiscardAPI(GenericAPIView):
         self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            coupon = get_coupon_by_code(code=serializer.validated_data.get('code'))
+            order = serializer.validated_data.get('order')
+            try:
+                discard_coupon(order, coupon)
+            except ValidationError as e:
+                return Response(
+                    data={'data': {'errors': e.messages}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             return Response(
                 data={'data': {'message': 'کد تخفیف غیرفعال شد.'}},
                 status=status.HTTP_200_OK

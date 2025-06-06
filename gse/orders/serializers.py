@@ -1,4 +1,3 @@
-from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
 from gse.payment.serializers import PaymentSerializer
@@ -12,7 +11,6 @@ from .selectors import (
     check_order_status,
     check_order_owner
 )
-from .services import apply_coupon, discard_coupon, create_order
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -91,11 +89,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
                 )
         return attrs
 
-    def create(self, validated_data):
-        owner = validated_data.pop('owner')
-        order = create_order(owner, validated_data.get('items'))
-        return order
-
 
 class CouponApplySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=50, required=True, write_only=True)
@@ -119,14 +112,6 @@ class CouponApplySerializer(serializers.Serializer):
         attrs['order'] = order
         return attrs
 
-    def save(self, **kwargs):
-        coupon: Coupon | None = get_usable_coupon_by_code(coupon_code=self.validated_data.get('code'))
-        order: Order = self.validated_data.get('order')
-        try:
-            apply_coupon(order, coupon)
-        except ValidationError:
-            raise serializers.ValidationError({'data': {'errors': {'order': 'درصد تخفیف نمیتواند بیشتر از ۱۰۰ باشد.'}}})
-
 
 class CouponDiscardSerializer(serializers.Serializer):
     code = serializers.CharField(max_length=50, required=True, write_only=True)
@@ -149,12 +134,3 @@ class CouponDiscardSerializer(serializers.Serializer):
 
         attrs['order'] = order
         return attrs
-
-    def save(self, *args, **kwargs):
-        coupon: Coupon | None = get_coupon_by_code(code=self.validated_data.get('code'))
-        order: Order = self.validated_data.get('order')
-
-        try:
-            discard_coupon(order, coupon)
-        except Exception:
-            raise serializers.ValidationError({'data': {'errors': {'order': 'عملیات با شکست مواجه شد.'}}})
