@@ -3,7 +3,6 @@ from rest_framework import serializers
 from gse.products.serializers import ProductListSerializer
 from .models import Cart, CartItem
 from .selectors import get_cart_item_by_product_id
-from .utils import check_cart_total_quantity
 
 
 class CartItemSerializer(serializers.ModelSerializer):
@@ -54,14 +53,14 @@ class CartItemAddSerializer(serializers.ModelSerializer):
         if quantity > product.quantity or (not quantity > 0):
             raise serializers.ValidationError({'quantity': 'این تعداد از این محصول در انبار موجود نمیباشد.'})
 
-        item_obj = get_cart_item_by_product_id(product_id=product.id, owner_id=request.user.id)
-        if item_obj and (product.id == item_obj.product.id):
-            item_obj.quantity += quantity
+        if (quantity + request.user.cart.get_total_quantity()) > 100:
+            raise serializers.ValidationError(
+                {'quantity': 'در یک سبد تعدا محصولات نمیتواند بیشتر از ۱۰۰ باشد.'}
+            )
 
-            if not check_cart_total_quantity(item_obj.cart):
-                raise serializers.ValidationError(
-                    {'quantity': 'در یک سبد خرید تعداد محصولات نمیتواند بیشتر از ۱۰۰ باشد.'}
-                )
+        item_obj = get_cart_item_by_product_id(product_id=product.id, owner_id=request.user.id)
+        if item_obj:
+            item_obj.quantity += quantity
 
             if product.quantity < item_obj.quantity or (not item_obj.quantity > 0):
                 raise serializers.ValidationError({'quantity': 'این تعداد از این محصول در انبار موجود نمیباشد.'})

@@ -69,6 +69,7 @@ class CartItemDeleteAPI(DestroyAPIView):
     def get_object(self):
         item_id = self.kwargs.get('item_id')
         cart = get_cart_by_item_id(item_id=item_id)
+        self.check_object_permissions(self.request, cart)
         return cart
 
     def delete(self, request, *args, **kwargs):
