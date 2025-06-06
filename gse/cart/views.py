@@ -9,11 +9,8 @@ from gse.utils import format_errors
 from gse.utils.doc_serializers import ResponseSerializer
 from gse.utils.permissions import IsAdminOrOwner
 from .selectors import get_all_carts, get_all_cart_items, get_cart_by_item_id, get_cart_item_by_id
-from .serializers import (
-    CartSerializer,
-    CartItemAddSerializer,
-    CartItemSerializer
-)
+from .serializers import CartSerializer, CartItemAddSerializer, CartItemSerializer
+from .services import add_cart_item
 
 
 class CartRetrieveAPI(RetrieveAPIView):
@@ -46,7 +43,7 @@ class CartItemAddAPI(GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save(cart=request.user.cart)
+            add_cart_item(request.user.cart, serializer.validated_data)
             return Response(
                 data={'data': {'message': 'محصول با موفقیت به سبد خرید اضافه شد.'}},
                 status=status.HTTP_201_CREATED
@@ -69,6 +66,7 @@ class CartItemDeleteAPI(DestroyAPIView):
     def get_object(self):
         item_id = self.kwargs.get('item_id')
         cart = get_cart_by_item_id(item_id=item_id)
+        self.check_object_permissions(self.request, cart)
         return cart
 
     def delete(self, request, *args, **kwargs):
