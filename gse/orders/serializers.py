@@ -5,7 +5,13 @@ from gse.payment.serializers import PaymentSerializer
 from gse.products.serializers import ProductListSerializer
 from .choices import ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon
-from .selectors import get_usable_coupon_by_code, get_order_by_id, get_coupon_by_code, check_order_status
+from .selectors import (
+    get_usable_coupon_by_code,
+    get_order_by_id,
+    get_coupon_by_code,
+    check_order_status,
+    check_order_owner
+)
 from .services import apply_coupon, discard_coupon, create_order
 
 
@@ -100,8 +106,8 @@ class CouponApplySerializer(serializers.Serializer):
         order_id = attrs.get('order_id')
         allowed_statuses = [ORDER_STATUS_PENDING]
 
-        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
-        if order is None or not check_order_status(order, allowed_statuses):
+        order: Order | None = get_order_by_id(order_id=order_id)
+        if order is None or not check_order_status(order, allowed_statuses) or not check_order_owner(order):
             raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
         if order.coupon is not None:
             raise serializers.ValidationError({'order': 'نمیتوان دو کد تخفیف برای یک سفارش اعمال کرد.'})
@@ -131,8 +137,8 @@ class CouponDiscardSerializer(serializers.Serializer):
         order_id = attrs.get('order_id')
         allowed_statuses = [ORDER_STATUS_PENDING]
 
-        order: Order | None = get_order_by_id(order_id=order_id, check_owner=False)
-        if order is None or not check_order_status(order, allowed_statuses):
+        order: Order | None = get_order_by_id(order_id=order_id)
+        if order is None or not check_order_status(order, allowed_statuses) or not check_order_owner(order):
             raise serializers.ValidationError({'order': 'سفارش درحال پردازشی با این مشخصات وجود ندارد.'})
         if order.coupon is None:
             raise serializers.ValidationError({'order': 'کد تخفیفی روی این سفارش اعمال نشده.'})

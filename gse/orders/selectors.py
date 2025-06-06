@@ -3,30 +3,29 @@ from datetime import datetime
 from pytz import timezone
 
 from gse.products.models import Product
+from gse.users.choices import USER_ROLE_ADMIN, USER_ROLE_SUPPORT
 from gse.users.models import User
-from gse.users.selectors import get_admins_and_supporters_ids
 from .choices import ORDER_STATUS_SUCCESS, ORDER_STATUS_PENDING
-from .models import Order, OrderItem, Coupon
+from .models import Order, Coupon
 
 
 def get_all_orders() -> list[Order]:
-    return Order.objects.prefetch_related('items').select_related('owner').all()
-
-
-def get_all_order_items() -> list[OrderItem]:
-    return OrderItem.objects.select_related('product', 'order').all()
+    return Order.objects.prefetch_related('items').select_related('owner', 'coupon').all()
 
 
 def get_pending_orders() -> list[Order]:
-    return Order.objects.filter(status=ORDER_STATUS_PENDING).all()
+    return Order.objects.filter(status=ORDER_STATUS_PENDING).select_related('owner').all()
 
 
-def get_order_by_id(order_id: int, check_owner: bool, owner: User = None) -> Order | None:
-    allowed_users: list[int] = get_admins_and_supporters_ids()
-    if check_owner and owner:
-        allowed_users.append(owner.id)
-        return Order.objects.filter(id=order_id, owner__in=allowed_users).first()
-    return Order.objects.filter(id=order_id).first()
+def get_order_by_id(order_id: int) -> Order | None:
+    return Order.objects.filter(id=order_id) \
+        .prefetch_related('items', 'payment') \
+        .select_related('owner', 'coupon') \
+        .first()
+
+
+def check_order_owner(order: Order) -> bool:
+    return order.owner.role not in [USER_ROLE_ADMIN, USER_ROLE_SUPPORT]
 
 
 def check_order_status(order: Order, statuses: list) -> bool:
