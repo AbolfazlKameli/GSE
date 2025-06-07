@@ -12,6 +12,7 @@ from .selectors import get_all_attributes
 from .serializers import WebsiteSerializer
 
 
+@extend_schema(tags=['Website'])
 class WebsiteAttributeCreateAPI(GenericAPIView):
     """
     API for creating website attribute, accessible only to admins or supporters.
@@ -34,6 +35,7 @@ class WebsiteAttributeCreateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Website'])
 class WebSiteAttributeListAPI(ListAPIView):
     """
     API for listing website attributes.
@@ -42,6 +44,7 @@ class WebSiteAttributeListAPI(ListAPIView):
     queryset = get_all_attributes()
 
 
+@extend_schema(tags=['Website'])
 class WebsiteAttributeUpdateAPI(GenericAPIView):
     """
     API for updating an attribute, accessible only to admins and supporters.
@@ -65,6 +68,7 @@ class WebsiteAttributeUpdateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Website'])
 class WebsiteAttributeDeleteAPI(DestroyAPIView):
     """
     API for deleting attributes, accessible only to admins or supporters.

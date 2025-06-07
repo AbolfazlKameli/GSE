@@ -13,6 +13,7 @@ from .serializers import CartSerializer, CartItemAddSerializer, CartItemSerializ
 from .services import add_cart_item
 
 
+@extend_schema(tags=['Cart'])
 class CartRetrieveAPI(RetrieveAPIView):
     """
     API for retrieving the authenticated user's cart details, accessible only to the cart owner or an admin or support.
@@ -32,6 +33,7 @@ class CartRetrieveAPI(RetrieveAPIView):
         )
 
 
+@extend_schema(tags=['Cart'])
 class CartItemAddAPI(GenericAPIView):
     """
     API for adding an item to the authenticated user's cart, accessible only to the cart owner or an admin or support.
@@ -54,6 +56,7 @@ class CartItemAddAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Cart'])
 class CartItemDeleteAPI(DestroyAPIView):
     """
     API for deleting an item from the authenticated user's cart,
