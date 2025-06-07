@@ -15,7 +15,7 @@ from .selectors import get_all_questions, get_all_answers, get_question_by_id, g
 from .serializers import QuestionSerializer, AnswerSerializer
 from .services import remove_answer, submit_answer
 
-
+@extend_schema(tags=['FAQ'])
 class QuestionListAPI(ListAPIView):
     """
     API for listing questions, accessible only to admin users.
@@ -26,6 +26,7 @@ class QuestionListAPI(ListAPIView):
     filterset_fields = ['status']
 
 
+@extend_schema(tags=['FAQ'])
 class ProductQuestionListAPI(ListAPIView):
     """
     API for listing question by product id.
@@ -37,6 +38,7 @@ class ProductQuestionListAPI(ListAPIView):
         return get_product_questions(self.kwargs.get('product_id'))
 
 
+@extend_schema(tags=['FAQ'])
 class QuestionRetrieveAPI(RetrieveAPIView):
     """
     API for retrieving question.
@@ -53,6 +55,7 @@ class QuestionRetrieveAPI(RetrieveAPIView):
         )
 
 
+@extend_schema(tags=['FAQ'])
 class QuestionCreateAPI(GenericAPIView):
     """
     API for creating questions, accessible only to authenticated users.
@@ -75,6 +78,7 @@ class QuestionCreateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['FAQ'])
 class QuestionDeleteAPI(DestroyAPIView):
     """
     API for deleting questions, accessible only to owner or admin or supporter.
@@ -85,6 +89,7 @@ class QuestionDeleteAPI(DestroyAPIView):
     lookup_url_kwarg = 'question_id'
 
 
+@extend_schema(tags=['FAQ'])
 class AnswerCreateAPI(GenericAPIView):
     """
     API for creating answers, accessible only to admin users.
@@ -114,6 +119,7 @@ class AnswerCreateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['FAQ'])
 class AnswerDeleteAPI(DestroyAPIView):
     """
     API for deleting answers, accessible only to admin users.
