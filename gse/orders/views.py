@@ -32,6 +32,7 @@ from .serializers import (
 from .services import cancel_order, create_order, apply_coupon, discard_coupon
 
 
+@extend_schema(tags=['Orders'])
 class OrderRetrieveAPI(RetrieveAPIView):
     """
     API for retrieving the details of an order, accessible only to the order owner or an admin or support.
@@ -49,6 +50,7 @@ class OrderRetrieveAPI(RetrieveAPIView):
         )
 
 
+@extend_schema(tags=['Orders'])
 class UserOrdersListAPI(ListAPIView):
     """
     API for listing all orders of the authenticated user, accessible only to the user or an admin or support.
@@ -63,6 +65,7 @@ class UserOrdersListAPI(ListAPIView):
         return self.request.user.orders.all()
 
 
+@extend_schema(tags=['Orders'])
 class OrderCreateAPI(GenericAPIView):
     """
     API for creating a new order, accessible only to authenticated users.
@@ -85,6 +88,7 @@ class OrderCreateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Orders'])
 class OrderCancelAPI(GenericAPIView):
     """
     API for canceling an order, accessible only to the order owner or an admin or support,
@@ -109,6 +113,7 @@ class OrderCancelAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Orders'])
 class OrderItemDeleteAPI(DestroyAPIView):
     """
     API for deleting an item from an order, accessible only to the order owner or an admin or support,
@@ -140,6 +145,7 @@ class OrderItemDeleteAPI(DestroyAPIView):
         )
 
 
+@extend_schema(tags=['Orders'])
 class CouponRetrieveAPI(RetrieveAPIView):
     """
     API for retrieving coupon details, accessible only to admin users.
@@ -157,6 +163,7 @@ class CouponRetrieveAPI(RetrieveAPIView):
         )
 
 
+@extend_schema(tags=['Orders'])
 class CouponCreateAPI(GenericAPIView):
     """
     API for creating a new coupon, accessible only to admin users.
@@ -179,6 +186,7 @@ class CouponCreateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Orders'])
 class CouponUpdateAPI(GenericAPIView):
     """
     API for updating a coupon, accessible only to admin users.
@@ -204,6 +212,7 @@ class CouponUpdateAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Orders'])
 class CouponDeleteAPI(DestroyAPIView):
     """
     API for deleting a coupon, accessible only to admin users.
@@ -214,6 +223,7 @@ class CouponDeleteAPI(DestroyAPIView):
     lookup_url_kwarg = 'coupon_id'
 
 
+@extend_schema(tags=['Orders'])
 class CouponApplyAPI(GenericAPIView):
     """
     API for applying a coupon to a pending order, accessible only to the order owner or an admin or support.
@@ -254,6 +264,7 @@ class CouponApplyAPI(GenericAPIView):
         )
 
 
+@extend_schema(tags=['Orders'])
 class CouponDiscardAPI(GenericAPIView):
     """
     API for discarding a coupon from a pending order, accessible only to the order owner or an admin.
