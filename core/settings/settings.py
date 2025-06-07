@@ -148,12 +148,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 INTERNAL_IPS = [
     '127.0.0.1'
 ]
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_HEADERS = [
-    'content-type',
-    'authorization',
-    # Other headers
-]
+
 SITE_ID = 1
 
 # Media Files
@@ -169,13 +164,8 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
-    'DEFAULT_PAGINATOR_CLASSES': [
-        'gse.utils.paginators.NeatPagination'
-    ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
-        'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser',
     ],
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -198,23 +188,10 @@ GOOGLE_OAUTH2_CLIENT_ID = config('GOOGLE_OAUTH2_CLIENT_ID')
 GOOGLE_OAUTH2_CLIENT_SECRET = config('GOOGLE_OAUTH2_CLIENT_SECRET')
 BASE_FRONTEND_URL = config('BASE_FRONTEND_URL')
 
-# ZarinPal
-MERCHANT = config('ZP_MERCHANT', default='00000000-0000-0000-0000-000000000000')
-if DEBUG:
-    sandbox = 'sandbox'
-    api = 'sandbox'
-else:
-    sandbox = 'www'
-    api = 'api'
-
-ZP_API_REQUEST = f"https://{api}.zarinpal.com/pg/v4/payment/request.json"
-ZP_API_VERIFY = f"https://{api}.zarinpal.com/pg/v4/payment/verify.json"
-ZP_API_STARTPAY = f"https://{sandbox}.zarinpal.com/pg/StartPay/"
-DESCRIPTION = "آسانسور گستران شرق"
-CALLBACK_URL = config('ZP_CALLBACK')
-
 from core.configs.celery_configs import *
 from core.configs.drf_spectacular import *
 from core.configs.jwt import *
 from core.configs.SMTP_configs import *
 from core.configs.storages import *
+from core.configs.cors_headers import *
+from core.configs.zarin_pal import *

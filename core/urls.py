@@ -24,9 +24,4 @@ urlpatterns = [
     path('schema/', include(documents))
 ]
 
-if settings.DEBUG and 'debug_toolbar' in settings.INSTALLED_APPS:
-    urlpatterns = [
-                      path('__debug__/', include('debug_toolbar.urls'))
-                  ] + urlpatterns
-
 handler404 = custom_page_not_found
