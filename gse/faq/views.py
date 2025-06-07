@@ -15,6 +15,7 @@ from .selectors import get_all_questions, get_all_answers, get_question_by_id, g
 from .serializers import QuestionSerializer, AnswerSerializer
 from .services import remove_answer, submit_answer
 
+
 @extend_schema(tags=['FAQ'])
 class QuestionListAPI(ListAPIView):
     """
@@ -35,6 +36,8 @@ class ProductQuestionListAPI(ListAPIView):
     filterset_fields = ['status']
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Question.objects.none()
         return get_product_questions(self.kwargs.get('product_id'))
 
 
