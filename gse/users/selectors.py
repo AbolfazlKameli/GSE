@@ -5,10 +5,7 @@ from .models import User
 
 
 def get_user_by_email(email: str) -> User | None:
-    try:
-        return User.objects.prefetch_related('profile', 'address').get(email__iexact=email)
-    except User.DoesNotExist:
-        return None
+    return User.objects.prefetch_related('profile', 'address').filter(email__iexact=email).first()
 
 
 def get_user_by_phone_number(phone_number: str) -> User | None:
