@@ -88,11 +88,12 @@ class UserVerificationAPI(GenericAPIView):
         if serializer.is_valid():
             phone_number = serializer.validated_data.get('phone_number')
             email = serializer.validated_data.get('email')
-            user = None
             if phone_number:
                 user: User | None = get_user_by_phone_number(phone_number=phone_number)
             elif email:
                 user: User | None = get_user_by_email(email=email)
+            else:
+                user = None
             if user is None:
                 return Response(
                     data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
@@ -129,16 +130,24 @@ class ResendVerificationEmailAPI(GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            user: User = serializer.validated_data['user']
+            user: User | None= get_user_by_email(serializer.validated_data.get('email'))
+            response = Response(
+                data={'data': {"message": "کد فعالسازی به ایمیل شما ارسال شد."}},
+                status=status.HTTP_202_ACCEPTED,
+            )
+            if user is None:
+                return response
+            if user.is_active:
+                return Response(
+                    data={'data': {'message': "این حساب درحال حاضر فعال است."}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             send_verification_email.delay_on_commit(
                 email_address=user.email,
                 content='کد تایید حساب کاربری',
                 subject='آسانسور گستران شرق'
             )
-            return Response(
-                data={'data': {"message": "کد فعالسازی به ایمیل شما ارسال شد."}},
-                status=status.HTTP_202_ACCEPTED,
-            )
+            return response
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST

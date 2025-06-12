@@ -65,23 +65,19 @@ class SetPasswordAPI(GenericAPIView):
     })
     def post(self, request):
         email: str = request.data.get('email')
-        user: User | None = get_user_by_email(email)
-        if user is None:
-            return Response(
-                data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
         serializer = self.serializer_class(data=request.data)
-
         if serializer.is_valid():
+            user: User | None = get_user_by_email(email)
+            response = Response(
+                data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
+                status=status.HTTP_202_ACCEPTED
+            )
+            if user is None:
+                return response
             new_password = serializer.validated_data['new_password']
             user.set_password(new_password)
             user.save()
-            return Response(
-                data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
-                status=status.HTTP_200_OK
-            )
+            return response
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
@@ -103,22 +99,19 @@ class ResetPasswordAPI(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user: User | None = get_user_by_email(serializer.validated_data.get('email'))
+            response = Response(
+                data={'data': {'message': 'لینک بازنشانی رمز عبور به ایمیل شما ارسال شد.'}},
+                status=status.HTTP_202_ACCEPTED
+            )
             if user is None:
-                return Response(
-                    data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
+                return response
             send_verification_email.delay_on_commit(
                 email_address=user.email,
                 content='کد فراموشی رمز:',
                 subject='آسانسور گستران شرق'
             )
 
-            return Response(
-                data={'data': {'message': 'لینک بازنشانی رمز عبور به ایمیل شما ارسال شد.'}},
-                status=status.HTTP_202_ACCEPTED
-            )
+            return response
         return Response(
             data={'errors': format_errors(serializer.errors)},
             status=status.HTTP_400_BAD_REQUEST
