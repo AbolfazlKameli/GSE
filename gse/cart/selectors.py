@@ -12,6 +12,7 @@ def get_all_cart_items() -> list[CartItem]:
 def get_cart_item_by_product_id(product_id: int, owner_id: int) -> CartItem | None:
     return CartItem.objects.select_related('cart__owner', 'product') \
         .filter(product_id=product_id, cart__owner_id=owner_id) \
+        .select_for_update() \
         .first()
 
 

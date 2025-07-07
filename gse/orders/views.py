@@ -17,8 +17,9 @@ from .selectors import (
     get_all_coupons,
     get_coupon_by_id,
     check_order_owner,
-    get_usable_coupon_by_code,
-    get_coupon_by_code
+    get_usable_coupon_for_update_by_code,
+    get_coupon_for_update_by_code,
+    get_order_for_update_by_id
 )
 from .serializers import (
     OrderSerializer,
@@ -100,7 +101,7 @@ class OrderCancelAPI(GenericAPIView):
 
     @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
-        order: Order | None = get_order_by_id(kwargs.get('pk'))
+        order: Order | None = get_order_for_update_by_id(kwargs.get('order_id'))
         if order is None or not check_order_status(order, self.allowed_statuses) or not check_order_owner(order):
             return Response(
                 data={'data': {'errors': 'هیچ سفارش درحال پردازشی یافت نشد.'}},
@@ -245,7 +246,7 @@ class CouponApplyAPI(GenericAPIView):
         self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            coupon = get_usable_coupon_by_code(coupon_code=serializer.validated_data.get('code'))
+            coupon = get_usable_coupon_for_update_by_code(coupon_code=serializer.validated_data.get('code'))
             order = serializer.validated_data.get('order')
             try:
                 apply_coupon(order, coupon)
@@ -286,7 +287,7 @@ class CouponDiscardAPI(GenericAPIView):
         self.get_object()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            coupon = get_coupon_by_code(code=serializer.validated_data.get('code'))
+            coupon = get_coupon_for_update_by_code(code=serializer.validated_data.get('code'))
             order = serializer.validated_data.get('order')
             try:
                 discard_coupon(order, coupon)

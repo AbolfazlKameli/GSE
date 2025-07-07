@@ -5,6 +5,7 @@ from pytz import timezone
 
 from gse.cart.models import Cart, CartItem
 from gse.products.models import Product
+from gse.products.selectors import get_products_for_update_by_ids
 from gse.users.models import User
 from .choices import ORDER_STATUS_CANCELLED
 from .models import Order, Coupon, OrderItem
@@ -14,12 +15,16 @@ from .models import Order, Coupon, OrderItem
 def create_order(owner: User, items: list[dict[str, int | Product]]) -> Order:
     cart = Cart.objects.select_related('owner').prefetch_related('items__product').get(owner=owner)
 
+    products_ids = [item['product'].id for item in items]
+    products = get_products_for_update_by_ids(products_ids)
+
     products_to_update = []
     cart_items_to_delete = []
     order_items = []
 
     for item in items:
-        product = item.get('product')
+        product_id = item.get('product').id
+        product = products[product_id]
         quantity = item.get('quantity')
 
         product.quantity -= quantity
@@ -75,11 +80,13 @@ def discard_coupon(order: Order, coupon: Coupon) -> Order | None:
 @transaction.atomic()
 def cancel_order(order: Order) -> Order:
     order.status = ORDER_STATUS_CANCELLED
-    for item in order.items.all():
-        item.product.quantity += item.quantity
-        item.product.save()
-    if order.coupon is not None:
-        discard_coupon(order=order, coupon=order.coupon)
+    items = order.items.select_related('product')
+    product_ids = [item.product_id for item in items]
+    products = get_products_for_update_by_ids(product_ids)
+    for item in items:
+        product = products[item.product_id]
+        product.quantity += item.quantity
+    Product.objects.bulk_update(products.values(), ['quantity'])
     order.save()
     return order
 

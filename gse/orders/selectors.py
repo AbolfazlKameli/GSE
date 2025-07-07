@@ -24,6 +24,14 @@ def get_order_by_id(order_id: int) -> Order | None:
         .first()
 
 
+def get_order_for_update_by_id(order_id: int) -> Order | None:
+    return Order.objects.filter(id=order_id) \
+        .prefetch_related('items', 'payment') \
+        .select_related('owner', 'coupon') \
+        .select_for_update() \
+        .first()
+
+
 def check_order_owner(order: Order) -> bool:
     return order.owner.role not in [USER_ROLE_ADMIN, USER_ROLE_SUPPORT]
 
@@ -40,13 +48,15 @@ def get_coupon_by_id(coupon_id: int) -> Coupon | None:
     return Coupon.objects.filter(id=coupon_id).first()
 
 
-def get_coupon_by_code(code: str) -> Coupon | None:
-    return Coupon.objects.filter(code__exact=code).first()
+def get_coupon_for_update_by_code(code: str) -> Coupon | None:
+    return Coupon.objects.filter(code__exact=code).select_for_update().first()
 
 
-def get_usable_coupon_by_code(coupon_code: str) -> Coupon | None:
+def get_usable_coupon_for_update_by_code(coupon_code: str) -> Coupon | None:
     now = datetime.now(tz=timezone('Asia/Tehran'))
-    return Coupon.objects.filter(code__exact=coupon_code, expiration_date__gt=now, max_usage_limit__gt=0).first()
+    return Coupon.objects.filter(code__exact=coupon_code, expiration_date__gt=now, max_usage_limit__gt=0) \
+        .select_for_update() \
+        .first()
 
 
 def get_invalid_coupons() -> list[Coupon]:

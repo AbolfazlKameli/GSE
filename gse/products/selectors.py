@@ -29,6 +29,10 @@ def get_product_by_id(product_id: int) -> list[Product]:
     return Product.objects.prefetch_related('questions').filter(id=product_id).first()
 
 
+def get_products_for_update_by_ids(product_ids: list[int]) -> dict[int, Product]:
+    return Product.objects.filter(id__in=product_ids).select_for_update().in_bulk()
+
+
 def get_all_details() -> list[ProductDetail]:
     return ProductDetail.objects.select_related('product').all()
 
