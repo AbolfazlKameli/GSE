@@ -108,7 +108,8 @@ class ResetPasswordAPI(GenericAPIView):
             send_verification_email.delay_on_commit(
                 email_address=user.email,
                 content='کد فراموشی رمز:',
-                subject='آسانسور گستران شرق'
+                subject='آسانسور گستران شرق',
+                action='reset_password'
             )
 
             return response

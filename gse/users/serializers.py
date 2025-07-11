@@ -5,7 +5,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from gse.orders.serializers import OrderListSerializer
 from gse.products.serializers import ProductReviewSerializer
 from .models import User
-from .selectors import get_user_by_email
 from .services import check_otp_code
 from .validators import validate_iranian_phone_number, validate_postal_code
 
@@ -121,10 +120,10 @@ class UserRegisterVerifySerializer(serializers.Serializer):
         phone_number = attrs.get('phone_number')
         email = attrs.get('email')
         if phone_number:
-            if not check_otp_code(phone_number=phone_number, otp_code=attrs.get('code')):
+            if not check_otp_code(phone_number=phone_number, otp_code=attrs.get('code'), action='verify'):
                 raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
         elif email:
-            if not check_otp_code(email=email, otp_code=attrs.get('code')):
+            if not check_otp_code(email=email, otp_code=attrs.get('code'), action='verify'):
                 raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
         else:
             raise serializers.ValidationError('وارد کردن ایمیل یا شماره تلفن الزامیست.')
@@ -181,7 +180,7 @@ class SetPasswordSerializer(serializers.Serializer):
         except serializers.ValidationError as e:
             raise serializers.ValidationError({'new_password': e.messages})
 
-        if not check_otp_code(email=email, otp_code=attrs.get('code')):
+        if not check_otp_code(email=email, otp_code=attrs.get('code'), action='reset_password'):
             raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
 
         return attrs

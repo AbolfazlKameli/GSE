@@ -59,13 +59,15 @@ class UserProfileUpdateAPI(UpdateAPIView):
                     send_verification_email.delay_on_commit(
                         email_address=serializer.validated_data['email'],
                         content='کد تایید حساب کاربری',
-                        subject='آسانسور گستران شرق'
+                        subject='آسانسور گستران شرق',
+                        action='verify'
                     )
                     message += 'و کد فعالسازی برای آدرس ایمیل جدید شما ارسال شد.'
 
                 if phone_changed:
                     send_verification_sms.delay_on_commit(
-                        phone_number=serializer.validated_data.get('profile').get('phone_number')
+                        phone_number=serializer.validated_data.get('profile').get('phone_number'),
+                        action='verify'
                     )
                     message += 'و کد فعالسازی برای شماره تلفن جدید شما ارسال شد.'
 

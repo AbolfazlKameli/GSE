@@ -60,7 +60,8 @@ class UserRegisterAPI(CreateAPIView):
             send_verification_email.delay_on_commit(
                 email_address=vd['email'],
                 content='کد تایید حساب کاربری',
-                subject='آسانسور گستران شرق'
+                subject='آسانسور گستران شرق',
+                action='verify'
             )
             return Response(
                 data={'data': {'message': 'کد فعالسازی به ایمیل شما ارسال شد.'}},
@@ -145,7 +146,8 @@ class ResendVerificationEmailAPI(GenericAPIView):
             send_verification_email.delay_on_commit(
                 email_address=user.email,
                 content='کد تایید حساب کاربری',
-                subject='آسانسور گستران شرق'
+                subject='آسانسور گستران شرق',
+                action='verify'
             )
             return response
         return Response(

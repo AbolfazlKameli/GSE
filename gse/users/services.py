@@ -1,6 +1,6 @@
 from datetime import datetime
 from random import randint, SystemRandom
-from typing import Dict, Any
+from typing import Any, Literal
 from urllib.parse import urlencode
 
 from decouple import config
@@ -97,30 +97,41 @@ def update_profile(
     return profile
 
 
-def generate_otp_code(*, email: str = None, phone_number: str = None) -> str:
+def generate_otp_code(
+        *,
+        email: str = None,
+        phone_number: str = None,
+        action: Literal['verify', 'reset_password']
+) -> str:
     while True:
         otp_code: str = str(randint(10000, 99999))
-        if not cache.get(f'otp_code_{otp_code}'):
+        if not cache.get(f'otp_code_{otp_code}_{action}'):
             if phone_number:
-                cache.set(f'otp_code_{phone_number}', otp_code, timeout=300)
-                cache.set(f'otp_code_{otp_code}', phone_number, timeout=300)
+                cache.set(f'otp_code_{phone_number}_{action}', otp_code, timeout=300)
+                cache.set(f'otp_code_{otp_code}_{action}', phone_number, timeout=300)
             elif email:
-                cache.set(f'otp_code_{email}', otp_code, timeout=300)
-                cache.set(f'otp_code_{otp_code}', email, timeout=300)
+                cache.set(f'otp_code_{email}_{action}', otp_code, timeout=300)
+                cache.set(f'otp_code_{otp_code}_{action}', email, timeout=300)
             return otp_code
 
 
-def check_otp_code(*, otp_code: str, phone_number: str = None, email: str = None) -> bool:
+def check_otp_code(
+        *,
+        otp_code: str,
+        phone_number: str = None,
+        email: str = None,
+        action: Literal['verify', 'reset_password']
+) -> bool:
     stored_code = ''
     if phone_number:
-        stored_code: str = cache.get(f'otp_code_{phone_number}')
+        stored_code: str = cache.get(f'otp_code_{phone_number}_{action}')
     elif email:
-        stored_code: str = cache.get(f'otp_code_{email}')
+        stored_code: str = cache.get(f'otp_code_{email}_{action}')
 
     if stored_code == otp_code:
-        cache.delete(f'otp_code_{email}')
-        cache.delete(f'otp_code_{phone_number}')
-        cache.delete(f'otp_code_{otp_code}')
+        cache.delete(f'otp_code_{email}_{action}')
+        cache.delete(f'otp_code_{phone_number}_{action}')
+        cache.delete(f'otp_code_{otp_code}_{action}')
         return stored_code == otp_code
     else:
         return False
@@ -157,7 +168,7 @@ def google_get_access_token(*, code: str, redirect_uri: str) -> str:
     return access_token
 
 
-def google_get_user_info(*, access_token: str) -> Dict[str, Any]:
+def google_get_user_info(*, access_token: str) -> dict[str, Any]:
     response = requests.get(
         GOOGLE_USER_INFO_URL,
         params={'access_token': access_token}
