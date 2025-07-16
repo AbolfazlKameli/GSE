@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import randint, SystemRandom
 from typing import Any, Literal
 from urllib.parse import urlencode
@@ -9,6 +9,8 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.db import transaction
+from jose import jwt
+from jose.exceptions import JWTError
 from kavenegar import *
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from pytz import timezone
@@ -217,3 +219,25 @@ def get_authorization_url() -> tuple[str, str]:
     authorization_url = f"{GOOGLE_AUTH_URL}?{query_params}"
 
     return authorization_url, state
+
+
+def generate_access_token(identifier: str, exp: timedelta = timedelta(minutes=5)) -> str:
+    payload = {
+        'sub': identifier,
+        'exp': datetime.now(tz=timezone(settings.TIME_ZONE)) + exp,
+    }
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+
+
+def decode_token(token: str) -> dict[str, Any]:
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+        return payload
+    except JWTError:
+        raise JWTError('ورورد غیرمجاز یا منقضی شده.')
+
+
+def activate_user(user: User) -> User:
+    user.is_active = True
+    user.save()
+    return user

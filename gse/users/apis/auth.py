@@ -4,24 +4,33 @@ from django.conf import settings
 from django.core.cache import cache
 from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
+from jose.exceptions import JWTError
 from rest_framework import status
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from gse.utils import permissions, format_errors
-from gse.utils.doc_serializers import ResponseSerializer, TokenResponseSerializer, GoogleAuthCallbackSerializer
+from gse.utils.doc_serializers import (
+    ResponseSerializer,
+    TokenResponseSerializer,
+    GoogleAuthCallbackSerializer,
+    VerificationResponseSerializer
+)
 from .. import serializers
 from ..mixins import ApiErrorsMixin
 from ..models import User
-from ..selectors import get_user_by_email, get_user_by_phone_number
+from ..selectors import get_user_by_email, is_email_taken
 from ..services import (
     register,
     google_get_access_token,
     google_get_user_info,
     update_profile,
     get_authorization_url,
-    generate_tokens_for_user
+    generate_tokens_for_user,
+    decode_token,
+    activate_user,
+    generate_access_token
 )
 from ..tasks import send_verification_email
 
@@ -42,31 +51,35 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 @extend_schema(tags=['Auth'])
-class UserRegisterAPI(CreateAPIView):
+class RequestCodeForRegisterAPI(CreateAPIView):
     """
-    API for user registration, accessible only to non-authenticated users,
-    with a limit of five requests per hour for each IP.
+    API for requesting register verification code, accessible only to non-authenticated users,
     """
-    model = User
-    serializer_class = serializers.UserRegisterSerializer
+    serializer_class = serializers.SendVerificationEmailSerializer
     permission_classes = [permissions.NotAuthenticated]
 
-    @extend_schema(responses={201: ResponseSerializer})
+    @extend_schema(responses={202: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            vd = serializer.validated_data
-            register(email=vd['email'], password=vd['password'])
-            send_verification_email.delay_on_commit(
-                email_address=vd['email'],
+            response = Response(
+                data={'data': {'message': 'کد فعالسازی به ایمیل شما ارسال شد.'}},
+                status=status.HTTP_202_ACCEPTED
+            )
+
+            email = serializer.validated_data.get('email')
+
+            if is_email_taken(email):
+                return response
+
+            send_verification_email.delay(
+                email,
                 content='کد تایید حساب کاربری',
                 subject='آسانسور گستران شرق',
                 action='verify'
             )
-            return Response(
-                data={'data': {'message': 'کد فعالسازی به ایمیل شما ارسال شد.'}},
-                status=status.HTTP_201_CREATED,
-            )
+
+            return response
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
@@ -77,40 +90,77 @@ class UserRegisterAPI(CreateAPIView):
 class UserVerificationAPI(GenericAPIView):
     """
     API for verifying user registration, accessible only to non-authenticated users,
-    with a limit of five requests per hour for each IP.
     """
     permission_classes = [permissions.NotAuthenticated]
     http_method_names = ['post', 'head', 'options']
     serializer_class = serializers.UserRegisterVerifySerializer
 
-    @extend_schema(responses={200: ResponseSerializer})
+    @extend_schema(responses={200: VerificationResponseSerializer})
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            phone_number = serializer.validated_data.get('phone_number')
-            email = serializer.validated_data.get('email')
-            if phone_number:
-                user: User | None = get_user_by_phone_number(phone_number=phone_number)
-            elif email:
-                user: User | None = get_user_by_email(email=email)
-            else:
-                user = None
-            if user is None:
+            vd = serializer.validated_data
+            identifier = vd.get('email') or vd.get('phone_number')
+            user = get_user_by_email(email=identifier)
+
+            if user is not None and not user.is_active:
+                activate_user(user)
                 return Response(
-                    data={'data': {'errors': {'email': 'حساب کاربری با این مشخصات یافت نشد.'}}},
-                    status=status.HTTP_404_NOT_FOUND
+                    data={'data': {'message': 'کاربر با موفقیت اعتبارسنجی شد.'}},
+                    status=status.HTTP_200_OK
                 )
 
-            if user.is_active:
-                return Response(
-                    data={'data': {'message': 'این حساب کاربری قبلاً فعال شده است.'}},
-                    status=status.HTTP_409_CONFLICT
-                )
-            user.is_active = True
-            user.save()
+            access_token = generate_access_token(serializer.validated_data.get('email'))
+
             return Response(
-                data={'data': {'message': 'حساب کاربری با موفقیت فعال شد.'}},
+                data={'data': {'message': 'کاربر با موفقیت اعتبارسنجی شد.', 'access_token': access_token}},
                 status=status.HTTP_200_OK
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@extend_schema(tags=['Auth'])
+class UserRegisterAPI(GenericAPIView):
+    """
+    API for registering users. takes a JWT token and after verification, registers the user.
+    """
+    serializer_class = serializers.UserRegisterSerializer
+    authentication_classes = []
+
+    @extend_schema(responses={201: ResponseSerializer})
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            token = request.headers.get('Authorization')
+            if token is None:
+                return Response(
+                    data={'data': {'errors': 'ارسال توکن الزامیست.'}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                payload = decode_token(token[7:])
+            except JWTError as e:
+                return Response(
+                    data={'data': {'errors': str(e)}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            email = payload.get('sub')
+            if is_email_taken(email):
+                return Response(
+                    data={'data': {'errors': 'این ایمیل قبلا استفاده شده.'}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            register(email=email, password=serializer.validated_data.get('password'), is_active=True)
+
+            return Response(
+                data={'data': {'message': 'حساب کاربری با موفقیت ساخته شد.'}},
+                status=status.HTTP_201_CREATED
             )
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
@@ -125,13 +175,13 @@ class ResendVerificationEmailAPI(GenericAPIView):
     with a limit of five requests per hour for each IP.
     """
     permission_classes = [permissions.NotAuthenticated]
-    serializer_class = serializers.ResendVerificationEmailSerializer
+    serializer_class = serializers.SendVerificationEmailSerializer
 
     @extend_schema(responses={202: ResponseSerializer})
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            user: User | None= get_user_by_email(serializer.validated_data.get('email'))
+            user: User | None = get_user_by_email(serializer.validated_data.get('email'))
             response = Response(
                 data={'data': {"message": "کد فعالسازی به ایمیل شما ارسال شد."}},
                 status=status.HTTP_202_ACCEPTED,

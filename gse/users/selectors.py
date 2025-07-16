@@ -7,6 +7,8 @@ from .models import User
 def get_user_by_email(email: str) -> User | None:
     return User.objects.prefetch_related('profile', 'address').filter(email__iexact=email).first()
 
+def is_email_taken(email: str) -> bool:
+    return User.objects.filter(email__exact=email).exists()
 
 def get_user_by_phone_number(phone_number: str) -> User | None:
     return User.objects.select_related('profile').filter(profile__phone_number__exact=phone_number).first()
