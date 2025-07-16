@@ -221,14 +221,9 @@ def get_authorization_url() -> tuple[str, str]:
     return authorization_url, state
 
 
-def generate_access_token(
-        email: str,
-        action: Literal['verify', 'reset_password'],
-        exp: timedelta = timedelta(minutes=5)
-) -> str:
+def generate_access_token(identifier: str, exp: timedelta = timedelta(minutes=5)) -> str:
     payload = {
-        'sub': email,
-        'action': action,
+        'sub': identifier,
         'exp': datetime.now(tz=timezone(settings.TIME_ZONE)) + exp,
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
@@ -240,3 +235,9 @@ def decode_token(token: str) -> dict[str, Any]:
         return payload
     except JWTError:
         raise JWTError('ورورد غیرمجاز یا منقضی شده.')
+
+
+def activate_user(user: User) -> User:
+    user.is_active = True
+    user.save()
+    return user

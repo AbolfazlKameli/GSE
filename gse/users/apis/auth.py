@@ -28,8 +28,9 @@ from ..services import (
     update_profile,
     get_authorization_url,
     generate_tokens_for_user,
-    generate_access_token,
-    decode_token
+    decode_token,
+    activate_user,
+    generate_access_token
 )
 from ..tasks import send_verification_email
 
@@ -61,16 +62,24 @@ class RequestCodeForRegisterAPI(CreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
+            response = Response(
+                data={'data': {'message': 'کد فعالسازی به ایمیل شما ارسال شد.'}},
+                status=status.HTTP_202_ACCEPTED
+            )
+
+            email = serializer.validated_data.get('email')
+
+            if is_email_taken(email):
+                return response
+
             send_verification_email.delay(
-                serializer.validated_data.get('email'),
+                email,
                 content='کد تایید حساب کاربری',
                 subject='آسانسور گستران شرق',
                 action='verify'
             )
-            return Response(
-                data={'data': {'message': 'کد فعالسازی به ایمیل شما ارسال شد.'}},
-                status=status.HTTP_202_ACCEPTED
-            )
+
+            return response
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
@@ -90,9 +99,21 @@ class UserVerificationAPI(GenericAPIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            access_token = generate_access_token(serializer.validated_data.get('email'), 'verify')
+            vd = serializer.validated_data
+            identifier = vd.get('email') or vd.get('phone_number')
+            user = get_user_by_email(email=identifier)
+
+            if user is not None and not user.is_active:
+                activate_user(user)
+                return Response(
+                    data={'data': {'message': 'کاربر با موفقیت اعتبارسنجی شد.'}},
+                    status=status.HTTP_200_OK
+                )
+
+            access_token = generate_access_token(serializer.validated_data.get('email'))
+
             return Response(
-                data={'data': {'message': 'ایمیل با موفقیت اعتبارسنجی شد.', 'access_token': access_token}},
+                data={'data': {'message': 'کاربر با موفقیت اعتبارسنجی شد.', 'access_token': access_token}},
                 status=status.HTTP_200_OK
             )
         return Response(
@@ -125,12 +146,6 @@ class UserRegisterAPI(GenericAPIView):
             except JWTError as e:
                 return Response(
                     data={'data': {'errors': str(e)}},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            if payload.get('action') != 'verify':
-                return Response(
-                    data={'data': {'errors': 'ورود غیرمجاز.'}},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
