@@ -11,6 +11,14 @@ class ResponseSerializer(serializers.Serializer):
     data = MessageSerializer()
 
 
+class VerificationResponse(MessageSerializer):
+    access_token = serializers.CharField()
+
+
+class VerificationResponseSerializer(serializers.Serializer):
+    data = VerificationResponse()
+
+
 class UserInfoSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     email = serializers.CharField()

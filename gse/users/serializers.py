@@ -90,12 +90,16 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return value
 
 
+class SendVerificationEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
 class UserRegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(required=True, write_only=True, min_length=8)
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'password2')
+        fields = ('password', 'password2')
         extra_kwargs = {
             'password': {'write_only': True, 'min_length': 8},
         }
@@ -128,10 +132,6 @@ class UserRegisterVerifySerializer(serializers.Serializer):
         else:
             raise serializers.ValidationError('وارد کردن ایمیل یا شماره تلفن الزامیست.')
         return attrs
-
-
-class ResendVerificationEmailSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
 
 
 class GoogleLoginSerializer(serializers.Serializer):
