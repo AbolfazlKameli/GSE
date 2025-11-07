@@ -7,6 +7,11 @@ services:
       - redis_data:/data
     networks:
       - main_network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   db:
     container_name: GSEDB
