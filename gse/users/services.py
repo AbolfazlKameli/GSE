@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from random import randint, SystemRandom
-from typing import Any, Literal
+from typing import Any
 from urllib.parse import urlencode
 
 from decouple import config
@@ -9,8 +9,6 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.db import transaction
-from jose import jwt
-from jose.exceptions import JWTError
 from kavenegar import *
 from oauthlib.common import UNICODE_ASCII_CHARACTER_SET
 from pytz import timezone
@@ -99,44 +97,31 @@ def update_profile(
     return profile
 
 
-def generate_otp_code(
-        *,
-        email: str = None,
-        phone_number: str = None,
-        action: Literal['verify', 'reset_password']
-) -> str:
-    while True:
-        otp_code: str = str(randint(10000, 99999))
-        if not cache.get(f'otp_code_{otp_code}_{action}'):
-            if phone_number:
-                cache.set(f'otp_code_{phone_number}_{action}', otp_code, timeout=300)
-                cache.set(f'otp_code_{otp_code}_{action}', phone_number, timeout=300)
-            elif email:
-                cache.set(f'otp_code_{email}_{action}', otp_code, timeout=300)
-                cache.set(f'otp_code_{otp_code}_{action}', email, timeout=300)
-            return otp_code
+def generate_otp_code(*, email: str = None, phone_number: str = None) -> str:
+    otp_code: str = str(randint(10000, 99999))
+
+    identifier = email or phone_number
+    if not identifier:
+        raise ValueError("An identifier(email, phone_number) should be provided.")
+
+    cache_key = f"otp:{identifier}"
+    if code := cache.get(cache_key):
+        return code
+
+    cache.set(cache_key, otp_code, timeout=120)
+    return otp_code
 
 
-def check_otp_code(
-        *,
-        otp_code: str,
-        phone_number: str = None,
-        email: str = None,
-        action: Literal['verify', 'reset_password']
-) -> bool:
-    stored_code = ''
-    if phone_number:
-        stored_code: str = cache.get(f'otp_code_{phone_number}_{action}')
-    elif email:
-        stored_code: str = cache.get(f'otp_code_{email}_{action}')
+def check_otp_code(*, otp_code: str, phone_number: str = None, email: str = None) -> bool:
+    identifier = email or phone_number
+    cache_key = f"otp:{identifier}"
+
+    stored_code = cache.get(cache_key)
 
     if stored_code == otp_code:
-        cache.delete(f'otp_code_{email}_{action}')
-        cache.delete(f'otp_code_{phone_number}_{action}')
-        cache.delete(f'otp_code_{otp_code}_{action}')
-        return stored_code == otp_code
-    else:
-        return False
+        cache.delete(cache_key)
+        return True
+    return False
 
 
 def generate_tokens_for_user(user: User) -> tuple[Any, Token]:
@@ -219,22 +204,6 @@ def get_authorization_url() -> tuple[str, str]:
     authorization_url = f"{GOOGLE_AUTH_URL}?{query_params}"
 
     return authorization_url, state
-
-
-def generate_access_token(identifier: str, exp: timedelta = timedelta(minutes=5)) -> str:
-    payload = {
-        'sub': identifier,
-        'exp': datetime.now(tz=timezone(settings.TIME_ZONE)) + exp,
-    }
-    return jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-
-
-def decode_token(token: str) -> dict[str, Any]:
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-        return payload
-    except JWTError:
-        raise JWTError('ورورد غیرمجاز یا منقضی شده.')
 
 
 def activate_user(user: User) -> User:

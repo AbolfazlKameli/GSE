@@ -4,9 +4,8 @@ from django.conf import settings
 from django.core.cache import cache
 from django.shortcuts import redirect
 from drf_spectacular.utils import extend_schema
-from jose.exceptions import JWTError
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -14,13 +13,12 @@ from gse.utils import permissions, format_errors
 from gse.utils.doc_serializers import (
     ResponseSerializer,
     TokenResponseSerializer,
-    GoogleAuthCallbackSerializer,
-    VerificationResponseSerializer
+    GoogleAuthCallbackSerializer
 )
 from .. import serializers
 from ..mixins import ApiErrorsMixin
 from ..models import User
-from ..selectors import get_user_by_email, is_email_taken
+from ..selectors import get_user_by_email, is_email_taken, get_user_by_phone_number
 from ..services import (
     register,
     google_get_access_token,
@@ -28,9 +26,8 @@ from ..services import (
     update_profile,
     get_authorization_url,
     generate_tokens_for_user,
-    decode_token,
-    activate_user,
-    generate_access_token
+    check_otp_code,
+    activate_user
 )
 from ..tasks import send_verification_email
 
@@ -50,70 +47,34 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = serializers.MyTokenObtainPairSerializer
 
 
-@extend_schema(tags=['Auth'])
-class RequestCodeForRegisterAPI(CreateAPIView):
+@extend_schema(tags=["Auth"])
+class UserRegisterAPI(GenericAPIView):
     """
-    API for requesting register verification code, accessible only to non-authenticated users,
+    API for user registration. Accessible only to not authenticated users.
     """
-    serializer_class = serializers.SendVerificationEmailSerializer
     permission_classes = [permissions.NotAuthenticated]
+    serializer_class = serializers.SendVerificationEmailSerializer
 
-    @extend_schema(responses={202: ResponseSerializer})
+    @extend_schema(responses={200: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            response = Response(
-                data={'data': {'message': 'کد فعالسازی به ایمیل شما ارسال شد.'}},
-                status=status.HTTP_202_ACCEPTED
-            )
-
-            email = serializer.validated_data.get('email')
+            email = serializer.validated_data.get("email")
 
             if is_email_taken(email):
-                return response
-
-            send_verification_email.delay(
-                email,
-                content='کد تایید حساب کاربری',
-                subject='آسانسور گستران شرق',
-                action='verify'
-            )
-
-            return response
-        return Response(
-            data={'data': {'errors': format_errors(serializer.errors)}},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-
-@extend_schema(tags=['Auth'])
-class UserVerificationAPI(GenericAPIView):
-    """
-    API for verifying user registration, accessible only to non-authenticated users,
-    """
-    permission_classes = [permissions.NotAuthenticated]
-    http_method_names = ['post', 'head', 'options']
-    serializer_class = serializers.UserRegisterVerifySerializer
-
-    @extend_schema(responses={200: VerificationResponseSerializer})
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            vd = serializer.validated_data
-            identifier = vd.get('email') or vd.get('phone_number')
-            user = get_user_by_email(email=identifier)
-
-            if user is not None and not user.is_active:
-                activate_user(user)
                 return Response(
-                    data={'data': {'message': 'کاربر با موفقیت اعتبارسنجی شد.'}},
-                    status=status.HTTP_200_OK
+                    data={"data": {"errors": {"email": "در حال حاضر حساب کاربری با این ایمیل وجود دارد."}}},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
 
-            access_token = generate_access_token(serializer.validated_data.get('email'))
+            send_verification_email.delay(
+                email_address=email,
+                content="کد تایید حساب کاربری",
+                subject="آسآنسور گستران شرق",
+            )
 
             return Response(
-                data={'data': {'message': 'کاربر با موفقیت اعتبارسنجی شد.', 'access_token': access_token}},
+                data={"message": "کد فعالسازی با موفقیت به ایمیل شما ارسال شد."},
                 status=status.HTTP_200_OK
             )
         return Response(
@@ -122,44 +83,40 @@ class UserVerificationAPI(GenericAPIView):
         )
 
 
-@extend_schema(tags=['Auth'])
-class UserRegisterAPI(GenericAPIView):
+@extend_schema(tags=["Auth"])
+class UserRegisterVerifyAPI(GenericAPIView):
     """
-    API for registering users. takes a JWT token and after verification, registers the user.
+    API for verifying and creating users during registration process. Accessible only to not authenticated users.
     """
-    serializer_class = serializers.UserRegisterSerializer
-    authentication_classes = []
+    permission_classes = [permissions.NotAuthenticated]
+    serializer_class = serializers.UserRegisterVerifySerializer
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            token = request.headers.get('Authorization')
-            if token is None:
+            email = serializer.validated_data.get("email")
+            otp_code = serializer.validated_data.get("otp_code")
+            password = serializer.validated_data.get("password")
+
+            if not check_otp_code(otp_code=otp_code, email=email):
                 return Response(
-                    data={'data': {'errors': 'ارسال توکن الزامیست.'}},
+                    data={"data": {"errors": {"otp_code": "کد وارد شده نامعتبر است."}}},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            try:
-                payload = decode_token(token[7:])
-            except JWTError as e:
+            user = get_user_by_email(email=email)
+
+            if user is not None and not user.is_active:
+                activate_user(user)
                 return Response(
-                    data={'data': {'errors': str(e)}},
-                    status=status.HTTP_400_BAD_REQUEST
+                    data={'data': {'message': 'کاربر با موفقیت اعتبارسنجی شد.'}},
+                    status=status.HTTP_200_OK
                 )
 
-            email = payload.get('sub')
-            if is_email_taken(email):
-                return Response(
-                    data={'data': {'errors': 'این ایمیل قبلا استفاده شده.'}},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            register(email=email, password=serializer.validated_data.get('password'), is_active=True)
-
+            register(email=email, password=password, is_active=True)
             return Response(
-                data={'data': {'message': 'حساب کاربری با موفقیت ساخته شد.'}},
+                data={"data": {"message": "ایمیل با موفقیت اعتبار سنجی و حساب کاربری ایجاد شد."}},
                 status=status.HTTP_201_CREATED
             )
         return Response(
@@ -168,38 +125,36 @@ class UserRegisterAPI(GenericAPIView):
         )
 
 
-@extend_schema(tags=['Auth'])
-class ResendVerificationEmailAPI(GenericAPIView):
+@extend_schema(tags=["Auth"])
+class UserVerificationAPI(GenericAPIView):
     """
-    API for resending a verification email, accessible only to non-authenticated users,
-    with a limit of five requests per hour for each IP.
+    API for verifying users after some operations like email and phone number update.
+    Accessible only to not authenticated users.
     """
     permission_classes = [permissions.NotAuthenticated]
-    serializer_class = serializers.SendVerificationEmailSerializer
+    serializer_class = serializers.UserVerificationSerializer
 
     @extend_schema(responses={202: ResponseSerializer})
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            user: User | None = get_user_by_email(serializer.validated_data.get('email'))
-            response = Response(
-                data={'data': {"message": "کد فعالسازی به ایمیل شما ارسال شد."}},
-                status=status.HTTP_202_ACCEPTED,
-            )
-            if user is None:
-                return response
-            if user.is_active:
+            email = serializer.validated_data.get("email")
+            phone_number = serializer.validated_data.get("phone_number")
+            otp_code = serializer.validated_data.get("otp_code")
+
+            if not check_otp_code(otp_code=otp_code, email=email, phone_number=phone_number):
                 return Response(
-                    data={'data': {'message': "این حساب درحال حاضر فعال است."}},
+                    data={"data": {"errors": {"otp_code": "کد وارد شده نامعتبر است."}}},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            send_verification_email.delay_on_commit(
-                email_address=user.email,
-                content='کد تایید حساب کاربری',
-                subject='آسانسور گستران شرق',
-                action='verify'
+
+            user = get_user_by_email(email=email) if email else get_user_by_phone_number(phone_number=phone_number)
+            activate_user(user)
+
+            return Response(
+                data={"data": {"message": "حساب کاربری با موفقیت فعال شد."}},
+                status=status.HTTP_202_ACCEPTED
             )
-            return response
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
             status=status.HTTP_400_BAD_REQUEST
