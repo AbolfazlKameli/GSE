@@ -180,7 +180,7 @@ class SetPasswordSerializer(serializers.Serializer):
         except serializers.ValidationError as e:
             raise serializers.ValidationError({'new_password': e.messages})
 
-        if not check_otp_code(email=email, otp_code=attrs.get('code'), action='reset_password'):
+        if not check_otp_code(email=email, otp_code=attrs.get('code')):
             raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
 
         return attrs

@@ -114,26 +114,16 @@ def generate_otp_code(*, email: str = None, phone_number: str = None) -> str | N
     return otp_code
 
 
-def check_otp_code(
-        *,
-        otp_code: str,
-        phone_number: str = None,
-        email: str = None,
-        action: Literal['verify', 'reset_password']
-) -> bool:
-    stored_code = ''
-    if phone_number:
-        stored_code: str = cache.get(f'otp_code_{phone_number}_{action}')
-    elif email:
-        stored_code: str = cache.get(f'otp_code_{email}_{action}')
+def check_otp_code(*, otp_code: str, phone_number: str = None, email: str = None) -> bool:
+    identifier = email or phone_number
+    cache_key = f"otp:{identifier}"
+
+    stored_code = cache.get(cache_key)
 
     if stored_code == otp_code:
-        cache.delete(f'otp_code_{email}_{action}')
-        cache.delete(f'otp_code_{phone_number}_{action}')
-        cache.delete(f'otp_code_{otp_code}_{action}')
-        return stored_code == otp_code
-    else:
-        return False
+        cache.delete(cache_key)
+        return True
+    return False
 
 
 def generate_tokens_for_user(user: User) -> tuple[Any, Token]:
