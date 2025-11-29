@@ -48,26 +48,34 @@ class UserProfileUpdateAPI(UpdateAPIView):
         if serializer.is_valid():
             profile = serializer.validated_data.pop('profile', None)
             address = serializer.validated_data.pop('address', None)
+
             user_data = serializer.validated_data
-            email_changed = 'email' in serializer.validated_data
+            email_changed = 'email' in user_data
             phone_changed = 'phone_number' in profile if profile else False
+
             message = 'اطلاعات شما با موفقیت به روز رسانی شد.'
+
+            if email_changed and phone_changed:
+                return Response(
+                    data={"data": {"message": "امکان تغییر تلفن همراه و آدرس ایمیل به صورت همزمان وجود ندارد."}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             if email_changed or phone_changed:
                 user.is_active = False
                 user.save()
+
                 if email_changed:
                     send_verification_email.delay_on_commit(
-                        email_address=serializer.validated_data['email'],
+                        email_address=user_data.get("email"),
                         content='کد تایید حساب کاربری',
                         subject='آسانسور گستران شرق',
-                        action='verify'
                     )
                     message += 'و کد فعالسازی برای آدرس ایمیل جدید شما ارسال شد.'
 
                 if phone_changed:
                     send_verification_sms.delay_on_commit(
-                        phone_number=serializer.validated_data.get('profile').get('phone_number'),
-                        action='verify'
+                        phone_number=profile.get('phone_number'),
                     )
                     message += 'و کد فعالسازی برای شماره تلفن جدید شما ارسال شد.'
 
