@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from random import randint, SystemRandom
-from typing import Any, Literal
+from typing import Any
 from urllib.parse import urlencode
 
 from decouple import config
@@ -99,22 +99,19 @@ def update_profile(
     return profile
 
 
-def generate_otp_code(
-        *,
-        email: str = None,
-        phone_number: str = None,
-        action: Literal['verify', 'reset_password']
-) -> str:
-    while True:
-        otp_code: str = str(randint(10000, 99999))
-        if not cache.get(f'otp_code_{otp_code}_{action}'):
-            if phone_number:
-                cache.set(f'otp_code_{phone_number}_{action}', otp_code, timeout=300)
-                cache.set(f'otp_code_{otp_code}_{action}', phone_number, timeout=300)
-            elif email:
-                cache.set(f'otp_code_{email}_{action}', otp_code, timeout=300)
-                cache.set(f'otp_code_{otp_code}_{action}', email, timeout=300)
-            return otp_code
+def generate_otp_code(*, email: str = None, phone_number: str = None) -> str | None:
+    otp_code: str = str(randint(10000, 99999))
+
+    identifier = email or phone_number
+    if not identifier:
+        raise ValueError("An identifier(email, phone_number) should be provided.")
+
+    cache_key = f"otp:{identifier}"
+    if cache.get(cache_key):
+        return None
+
+    cache.set(cache_key, otp_code, timeout=120)
+    return otp_code
 
 
 def check_otp_code(
