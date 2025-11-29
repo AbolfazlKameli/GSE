@@ -97,7 +97,7 @@ def update_profile(
     return profile
 
 
-def generate_otp_code(*, email: str = None, phone_number: str = None) -> str | None:
+def generate_otp_code(*, email: str = None, phone_number: str = None) -> str:
     otp_code: str = str(randint(10000, 99999))
 
     identifier = email or phone_number
@@ -105,8 +105,8 @@ def generate_otp_code(*, email: str = None, phone_number: str = None) -> str | N
         raise ValueError("An identifier(email, phone_number) should be provided.")
 
     cache_key = f"otp:{identifier}"
-    if cache.get(cache_key):
-        return None
+    if code := cache.get(cache_key):
+        return code
 
     cache.set(cache_key, otp_code, timeout=120)
     return otp_code
