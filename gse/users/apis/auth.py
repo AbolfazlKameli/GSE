@@ -49,6 +49,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 @extend_schema(tags=["Auth"])
 class UserRegisterAPI(GenericAPIView):
+    """
+    API for user registration. Accessible only to not authenticated users.
+    """
     permission_classes = [permissions.NotAuthenticated]
     serializer_class = serializers.SendVerificationEmailSerializer
 
@@ -82,6 +85,9 @@ class UserRegisterAPI(GenericAPIView):
 
 @extend_schema(tags=["Auth"])
 class UserRegisterVerifyAPI(GenericAPIView):
+    """
+    API for verifying and creating users during registration process. Accessible only to not authenticated users.
+    """
     permission_classes = [permissions.NotAuthenticated]
     serializer_class = serializers.UserRegisterVerifySerializer
 
@@ -121,6 +127,10 @@ class UserRegisterVerifyAPI(GenericAPIView):
 
 @extend_schema(tags=["Auth"])
 class UserVerificationAPI(GenericAPIView):
+    """
+    API for verifying users after some operations like email and phone number update.
+    Accessible only to not authenticated users.
+    """
     permission_classes = [permissions.NotAuthenticated]
     serializer_class = serializers.UserVerificationSerializer
 
