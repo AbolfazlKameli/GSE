@@ -5,7 +5,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from gse.orders.serializers import OrderListSerializer
 from gse.products.serializers import ProductReviewSerializer
 from .models import User
-from .services import check_otp_code
 from .validators import validate_iranian_phone_number, validate_postal_code
 
 
@@ -146,13 +145,11 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class SetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, max_length=50)
-    code = serializers.CharField(required=True, max_length=5)
+    otp_code = serializers.CharField(required=True, min_length=5, max_length=5)
     new_password = serializers.CharField(required=True, write_only=True)
     confirm_password = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
-        email: str = attrs.get('email')
-
         new_password = attrs.get('new_password')
         confirm_password = attrs.get('confirm_password')
         if (new_password and confirm_password) and (new_password != confirm_password):
@@ -161,12 +158,4 @@ class SetPasswordSerializer(serializers.Serializer):
             validate_password(new_password)
         except serializers.ValidationError as e:
             raise serializers.ValidationError({'new_password': e.messages})
-
-        if not check_otp_code(email=email, otp_code=attrs.get('code')):
-            raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
-
         return attrs
-
-
-class ResetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)

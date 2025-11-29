@@ -9,6 +9,7 @@ from gse.utils.doc_serializers import ResponseSerializer
 from .. import serializers
 from ..models import User
 from ..selectors import get_user_by_email
+from ..services import check_otp_code
 from ..tasks import send_verification_email
 
 
@@ -64,19 +65,30 @@ class SetPasswordAPI(GenericAPIView):
         200: ResponseSerializer
     })
     def post(self, request):
-        email: str = request.data.get('email')
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
+            email = serializer.validated_data.get("email")
+            otp_code = serializer.validated_data.get("otp_code")
             user: User | None = get_user_by_email(email)
+
+            if not check_otp_code(otp_code=otp_code, email=email):
+                return Response(
+                    data={"data": {"errors": {"otp_code": "کد وارد شده نامعتبر است."}}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             response = Response(
                 data={'data': {'message': 'رمز شما با موفقیت تغییر کرد.'}},
                 status=status.HTTP_202_ACCEPTED
             )
+
             if user is None:
                 return response
+
             new_password = serializer.validated_data['new_password']
             user.set_password(new_password)
             user.save()
+
             return response
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},
@@ -90,7 +102,7 @@ class ResetPasswordAPI(GenericAPIView):
     API for initiating the password reset process by sending a reset link to the user's email, accessible to all users.
     """
     permission_classes = [AllowAny]
-    serializer_class = serializers.ResetPasswordSerializer
+    serializer_class = serializers.SendVerificationEmailSerializer
 
     @extend_schema(responses={
         202: ResponseSerializer
@@ -99,17 +111,19 @@ class ResetPasswordAPI(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             user: User | None = get_user_by_email(serializer.validated_data.get('email'))
+
             response = Response(
                 data={'data': {'message': 'لینک بازنشانی رمز عبور به ایمیل شما ارسال شد.'}},
                 status=status.HTTP_202_ACCEPTED
             )
+
             if user is None:
                 return response
+
             send_verification_email.delay_on_commit(
                 email_address=user.email,
                 content='کد فراموشی رمز:',
                 subject='آسانسور گستران شرق',
-                action='reset_password'
             )
 
             return response
