@@ -94,17 +94,18 @@ class SendVerificationEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
 
-class UserRegisterSerializer(serializers.ModelSerializer):
-    password2 = serializers.CharField(required=True, write_only=True, min_length=8)
+class UserRegisterVerifySerializer(serializers.ModelSerializer):
+    confirm_password = serializers.CharField(required=True, write_only=True, min_length=8)
+    otp_code = serializers.CharField(required=True, min_length=5, max_length=5)
 
     class Meta:
         model = User
-        fields = ('password', 'password2')
+        fields = ("email", "otp_code", "password", "confirm_password")
         extra_kwargs = {
-            'password': {'write_only': True, 'min_length': 8},
+            "password": {"write_only": True, "min_length": 8}
         }
 
-    def validate_password2(self, data):
+    def validate_confirm_password(self, data):
         password1 = self.initial_data.get('password', False)
         if password1 and data and password1 != data:
             raise serializers.ValidationError('رمز های عبور باید یکسان باشند.')
@@ -113,25 +114,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         except serializers.ValidationError:
             raise serializers.ValidationError()
         return data
-
-
-class UserRegisterVerifySerializer(serializers.Serializer):
-    email = serializers.EmailField(max_length=50, required=False)
-    phone_number = serializers.CharField(max_length=11, validators=[validate_iranian_phone_number], required=False)
-    code = serializers.CharField(max_length=5)
-
-    def validate(self, attrs):
-        phone_number = attrs.get('phone_number')
-        email = attrs.get('email')
-        if phone_number:
-            if not check_otp_code(phone_number=phone_number, otp_code=attrs.get('code'), action='verify'):
-                raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
-        elif email:
-            if not check_otp_code(email=email, otp_code=attrs.get('code'), action='verify'):
-                raise serializers.ValidationError({'code': 'کد وارد شده نامعتبر است.'})
-        else:
-            raise serializers.ValidationError('وارد کردن ایمیل یا شماره تلفن الزامیست.')
-        return attrs
 
 
 class GoogleLoginSerializer(serializers.Serializer):
@@ -188,7 +170,3 @@ class SetPasswordSerializer(serializers.Serializer):
 
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
-
-
-class TokenSerializer(serializers.Serializer):
-    refresh = serializers.CharField(required=True, write_only=True)
