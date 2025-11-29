@@ -9,7 +9,8 @@ def send_verification_email(self, email_address: str, content: str, subject: str
     content = f'{content}\n{otp_code}'
 
     try:
-        send_link(email=email_address, content=content, subject=subject)
+        result = send_link(email=email_address, content=content, subject=subject)
+        return result
     except Exception as e:
         self.retry(exc=e, max_retries=3, countdown=5)
 
@@ -21,7 +22,6 @@ def send_verification_sms(self, phone_number: str):
 
     try:
         result = send_sms(phone_number=phone_number, content=content)
+        return result
     except Exception as e:
         self.retry(exc=e, max_retries=3, countdown=5)
-
-    return result
