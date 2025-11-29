@@ -18,7 +18,7 @@ from gse.utils.doc_serializers import (
 from .. import serializers
 from ..mixins import ApiErrorsMixin
 from ..models import User
-from ..selectors import get_user_by_email, is_email_taken
+from ..selectors import get_user_by_email, is_email_taken, get_user_by_phone_number
 from ..services import (
     register,
     google_get_access_token,
@@ -81,7 +81,7 @@ class UserRegisterAPI(GenericAPIView):
 
 
 @extend_schema(tags=["Auth"])
-class UserVerifyAPI(GenericAPIView):
+class UserRegisterVerifyAPI(GenericAPIView):
     permission_classes = [permissions.NotAuthenticated]
     serializer_class = serializers.UserRegisterVerifySerializer
 
@@ -112,6 +112,38 @@ class UserVerifyAPI(GenericAPIView):
             return Response(
                 data={"data": {"message": "ایمیل با موفقیت اعتبار سنجی و حساب کاربری ایجاد شد."}},
                 status=status.HTTP_201_CREATED
+            )
+        return Response(
+            data={'data': {'errors': format_errors(serializer.errors)}},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@extend_schema(tags=["Auth"])
+class UserVerificationAPI(GenericAPIView):
+    permission_classes = [permissions.NotAuthenticated]
+    serializer_class = serializers.UserVerificationSerializer
+
+    @extend_schema(responses={202: ResponseSerializer})
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data.get("email")
+            phone_number = serializer.validated_data.get("phone_number")
+            otp_code = serializer.validated_data.get("otp_code")
+
+            if not check_otp_code(otp_code=otp_code, email=email, phone_number=phone_number):
+                return Response(
+                    data={"data": {"errors": {"otp_code": "کد وارد شده نامعتبر است."}}},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user = get_user_by_email(email=email) if email else get_user_by_phone_number(phone_number=phone_number)
+            activate_user(user)
+
+            return Response(
+                data={"data": {"message": "حساب کاربری با موفقیت فعال شد."}},
+                status=status.HTTP_202_ACCEPTED
             )
         return Response(
             data={'data': {'errors': format_errors(serializer.errors)}},

@@ -115,6 +115,12 @@ class UserRegisterVerifySerializer(serializers.ModelSerializer):
         return data
 
 
+class UserVerificationSerializer(serializers.Serializer):
+    otp_code = serializers.CharField(required=True, min_length=5, max_length=5)
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(required=False, validators=[validate_iranian_phone_number])
+
+
 class GoogleLoginSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)
     error = serializers.CharField(required=False)

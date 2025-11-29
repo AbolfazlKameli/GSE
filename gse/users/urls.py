@@ -19,11 +19,12 @@ profile_patterns = [
 urlpatterns = [
     path('', user.UsersListAPI.as_view(), name='users-list'),
     path('register/', auth.UserRegisterAPI.as_view(), name='user-register'),
-    path("register/verify/", auth.UserVerifyAPI.as_view(), name='user-verify'),
+    path("register/verify/", auth.UserRegisterVerifyAPI.as_view(), name='user-register-verify'),
     path('register/google/auth/redirect/', auth.GoogleLoginRedirectAPI.as_view(), name='google_login_redirect'),
     path('register/google/auth/callback/', auth.GoogleLoginApi.as_view(), name='google_login'),
     path('login/', auth.CustomTokenObtainPairView.as_view(), name='user-login'),
     path('refresh/', auth.CustomTokenRefreshAPI.as_view(), name='token-refresh'),
+    path("verify/", auth.UserVerificationAPI.as_view(), name='user-verify'),
     path('profile/', include(profile_patterns)),
     path('password/', include(password_patterns)),
 ]
