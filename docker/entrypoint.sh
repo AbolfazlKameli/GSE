@@ -21,7 +21,7 @@ echo "Starting Gunicorn server..."
 echo "Redis URL: $REDIS_LOCATION"
 exec gunicorn core.wsgi:application \
   --bind 0.0.0.0:8000 \
-  --workers 4 \
+  --workers $(( 2 * `cat /proc/cpuinfo | grep 'core id' | wc -l` + 1 )) \
   --timeout 120 \
   --log-level info \
   --access-logfile - \
