@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
@@ -15,10 +14,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('gse.users.urls', namespace='users')),
     path('products/', include('gse.products.urls', namespace='products')),
-    path('cart/', include('gse.cart.urls', namespace='cart')),
+    path('carts/', include('gse.cart.urls', namespace='cart')),
     path('orders/', include('gse.orders.urls', namespace='orders')),
     path('website/', include('gse.website.urls', namespace='website')),
-    path('payment/', include('gse.payment.urls', namespace='payment')),
+    path('payments/', include('gse.payment.urls', namespace='payment')),
     path('faq/', include('gse.faq.urls', namespace='faq')),
     path('tickets/', include('gse.ticket.urls', namespace='ticket')),
     path('schema/', include(documents))

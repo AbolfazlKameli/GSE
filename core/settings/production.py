@@ -1,6 +1,6 @@
 from .settings import *
 
-DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
+DEBUG = False
 
 SECRET_KEY = config('DJANGO_SECRET_KEY')
 
