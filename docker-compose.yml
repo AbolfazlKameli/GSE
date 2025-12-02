@@ -1,7 +1,7 @@
 services:
   redis:
     container_name: redis1
-    image: docker.arvancloud.ir/redis:7.4.1
+    image: docker.arvancloud.ir/redis:7.4.1-alpine
     restart: always
     volumes:
       - redis_data:/data
@@ -15,7 +15,7 @@ services:
 
   db:
     container_name: GSEDB
-    image: docker.arvancloud.ir/postgres:16
+    image: docker.arvancloud.ir/postgres:17
     restart: always
     env_file:
       - .env
@@ -46,7 +46,7 @@ services:
       - main_network
     depends_on:
       redis:
-        condition: service_started
+        condition: service_healthy
       db:
         condition: service_healthy
 
