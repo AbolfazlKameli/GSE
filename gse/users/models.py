@@ -15,7 +15,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name='نقش',
     )
 
-    is_active = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     created_date = models.DateTimeField(auto_now_add=True, verbose_name='created date')
     updated_date = models.DateTimeField(auto_now=True, verbose_name='updated date')
 

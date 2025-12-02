@@ -24,10 +24,6 @@ GOOGLE_USER_INFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo'
 GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/auth'
 
 
-def create_user(*, email: str, password) -> User:
-    return User.objects.create_user(email=email, password=password)
-
-
 def update_last_login(email) -> User | None:
     user: User | None = get_user_by_email(email=email)
     if user is None:
@@ -59,13 +55,8 @@ def send_sms(*, phone_number: str, content: str):
     return response
 
 
-@transaction.atomic
-def register(*, email: str, password: str = None, is_active: bool = False) -> User:
-    user = create_user(email=email, password=password)
-    if is_active:
-        user.is_active = True
-        user.save()
-    return user
+def register(*, email: str, password: str = None) -> User:
+    return User.objects.create_user(email=email, password=password)
 
 
 @transaction.atomic

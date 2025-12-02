@@ -105,16 +105,8 @@ class UserRegisterVerifyAPI(GenericAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            user = get_user_by_email(email=email)
+            register(email=email, password=password)
 
-            if user is not None and not user.is_active:
-                activate_user(user)
-                return Response(
-                    data={'data': {'message': 'کاربر با موفقیت اعتبارسنجی شد.'}},
-                    status=status.HTTP_200_OK
-                )
-
-            register(email=email, password=password, is_active=True)
             return Response(
                 data={"data": {"message": "ایمیل با موفقیت اعتبار سنجی و حساب کاربری ایجاد شد."}},
                 status=status.HTTP_201_CREATED
@@ -219,7 +211,7 @@ class GoogleLoginApi(ApiErrorsMixin, GenericAPIView):
 
         user: User | None = get_user_by_email(user_data['email'])
         if user is None:
-            user: User = register(email=user_data['email'], is_active=True)
+            user: User = register(email=user_data['email'])
             profile_data = {
                 'first_name': user_data['given_name'],
                 'last_name': user_data['family_name']
