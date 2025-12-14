@@ -14,7 +14,10 @@ def get_all_orders() -> list[Order]:
 
 
 def get_pending_orders() -> list[Order]:
-    return Order.objects.filter(status=ORDER_STATUS_PENDING).select_related('owner').all()
+    return Order.objects.filter(status=ORDER_STATUS_PENDING) \
+        .select_related('owner') \
+        .prefetch_related('items', 'items__product') \
+        .all()
 
 
 def get_order_by_id(order_id: int) -> Order | None:

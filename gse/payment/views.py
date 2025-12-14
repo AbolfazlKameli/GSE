@@ -1,6 +1,7 @@
 from django.http import Http404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -28,6 +29,12 @@ class ZPPaymentAPI(GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         order: Order = self.get_object()
+        order_items = order.items.all()
+
+        for item in order_items:
+            if item.quantity > item.product.quantity:
+                error_message = "تعداد محصول در سفارش نمیتواند از تعداد محصول در انبار بیشتر باشد."
+                raise ValidationError(detail={"data": {"errors": error_message}})
 
         response = payment_request(
             amount=order.total_price,
