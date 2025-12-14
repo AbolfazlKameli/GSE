@@ -14,7 +14,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('gse.users.urls', namespace='users')),
     path('products/', include('gse.products.urls', namespace='products')),
-    path('carts/', include('gse.cart.urls', namespace='cart')),
+    path('cart/', include('gse.cart.urls', namespace='cart')),
     path('orders/', include('gse.orders.urls', namespace='orders')),
     path('website/', include('gse.website.urls', namespace='website')),
     path('payments/', include('gse.payment.urls', namespace='payment')),
