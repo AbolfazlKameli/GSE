@@ -100,7 +100,10 @@ class CartItemDeleteAPI(DestroyAPIView):
         cart_item = get_cart_item_by_id(item_id=kwargs.get('item_id'))
         if cart_item is None:
             raise Http404('آیتم مورد نظر پیدا نشد.')
-        cart_item.delete()
+
+        cart_item.quantity -= 1
+        cart_item.delete() if cart_item.quantity == 0 else cart_item.save()
+
         return Response(
             status=status.HTTP_204_NO_CONTENT
         )
