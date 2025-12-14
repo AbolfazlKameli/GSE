@@ -16,9 +16,8 @@ class Order(models.Model):
         verbose_name='وضعیت سفارش',
         default=ORDER_STATUS_PENDING,
         max_length=10,
-        db_index=True
     )
-    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0, db_index=True)
+    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
     coupon = models.ForeignKey(
         'Coupon',
         on_delete=models.SET_NULL,
@@ -52,7 +51,7 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', db_index=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_items', db_index=True)
-    quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], db_index=True)
+    quantity = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)])
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
 
@@ -77,8 +76,8 @@ class OrderItem(models.Model):
 
 class Coupon(models.Model):
     code = models.CharField(max_length=50, unique=True, db_index=True)
-    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0, db_index=True)
-    max_usage_limit = models.PositiveIntegerField(default=100, db_index=True)
+    discount_percent = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=0)
+    max_usage_limit = models.PositiveIntegerField(default=100)
     expiration_date = models.DateTimeField(db_index=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
