@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -13,8 +14,7 @@ from .selectors import (
     get_all_carts,
     get_all_cart_items,
     get_cart_by_item_id,
-    get_cart_item_by_id,
-    get_cart_item_by_product_id
+    get_cart_item_by_id
 )
 from .serializers import CartSerializer, CartItemAddSerializer, CartItemSerializer
 from .services import add_cart_item
@@ -54,7 +54,6 @@ class CartItemAddAPI(GenericAPIView):
         if serializer.is_valid():
             product = serializer.validated_data.get("product")
             user_cart = request.user.cart
-            item_in_user_cart = get_cart_item_by_product_id(product.id, request.user.id)
 
             if user_cart.get_total_quantity() == 100:
                 error_message = {"product": "در یک سبد خرید نمیتوانید بیشتر از 100 محصول قرار دهید."}
@@ -64,11 +63,10 @@ class CartItemAddAPI(GenericAPIView):
                 error_message = {"product": "محصول در انبار موجود نمیباشد."}
                 raise ValidationError(detail={"data": {"errors": error_message}})
 
-            if item_in_user_cart is not None and (item_in_user_cart.quantity + 1) > product.quantity:
-                error_message = {"product": "این تعداد از این محصول موجود نمیباشد."}
-                raise ValidationError(detail={"data": {"errors": error_message}})
-
-            add_cart_item(cart=user_cart, product=product)
+            try:
+                add_cart_item(cart=user_cart, product=product)
+            except DjangoValidationError as exc:
+                raise ValidationError(detail={"data": {"errors": {"product": exc.message}}})
 
             return Response(
                 data={"data": {"message": "محصول با موفقیت به سبد خرید اضافه شد."}},
