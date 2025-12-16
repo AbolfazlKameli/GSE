@@ -1,4 +1,8 @@
+from django.contrib.auth import get_user_model
+
 from .models import Cart, CartItem
+
+User = get_user_model()
 
 
 def get_all_carts() -> list[Cart]:
@@ -18,6 +22,10 @@ def get_cart_item_by_product_id(product_id: int, owner_id: int) -> CartItem | No
 
 def get_cart_item_by_id(item_id: int) -> CartItem | None:
     return CartItem.objects.filter(id=item_id).first()
+
+
+def get_cart_by_owner(owner: User) -> Cart | None:
+    return Cart.objects.prefetch_related("items").filter(owner=owner).first()
 
 
 def get_cart_by_item_id(item_id: int) -> Cart | None:

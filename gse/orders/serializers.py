@@ -6,7 +6,6 @@ from .choices import ORDER_STATUS_PENDING
 from .models import Order, OrderItem, Coupon
 from .selectors import (
     get_usable_coupon_for_update_by_code,
-    get_order_by_id,
     get_coupon_for_update_by_code,
     check_order_status,
     check_order_owner,
@@ -70,25 +69,6 @@ class OrderCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ('items',)
-
-    def validate(self, attrs):
-        request = self.context.get('request')
-        items = attrs.get('items')
-
-        if not bool(items):
-            raise serializers.ValidationError({'items': 'هیچ محصولی در دیتای اسالی وجود ندارد.'})
-
-        for item in items:
-            cart_item = request.user.cart.items.filter(product=item.get('product'))
-            if not cart_item.exists():
-                raise serializers.ValidationError(
-                    {'product': 'تنها محصولات ثبت شده در سبد خرید به سفارش اضافه میشوند.'}
-                )
-            if item.get('quantity') != cart_item.first().quantity:
-                raise serializers.ValidationError(
-                    {'quantity': 'تعداد باید با تعداد ثبت شده در سبد خرید یکسان باشد.'}
-                )
-        return attrs
 
 
 class CouponApplySerializer(serializers.Serializer):
