@@ -1,10 +1,12 @@
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import RetrieveAPIView, DestroyAPIView, ListAPIView, GenericAPIView
 from rest_framework.response import Response
 
+from gse.cart.selectors import get_cart_by_owner
 from gse.utils import is_child_of, format_errors
 from gse.utils.doc_serializers import ResponseSerializer
 from gse.utils.permissions import IsAdminOrOwner, IsAdminOrSupporter, FullCredentialsUser
@@ -19,7 +21,7 @@ from .selectors import (
     check_order_owner,
     get_usable_coupon_for_update_by_code,
     get_coupon_for_update_by_code,
-    get_order_for_update_by_id
+    get_order_for_update_by_id,
 )
 from .serializers import (
     OrderSerializer,
@@ -76,8 +78,30 @@ class OrderCreateAPI(GenericAPIView):
 
     @extend_schema(responses={201: ResponseSerializer})
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
+            items = serializer.validated_data.get('items')
+            user_cart = get_cart_by_owner(request.user)
+
+            if not bool(items):
+                error_message = "هیچ محصولی در اطلاعات ارسالی وجود ندارد."
+                raise ValidationError(detail={"data": {"errors": error_message}})
+
+            for item in items:
+                cart_item = user_cart.items.select_related("product").filter(product=item.get('product')).first()
+
+                if cart_item is None:
+                    error_message = {"product": "تنها محصولات ثبت شده در سبد خرید به سفارش اضافه میشوند."}
+                    raise ValidationError(detail={"data": {"errors": error_message}})
+
+                if item.get('quantity') != cart_item.quantity:
+                    error_message = {'quantity': 'تعداد باید با تعداد ثبت شده در سبد خرید یکسان باشد.'}
+                    raise ValidationError(detail={"data": {"errors": error_message}})
+
+                if item.get("quantity") > cart_item.product.quantity:
+                    error_message = {"quantity": "این تعداد از این محصول در انبار وجود ندارد."}
+                    raise ValidationError(detail={"data": {"errors": error_message}})
+
             create_order(owner=request.user, items=serializer.validated_data.get('items'))
             return Response(
                 data={'data': {'message': 'سفارش با موفقیت ایجاد شد.'}},
@@ -250,7 +274,7 @@ class CouponApplyAPI(GenericAPIView):
             order = serializer.validated_data.get('order')
             try:
                 apply_coupon(order, coupon)
-            except ValidationError as e:
+            except DjangoValidationError as e:
                 return Response(
                     data={'data': {'errors': e.messages}},
                     status=status.HTTP_400_BAD_REQUEST
@@ -291,7 +315,7 @@ class CouponDiscardAPI(GenericAPIView):
             order = serializer.validated_data.get('order')
             try:
                 discard_coupon(order, coupon)
-            except ValidationError as e:
+            except DjangoValidationError as e:
                 return Response(
                     data={'data': {'errors': e.messages}},
                     status=status.HTTP_400_BAD_REQUEST
