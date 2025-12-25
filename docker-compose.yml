@@ -37,6 +37,7 @@ services:
     image: app:latest
     volumes:
       - app_data:/app
+      - statics:/app/static
     env_file:
       - .env
     restart: always
@@ -57,6 +58,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/gse.conf:/etc/nginx/conf.d/default.conf/:ro
+      - statics:/app/static:ro
     networks:
       - main_network
     ports:
@@ -102,6 +104,7 @@ volumes:
   app_data:
   redis_data:
   postgres_data:
+  statics:
 
 networks:
   main_network:
