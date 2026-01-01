@@ -133,3 +133,6 @@ $ python manage.py test
 ```
 
 The tests are written for the pre-built users app in the gse project.
+
+## Todo List
+- [ ] Fix queries n+1 problem
